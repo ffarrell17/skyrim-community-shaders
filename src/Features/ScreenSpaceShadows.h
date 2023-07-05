@@ -1,20 +1,22 @@
 #pragma once
 
 #include "Buffer.h"
-#include "Feature.h"
+#include "Configuration/TODValue.h"
+#include "Configuration/Feature.h"
+#include "Configuration/FeatureSettings.h"
 
-struct ScreenSpaceShadows : Feature
+using namespace Configuration;
+
+class ScreenSpaceShadows : public Feature
 {
-	static ScreenSpaceShadows* GetSingleton()
+public:
+
+	ScreenSpaceShadows()
 	{
-		static ScreenSpaceShadows singleton;
-		return &singleton;
+		_featureName = "Screen-Space Shadows";
 	}
 
-	virtual inline std::string GetName() { return "Screen-Space Shadows"; }
-	virtual inline std::string GetShortName() { return "ScreenSpaceShadows"; }
-
-	struct Settings
+	struct ShaderSettings
 	{
 		uint32_t MaxSamples = 24;
 		float FarDistanceScale = 0.025f;
@@ -26,6 +28,35 @@ struct ScreenSpaceShadows : Feature
 		float BlurRadius = 0.5f;
 		float BlurDropoff = 0.005f;
 	};
+
+	struct ConfigSettings : FeatureSettings
+	{
+		std::optional<uint32_t> MaxSamples = 24;
+		std::optional<TODValue<float>> FarDistanceScale = 0.025f;
+		std::optional<TODValue<float>> FarThicknessScale = 0.025f;
+		std::optional<TODValue<float>> FarHardness = 8.0f;
+		std::optional<TODValue<float>> NearDistance = 16.0f;
+		std::optional<TODValue<float>> NearThickness = 2.0f;
+		std::optional<TODValue<float>> NearHardness = 32.0f;
+		std::optional<TODValue<float>> BlurRadius = 0.5f;
+		std::optional<TODValue<float>> BlurDropoff = 0.005f;
+
+		
+		FEATURE_SETTINGS_OVERRIDES(
+			ConfigSettings,
+			MaxSamples,
+			FarDistanceScale,
+			FarThicknessScale,
+			FarHardness,
+			NearDistance,
+			NearThickness,
+			NearHardness,
+			BlurRadius,
+			BlurDropoff)
+
+		ShaderSettings ToShaderSettings();
+		virtual bool DrawSettings(bool& featureEnabled, bool isConfigOverride) override;
+	};	
 
 	struct alignas(16) PerPass
 	{
@@ -43,14 +74,12 @@ struct ScreenSpaceShadows : Feature
 		DirectX::XMFLOAT4 DynamicRes;
 		DirectX::XMVECTOR InvDirLightDirectionVS;
 		float ShadowDistance = 10000;
-		Settings Settings;
+		ShaderSettings Settings;
 	};
 
-	Settings settings;
+	std::shared_ptr<ConfigSettings> configSettings;
 
 	ConstantBuffer* perPass = nullptr;
-
-	bool enabled = true;
 
 	ID3D11SamplerState* computeSampler = nullptr;
 
@@ -65,21 +94,22 @@ struct ScreenSpaceShadows : Feature
 
 	bool renderedScreenCamera = false;
 
-	virtual void SetupResources();
-	virtual void Reset();
+	virtual void SetupResources() override;
+	virtual void Reset() override;
+	virtual void ClearComputeShader() override;
 
-	virtual void DrawSettings();
 	void ModifyGrass(const RE::BSShader* shader, const uint32_t descriptor);
 	void ModifyDistantTree(const RE::BSShader*, const uint32_t descriptor);
 
-	void ClearComputeShader();
 	ID3D11ComputeShader* GetComputeShader();
 	ID3D11ComputeShader* GetComputeShaderHorizontalBlur();
 	ID3D11ComputeShader* GetComputeShaderVerticalBlur();
 
 	void ModifyLighting(const RE::BSShader* shader, const uint32_t descriptor);
-	virtual void Draw(const RE::BSShader* shader, const uint32_t descriptor);
+	virtual void Draw(const RE::BSShader* shader, const uint32_t descriptor) override;
 
-	virtual void Load(json& o_json);
-	virtual void Save(json& o_json);
+	virtual std::shared_ptr<FeatureSettings> CreateConfig() override;
+	virtual std::shared_ptr<FeatureSettings> ParseConfig(json& o_json) override;
+	virtual void SaveConfig(json& o_json, std::shared_ptr<FeatureSettings> config) override;
+	virtual void ApplyConfig(std::shared_ptr<FeatureSettings> config) override;
 };

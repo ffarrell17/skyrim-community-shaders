@@ -25,13 +25,19 @@ public:
 	void Init(IDXGISwapChain* swapchain, ID3D11Device* device, ID3D11DeviceContext* context);
 	void DrawSettings();
 	void DrawOverlay();
+	void DrawWeatherPanel();
 
 private:
-
+	bool IsEnabled = false;
 	uint32_t toggleKey = VK_END;
 	bool settingToggleKey = false;
+	bool _showWeatherMenu = false;
+
+	int selectedWeatherIndex = -1;
+	int selectedLocationIndex = -1;
 
 	Menu() { }
 	const char* KeyIdToString(uint32_t key);
 	const ImGuiKey VirtualKeyToImGuiKey(WPARAM vkKey);
+	std::string FormIdToHexString(RE::FormID id);
 };

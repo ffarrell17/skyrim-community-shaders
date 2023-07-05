@@ -105,7 +105,10 @@ namespace SIE
 				++defines;
 			}
 
-			if (ScreenSpaceShadows::GetSingleton()->loaded) {
+			// TODO: Update to add generically
+			const auto& screenSpaceShadows = State::GetSingleton()->GetFeatureByName("Screen-Space Shadows");
+			if (screenSpaceShadows && screenSpaceShadows->IsEnabled())
+			{
 				defines[0] = { "SCREEN_SPACE_SHADOWS", nullptr };
 				++defines;
 			}
@@ -159,7 +162,10 @@ namespace SIE
 				++defines;
 			}
 
-			if (ScreenSpaceShadows::GetSingleton()->loaded) {
+			// TODO: Update to add generically
+			const auto& screenSpaceShadows = State::GetSingleton()->GetFeatureByName("Screen-Space Shadows");
+			if (screenSpaceShadows && screenSpaceShadows->IsEnabled())
+			{
 				defines[0] = { "SCREEN_SPACE_SHADOWS", nullptr };
 				++defines;
 			}
@@ -272,12 +278,18 @@ namespace SIE
 				++defines;
 			}
 
-			if (GrassCollision::GetSingleton()->loaded) {
-				defines[0] = { "GRASS_COLLISION", nullptr };
+			// TODO: Update to add generically
+			const auto& grassCollision = State::GetSingleton()->GetFeatureByName("Grass Collision");
+			if (grassCollision && grassCollision->IsEnabled())
+			{
+				defines[0] = { "GRASS_COLLISION", nullptr };		
 				++defines;
 			}
 
-			if (ScreenSpaceShadows::GetSingleton()->loaded) {
+			// TODO: Update to add generically
+			const auto& screenSpaceShadows = State::GetSingleton()->GetFeatureByName("Screen-Space Shadows");
+			if (screenSpaceShadows && screenSpaceShadows->IsEnabled())
+			{
 				defines[0] = { "SCREEN_SPACE_SHADOWS", nullptr };
 				++defines;
 			}

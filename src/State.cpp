@@ -2,14 +2,19 @@
 
 #include <magic_enum.hpp>
 
+#include "Configuration/ConfigurationManager.h"
+
+#include "ShaderCache.h"
 #include "Menu.h"
 #include "ShaderCache.h"
 
-#include "Feature.h"
+#include "Configuration/Feature.h"
 #include "Features/Clustered.h"
 
  void State::Draw()
 {
+	Configuration::ConfigurationManager::GetSingleton()->Update();
+
 	auto& shaderCache = SIE::ShaderCache::Instance();
 	if (shaderCache.IsEnabled() && currentShader) {
 		auto type = currentShader->shaderType.get();
@@ -25,8 +30,9 @@
 					context->PSSetShader(pixelShader->shader, NULL, NULL);
 				}
 
-				for (auto* feature : Feature::GetFeatureList())
+				for (auto& feature : Features) {
 					feature->Draw(currentShader, currentPixelDescriptor);
+				}
 			}
 		}
 	}
@@ -37,14 +43,17 @@
 void State::Reset()
 {
 	Clustered::GetSingleton()->Reset();
-	for (auto* feature : Feature::GetFeatureList())
+
+	for (auto& feature : Features) {
 		feature->Reset();
+	}
 }
 
 void State::Setup()
 {
-	for (auto* feature : Feature::GetFeatureList())
+	for (auto& feature : Features) {
 		feature->SetupResources();
+	}
 }
 
 void State::Load()
@@ -103,8 +112,19 @@ void State::Load()
 		}
 	}
 
-	for (auto* feature : Feature::GetFeatureList())
-		feature->Load(settings);
+	
+	Features.clear(); // TODO: Needed because load seems to be called twice on startup
+	Features.push_back(std::static_pointer_cast<Feature>(std::make_shared<DistantTreeLighting>()));
+	Features.push_back(std::static_pointer_cast<Feature>(std::make_shared<GrassCollision>()));
+	Features.push_back(std::static_pointer_cast<Feature>(std::make_shared<GrassLighting>()));
+	Features.push_back(std::static_pointer_cast<Feature>(std::make_shared<ScreenSpaceShadows>()));
+
+	for (auto& feature : Features) {
+		feature->Init();
+		feature->LoadAndApplyConfig(settings);
+	}
+
+	Configuration::ConfigurationManager::GetSingleton()->Load(settings);
 }
 
 void State::Save()
@@ -135,24 +155,42 @@ void State::Save()
 
 	settings["Version"] = Plugin::VERSION.string();
 
-	for (auto* feature : Feature::GetFeatureList())
-		feature->Save(settings);
-
+	Configuration::ConfigurationManager::GetSingleton()->Save(settings);
+	
 	o << settings.dump(1);
+}
+
+std::shared_ptr<Configuration::Feature> State::GetFeatureByName(std::string name)
+{
+	for (const auto& feature : Features) {
+		if (feature->GetName() == name)
+			return feature;
+	}
+	return nullptr;
+}
+
+void State::ClearComputeShaders()
+{
+	for (auto& feature : Features) {
+		feature->ClearComputeShader();
+	}
 }
 
 bool State::ValidateCache(CSimpleIniA& a_ini)
 {
-	bool valid = true;
-	for (auto* feature : Feature::GetFeatureList())
+	bool valid = false;
+	for (auto& feature : Features) {
 		valid = valid && feature->ValidateCache(a_ini);
+	}
+
 	return valid;
 }
 
 void State::WriteDiskCacheInfo(CSimpleIniA& a_ini)
 {
-	for (auto* feature : Feature::GetFeatureList())
+	for (auto& feature : Features) {
 		feature->WriteDiskCacheInfo(a_ini);
+	}
 }
 
 void State::SetLogLevel(spdlog::level::level_enum a_level)

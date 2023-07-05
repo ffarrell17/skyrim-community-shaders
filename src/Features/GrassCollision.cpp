@@ -2,12 +2,13 @@
 
 #include "State.h"
 #include "Util.h"
+#include "Helpers/Time.h"
 
 #include "Features/Clustered.h"
+#include <Helpers/UI.h>
 
 NLOHMANN_DEFINE_TYPE_NON_INTRUSIVE_WITH_DEFAULT(
-	GrassCollision::Settings,
-	EnableGrassCollision,
+	GrassCollision::ConfigSettings,
 	RadiusMultiplier,
 	DisplacementMultiplier)
 
@@ -16,23 +17,46 @@ enum class GrassShaderTechniques
 	RenderDepth = 8,
 };
 
-void GrassCollision::DrawSettings()
+bool GrassCollision::ConfigSettings::DrawSettings(bool& featureEnabled, bool isConfigOverride)
 {
+	bool updated = false;
+
 	if (ImGui::TreeNodeEx("Grass Collision", ImGuiTreeNodeFlags_DefaultOpen)) {
 		ImGui::TextWrapped("Allows player collision to modify grass position.");
+			
+		if (!isConfigOverride) {
+			ImGui::Checkbox("Enable Grass Collision", &featureEnabled);
+		}
+		
+		if (isConfigOverride) Helpers::UI::BeginOptionalSection<TODValue<float>>(RadiusMultiplier, 2.0f);
 
-		ImGui::Checkbox("Enable Grass Collision", (bool*)&settings.EnableGrassCollision);
 		ImGui::TextWrapped("Distance from collision centres to apply collision");
-		ImGui::SliderFloat("Radius Multiplier", &settings.RadiusMultiplier, 0.0f, 8.0f);
+		updated = updated || RadiusMultiplier->DrawSliderScalar("Radius Multiplier", ImGuiDataType_Float, 0.0f, 8.0f);
 
+		if (isConfigOverride) Helpers::UI::EndOptionalSection(RadiusMultiplier);
+
+			
+		if (isConfigOverride) Helpers::UI::BeginOptionalSection<TODValue<float>>(RadiusMultiplier, 2.0f);
+			
 		ImGui::TextWrapped("Strength of each collision on grass position.");
-		ImGui::SliderFloat("Displacement Multiplier", &settings.DisplacementMultiplier, 0.0f, 32.0f);
+		updated = updated || RadiusMultiplier->DrawSliderScalar("Displacement Multiplier", ImGuiDataType_Float, 0.0f, 32.0f);
 
+		if (isConfigOverride) Helpers::UI::EndOptionalSection(RadiusMultiplier);
+		
 		ImGui::TreePop();
 	}
 
-	ImGui::EndTabItem();
+	return updated;
 }
+
+GrassCollision::ShaderSettings GrassCollision::ConfigSettings::ToShaderSettings()
+{
+	ShaderSettings settings;
+	settings.RadiusMultiplier = RadiusMultiplier->Get();
+	settings.DisplacementMultiplier = DisplacementMultiplier->Get();
+	return settings;
+}
+
 
 static bool GetShapeBound(RE::NiAVObject* a_node, RE::NiPoint3& centerPos, float& radius)
 {
@@ -127,7 +151,7 @@ void GrassCollision::UpdateCollisions()
 				RE::NiPoint3 centerPos;
 				float radius;
 				if (GetShapeBound(a_object, centerPos, radius)) {
-					radius *= settings.RadiusMultiplier;
+					radius *= configSettings->RadiusMultiplier->Get();
 					CollisionSData data{};
 					RE::NiPoint3 eyePosition{};
 					if (REL::Module::IsVR()) {
@@ -188,11 +212,11 @@ void GrassCollision::UpdateCollisions()
 
 void GrassCollision::ModifyGrass(const RE::BSShader*, const uint32_t)
 {
-	if (!loaded)
+	if (!_enabled)
 		return;
 
 	if (updatePerFrame) {
-		if (settings.EnableGrassCollision) {
+		if (_enabled) {
 			UpdateCollisions();
 		}
 
@@ -213,16 +237,16 @@ void GrassCollision::ModifyGrass(const RE::BSShader*, const uint32_t)
 		perFrameData.boundCentre.x = bound.center.x - eyePosition.x;
 		perFrameData.boundCentre.y = bound.center.y - eyePosition.y;
 		perFrameData.boundCentre.z = bound.center.z - eyePosition.z;
-		perFrameData.boundRadius = bound.radius * settings.RadiusMultiplier;
+		perFrameData.boundRadius = bound.radius * configSettings->RadiusMultiplier->Get();;
 
-		perFrameData.Settings = settings;
+		perFrameData.Settings = configSettings->ToShaderSettings();
 
 		perFrame->Update(perFrameData);
 
 		updatePerFrame = false;
 	}
 
-	if (settings.EnableGrassCollision) {
+	if (_enabled) {
 		auto context = RE::BSGraphics::Renderer::GetSingleton()->GetRuntimeData().context;
 
 		ID3D11ShaderResourceView* views[1]{};
@@ -244,19 +268,6 @@ void GrassCollision::Draw(const RE::BSShader* shader, const uint32_t descriptor)
 	}
 }
 
-void GrassCollision::Load(json& o_json)
-{
-	if (o_json[GetName()].is_object())
-		settings = o_json[GetName()];
-
-	Feature::Load(o_json);
-}
-
-void GrassCollision::Save(json& o_json)
-{
-	o_json[GetName()] = settings;
-}
-
 void GrassCollision::SetupResources()
 {
 	perFrame = new ConstantBuffer(ConstantBufferDesc<PerFrame>());
@@ -265,4 +276,29 @@ void GrassCollision::SetupResources()
 void GrassCollision::Reset()
 {
 	updatePerFrame = true;
+}
+
+std::shared_ptr<FeatureSettings> GrassCollision::CreateConfig()
+{
+	return std::make_shared<GrassCollision::ConfigSettings>();
+}
+
+std::shared_ptr<FeatureSettings> GrassCollision::ParseConfig(json& o_json)
+{
+	auto config = std::dynamic_pointer_cast<GrassCollision::ConfigSettings>(CreateConfig());
+	*config = o_json;
+	return config;
+}
+
+void GrassCollision::SaveConfig(json& o_json, std::shared_ptr<FeatureSettings> config)
+{
+	auto gcConfig = std::dynamic_pointer_cast<GrassCollision::ConfigSettings>(config);
+	if (gcConfig) {
+		o_json = *gcConfig;
+	}
+}
+
+void GrassCollision::ApplyConfig(std::shared_ptr<FeatureSettings> config)
+{
+	configSettings = std::dynamic_pointer_cast<GrassCollision::ConfigSettings>(config);
 }

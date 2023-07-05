@@ -1,31 +1,47 @@
 #pragma once
 
 #include "Buffer.h"
-#include "Feature.h"
+#include "Configuration/TODValue.h"
+#include "Configuration/Feature.h"
+#include "Configuration/FeatureSettings.h"
 
-struct GrassCollision : Feature
+using namespace Configuration;
+
+class GrassCollision : public Feature
 {
-	static GrassCollision* GetSingleton()
+public:
+
+	GrassCollision()
 	{
-		static GrassCollision singleton;
-		return &singleton;
+		_featureName = "Grass Collision";
 	}
 
-	virtual inline std::string GetName() { return "Grass Collision"; }
-	virtual inline std::string GetShortName() { return "GrassCollision"; }
-
-	struct Settings
+	struct ShaderSettings
 	{
-		std::uint32_t EnableGrassCollision = 1;
+		std::uint32_t EnableGrassCollision;
 		float RadiusMultiplier = 2;
 		float DisplacementMultiplier = 16;
+	};
+
+	struct ConfigSettings : FeatureSettings
+	{
+		std::optional<TODValue<float>> RadiusMultiplier = 2.0f;
+		std::optional<TODValue<float>> DisplacementMultiplier = 8.0f;
+
+		ShaderSettings ToShaderSettings();
+		virtual bool DrawSettings(bool& featureEnabled, bool isConfigOverride) override;
+
+		FEATURE_SETTINGS_OVERRIDES(
+			ConfigSettings,
+			RadiusMultiplier,
+			DisplacementMultiplier)
 	};
 
 	struct alignas(16) PerFrame
 	{
 		DirectX::XMFLOAT3 boundCentre;
 		float boundRadius;
-		Settings Settings;
+		ShaderSettings Settings;
 		float pad0;
 	};
 
@@ -37,19 +53,20 @@ struct GrassCollision : Feature
 
 	std::unique_ptr<Buffer> collisions = nullptr;
 
-	Settings settings;
+	std::shared_ptr<ConfigSettings> configSettings;
 
 	bool updatePerFrame = false;
 	ConstantBuffer* perFrame = nullptr;
 
-	virtual void SetupResources();
-	virtual void Reset();
+	virtual void SetupResources() override;
+	virtual void Reset() override;
 
-	virtual void DrawSettings();
 	void UpdateCollisions();
 	void ModifyGrass(const RE::BSShader* shader, const uint32_t descriptor);
-	virtual void Draw(const RE::BSShader* shader, const uint32_t descriptor);
+	virtual void Draw(const RE::BSShader* shader, const uint32_t descriptor) override;
 
-	virtual void Load(json& o_json);
-	virtual void Save(json& o_json);
+	virtual std::shared_ptr<FeatureSettings> CreateConfig() override;
+	virtual std::shared_ptr<FeatureSettings> ParseConfig(json& o_json) override;
+	virtual void SaveConfig(json& o_json, std::shared_ptr<FeatureSettings> config) override;
+	virtual void ApplyConfig(std::shared_ptr<FeatureSettings> config) override;
 };

@@ -1,6 +1,8 @@
 #pragma once
 
 #include <nlohmann/json.hpp>
+#include "Configuration/Feature.h"
+
 using json = nlohmann::json;
 
 class State
@@ -11,13 +13,15 @@ public:
 		static State singleton;
 		return &singleton;
 	}
+	
+	std::vector<std::shared_ptr<Configuration::Feature>> Features;
 
 	bool enabledClasses[RE::BSShader::Type::Total - 1];
 
 	RE::BSShader* currentShader = nullptr;
 	uint32_t currentVertexDescriptor = 0;
 	uint32_t currentPixelDescriptor = 0;
-	spdlog::level::level_enum logLevel = spdlog::level::info;
+	spdlog::level::level_enum logLevel = spdlog::level::trace;
 
 	void Draw();
 	void Reset();
@@ -26,6 +30,9 @@ public:
 	void Load();
 	void Save();
 
+	std::shared_ptr<Configuration::Feature> GetFeatureByName(std::string name);
+
+	void ClearComputeShaders();
 	bool ValidateCache(CSimpleIniA& a_ini);
 	void WriteDiskCacheInfo(CSimpleIniA& a_ini);
 

@@ -1,26 +1,47 @@
 #pragma once
 
 #include "Buffer.h"
-#include "Feature.h"
+#include "Configuration/TODValue.h"
+#include "Configuration/Feature.h"
+#include "Configuration/FeatureSettings.h"
 
-struct GrassLighting : Feature
+
+using namespace Configuration;
+
+class GrassLighting : public Feature
 {
-	static GrassLighting* GetSingleton()
+public:
+
+	GrassLighting()
 	{
-		static GrassLighting singleton;
-		return &singleton;
+		_featureName = "Grass Lighting";
 	}
 
-	virtual inline std::string GetName() { return "Grass Lighting"; }
-	virtual inline std::string GetShortName() { return "GrassLighting"; }
-
-	struct Settings
+	struct ShaderSettings
 	{
-		float Glossiness = 20;
-		float SpecularStrength = 0.5;
-		float SubsurfaceScatteringAmount = 0.5;
-		std::uint32_t EnableDirLightFix = 1;
-		std::uint32_t EnablePointLights = 1;
+		float Glossiness;
+		float SpecularStrength;
+		float SubsurfaceScatteringAmount;
+		std::uint32_t EnableDirLightFix;
+		std::uint32_t EnablePointLights;
+	};
+
+	struct ConfigSettings : FeatureSettings
+	{
+		std::optional<TODValue<float>> Glossiness = 20.0f;
+		std::optional<TODValue<float>> SpecularStrength = 0.5f;
+		std::optional<TODValue<float>> SubsurfaceScatteringAmount = 0.5f;
+		bool EnableDirLightFix = true;
+		bool EnablePointLights = true;
+
+		ShaderSettings ToShaderSettings();
+		virtual bool DrawSettings(bool& featureEnabled, bool isConfigOverride) override;
+
+		FEATURE_SETTINGS_OVERRIDES(
+			ConfigSettings,
+			Glossiness,
+			SpecularStrength,
+			SubsurfaceScatteringAmount)
 	};
 
 	struct alignas(16) PerFrame
@@ -28,22 +49,24 @@ struct GrassLighting : Feature
 		DirectX::XMFLOAT4 EyePosition;
 		DirectX::XMFLOAT3X4 DirectionalAmbient;
 		float SunlightScale;
-		Settings Settings;
+		ShaderSettings Settings;
 		float pad0;
 		float pad1;
 	};
 
-	Settings settings;
+	std::shared_ptr<ConfigSettings> configSettings;
 
 	bool updatePerFrame = false;
 	ConstantBuffer* perFrame = nullptr;
-	virtual void SetupResources();
-	virtual void Reset();
 
-	virtual void DrawSettings();
+	virtual void SetupResources() override;
+	virtual void Reset() override;
+
 	void ModifyGrass(const RE::BSShader* shader, const uint32_t descriptor);
-	virtual void Draw(const RE::BSShader* shader, const uint32_t descriptor);
+	virtual void Draw(const RE::BSShader* shader, const uint32_t descriptor) override;
 
-	virtual void Load(json& o_json);
-	virtual void Save(json& o_json);
+	virtual std::shared_ptr<FeatureSettings> CreateConfig() override;
+	virtual std::shared_ptr<FeatureSettings> ParseConfig(json& o_json) override;
+	virtual void SaveConfig(json& o_json, std::shared_ptr<FeatureSettings> config) override;
+	virtual void ApplyConfig(std::shared_ptr<FeatureSettings> config) override;
 };

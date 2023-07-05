@@ -5,6 +5,7 @@
 
 #include "ShaderCache.h"
 #include "State.h"
+#include "Configuration/ConfigurationManager.h"
 
 #include "Feature.h"
 #include "Features/ExtendedMaterials.h"
@@ -94,8 +95,6 @@ void SetupImGuiStyle()
 	style.TabRounding = 0.0f;
 }
 
-bool IsEnabled = false;
-
 Menu::~Menu()
 {
 	ImGui_ImplDX11_Shutdown();
@@ -125,14 +124,17 @@ RE::BSEventNotifyControl Menu::ProcessEvent(RE::InputEvent* const* a_event, RE::
 
 	for (auto event = *a_event; event; event = event->next) {
 		if (event->eventType == RE::INPUT_EVENT_TYPE::kChar) {
+			const auto& charEvent = event->AsCharEvent();
+			ImGui::GetIO().AddInputCharacter(charEvent->keycode);
 		} else if (event->eventType == RE::INPUT_EVENT_TYPE::kButton) {
-			const auto button = static_cast<RE::ButtonEvent*>(event);
-			if (!button || (button->IsPressed() && !button->IsDown()))
+
+			const auto& buttonEvent = event->AsButtonEvent();
+			if (!buttonEvent || (buttonEvent->IsPressed() && !buttonEvent->IsDown()))
 				continue;
 
-			auto scan_code = button->GetIDCode();
+			auto scan_code = buttonEvent->GetIDCode();
 			uint32_t key = MapVirtualKeyEx(scan_code, MAPVK_VSC_TO_VK_EX, GetKeyboardLayout(0));
-
+			
 			switch (scan_code) {
 			case DIK_LEFTARROW:
 				key = VK_LEFT;
@@ -212,6 +214,9 @@ RE::BSEventNotifyControl Menu::ProcessEvent(RE::InputEvent* const* a_event, RE::
 			case DIK_APPS:
 				key = VK_APPS;
 				break;
+			case DIK_BACK:
+				key = VK_BACK;
+				break;
 			default:
 				break;
 			}
@@ -219,8 +224,11 @@ RE::BSEventNotifyControl Menu::ProcessEvent(RE::InputEvent* const* a_event, RE::
 			auto& io = ImGui::GetIO();
 			switch (button->device.get()) {
 			case RE::INPUT_DEVICE::kKeyboard:
-				if (!button->IsPressed()) {
-					if (settingToggleKey) {
+				if (!buttonEvent->IsPressed()) 
+				{
+					logger::trace("Detect keyboard scan code {} value {}", key, buttonEvent->Value());
+					if (settingToggleKey) 
+					{
 						toggleKey = key;
 						settingToggleKey = false;
 					} else if (key == toggleKey) {
@@ -231,16 +239,21 @@ RE::BSEventNotifyControl Menu::ProcessEvent(RE::InputEvent* const* a_event, RE::
 					} else {
 						io.AddKeyEvent(VirtualKeyToImGuiKey(key), button->IsPressed());
 					}
+				} 
+				else 
+				{
+					if (key == VK_BACK || key == VK_DELETE || key == VK_CONTROL || key == VK_TAB || key == VK_RETURN)
+						io.AddKeyEvent(VirtualKeyToImGuiKey(key), buttonEvent->IsPressed());
 				}
 				break;
 			case RE::INPUT_DEVICE::kMouse:
-				logger::trace("Detect mouse scan code {} value {} pressed: {}", scan_code, button->Value(), button->IsPressed());
+				logger::trace("Detect mouse scan code {} value {} pressed: {}", scan_code, buttonEvent->Value(), buttonEvent->IsPressed());
 				if (scan_code > 7)  // middle scroll
-					io.AddMouseWheelEvent(0, button->Value() * (scan_code == 8 ? 1 : -1));
+					io.AddMouseWheelEvent(0, buttonEvent->Value() * (scan_code == 8 ? 1 : -1));
 				else {
 					if (scan_code > 5)
 						scan_code = 5;
-					io.AddMouseButtonEvent(scan_code, button->IsPressed());
+					io.AddMouseButtonEvent(scan_code, buttonEvent->IsPressed());
 				}
 				break;
 			default:
@@ -296,20 +309,20 @@ void Menu::DrawSettings()
 				State::GetSingleton()->Load();
 			}
 
-			ImGui::TableNextColumn();
-			if (ImGui::Button("Clear Shader Cache", { -1, 0 })) {
-				shaderCache.Clear();
-				ScreenSpaceShadows::GetSingleton()->ClearComputeShader();
-			}
-			if (ImGui::IsItemHovered()) {
-				ImGui::BeginTooltip();
-				ImGui::PushTextWrapPos(ImGui::GetFontSize() * 35.0f);
-				ImGui::Text("The Shader Cache is the collection of compiled shaders which replace the vanilla shaders at runtime.");
-				ImGui::Text("Clearing the shader cache will mean that shaders are recompiled only when the game re-encounters them.");
-				ImGui::Text("This is only needed for hot-loading shaders for development purposes.");
-				ImGui::PopTextWrapPos();
-				ImGui::EndTooltip();
-			}
+	ImGui::TableNextColumn();
+	if (ImGui::Button("Clear Shader Cache", { -1, 0 })) {
+		shaderCache.Clear();
+		State::GetSingleton()->ClearComputeShaders();
+	}
+	if (ImGui::IsItemHovered()) {
+		ImGui::BeginTooltip();
+		ImGui::PushTextWrapPos(ImGui::GetFontSize() * 35.0f);
+		ImGui::Text("The Shader Cache is the collection of compiled shaders which replace the vanilla shaders at runtime.");
+		ImGui::Text("Clearing the shader cache will mean that shaders are recompiled only when the game re-encounters them.");
+		ImGui::Text("This is only needed for hot-loading shaders for development purposes.");
+		ImGui::PopTextWrapPos();
+		ImGui::EndTooltip();
+	}
 
 			ImGui::TableNextColumn();
 			if (ImGui::Button("Clear Disk Cache", { -1, 0 })) {
@@ -346,8 +359,10 @@ void Menu::DrawSettings()
 				if (ImGui::Button("Change")) {
 					settingToggleKey = true;
 				}
-			}
+
+			ImGui::Checkbox("Show Weather & Locations Menu", &_showWeatherMenu);
 		}
+	}
 
 		if (ImGui::CollapsingHeader("Advanced", ImGuiTreeNodeFlags_DefaultOpen)) {
 			bool useDump = shaderCache.IsDump();
@@ -467,6 +482,13 @@ void Menu::DrawSettings()
 						selectedFeature = i;
 				ImGui::EndListBox();
 			}
+	if (ImGui::CollapsingHeader("Features", ImGuiTreeNodeFlags_DefaultOpen)) {
+		Configuration::ConfigurationManager::GetSingleton()->DefaultSettings.Draw();
+	}
+
+	if (ImGui::CollapsingHeader("Current", ImGuiTreeNodeFlags_DefaultOpen)) {
+		Configuration::ConfigurationManager::GetSingleton()->CurrentConfig.Draw("Current");
+	}
 
 			ImGui::TableNextColumn();
 			if (ImGui::BeginChild("##FeatureConfigFrame", { 0, 0 }, true)) {
@@ -494,8 +516,129 @@ void Menu::DrawSettings()
 	ImGuiStyle& style = ImGui::GetStyle();
 	style = oldStyle;
 
-	ImGui::Render();
-	ImGui_ImplDX11_RenderDrawData(ImGui::GetDrawData());
+}
+
+void Menu::DrawWeatherPanel()
+{
+	ImGuiStyle oldStyle = ImGui::GetStyle();
+	SetupImGuiStyle();
+
+	ImGui::SetNextWindowSize({ 1024, 1024 }, ImGuiCond_Once);
+	ImGui::Begin("Skyrim Community Shaders Weather & Location Menu", &IsEnabled);
+
+	if (ImGui::CollapsingHeader("Stats", ImGuiTreeNodeFlags_DefaultOpen)) {
+
+		auto& todInfo = Configuration::TODInfo::GetSingleton();
+
+		char time[6] = "-";
+		char sunriseStart[6] = "-";
+		char sunriseEnd[6] = "-";
+		char sunsetStart[6] = "-";
+		char sunsetEnd[6] = "-";
+
+		Helpers::Time::TimeToString(todInfo.Time, time, 6);
+		Helpers::Time::TimeToString(todInfo.SunriseBeginTime, sunriseStart, 6);
+		Helpers::Time::TimeToString(todInfo.SunriseEndTime, sunriseEnd, 6);
+		Helpers::Time::TimeToString(todInfo.SunsetBeginTime, sunsetStart, 6);
+		Helpers::Time::TimeToString(todInfo.SunsetEndTime, sunsetEnd, 6);
+		std::string todTransition = todInfo.GetTimePeriodStr();
+
+		float width = 45.0f;
+		
+		ImGui::SetNextItemWidth(width);
+		ImGui::InputText("Time", time, 6, ImGuiInputTextFlags_ReadOnly);
+
+		ImGui::SameLine();
+		ImGui::Dummy(ImVec2(20.0f, 0.0f));
+		ImGui::SameLine();
+
+		ImGui::SetNextItemWidth(width);
+		ImGui::InputText("-", sunriseStart, 6, ImGuiInputTextFlags_ReadOnly);
+		ImGui::SameLine();
+		ImGui::SetNextItemWidth(width);
+		ImGui::InputText("Sunrise", sunriseEnd, 6, ImGuiInputTextFlags_ReadOnly);
+
+		ImGui::SameLine();
+		ImGui::Dummy(ImVec2(10.0f, 0.0f));
+		ImGui::SameLine();
+
+		ImGui::SetNextItemWidth(width);
+		ImGui::InputText("-", sunsetStart, 6, ImGuiInputTextFlags_ReadOnly);
+		ImGui::SameLine();
+		ImGui::SetNextItemWidth(width);
+		ImGui::InputText("Sunset", sunsetEnd, 6, ImGuiInputTextFlags_ReadOnly);
+
+
+		std::string locIdStr = Helpers::Location::GetWorldSpaceIDString();
+		ImGui::InputText("Location", &locIdStr, ImGuiInputTextFlags_ReadOnly);
+
+		std::string currentWeatherIdStr = Helpers::Weather::GetCurrentWeatherString();
+		ImGui::InputText("Current Weather", &currentWeatherIdStr, ImGuiInputTextFlags_ReadOnly);
+
+		std::string outgoingWeatherIdStr = Helpers::Weather::GetOutgoingWeatherString();
+		ImGui::InputText("Outgoing Weather", const_cast<char*>(outgoingWeatherIdStr.c_str()), outgoingWeatherIdStr.size() + 1, ImGuiInputTextFlags_ReadOnly);
+
+		std::string weatherTransStr = Helpers::Weather::GetWeatherTransitionString();
+		ImGui::InputText("Weather Transition", const_cast<char*>(weatherTransStr.c_str()), weatherTransStr.size() + 1, ImGuiInputTextFlags_ReadOnly);
+	}	
+
+	if (ImGui::CollapsingHeader("Weathers", ImGuiTreeNodeFlags_DefaultOpen)) {
+		
+		const auto& configManager = Configuration::ConfigurationManager::GetSingleton();
+
+		std::string currentWeatherSetting = "-";
+		if (configManager->MatchingCurrentWeatherSettings) {
+			currentWeatherSetting = configManager->MatchingCurrentWeatherSettings->Name;
+		}
+		ImGui::InputText("Current Weather Settings", const_cast<char*>(currentWeatherSetting.c_str()), currentWeatherSetting.size() + 1, ImGuiInputTextFlags_ReadOnly);
+		
+		std::string outgoingWeatherSetting = "-";
+		if (configManager->MatchingOutgoingWeatherSettings) {
+			outgoingWeatherSetting = configManager->MatchingOutgoingWeatherSettings->Name;
+		}
+		ImGui::InputText("Outgoing Weather Settings", const_cast<char*>(outgoingWeatherSetting.c_str()), outgoingWeatherSetting.size() + 1, ImGuiInputTextFlags_ReadOnly);
+
+		ImGui::Spacing();
+		ImGui::Spacing();
+		ImGui::Spacing();
+		ImGui::Spacing();
+		
+		if (ImGui::Button("Add Weather")) {
+			configManager->WeatherSettings.push_back(std::make_shared<Configuration::Weather>());
+			selectedWeatherIndex = (int)configManager->WeatherSettings.size() - 1;
+			logger::trace("Added new weather config");
+		}
+
+		if (ImGui::Button("Remove Weather")) {
+			// TODO: add warning
+			configManager->WeatherSettings.erase(configManager->WeatherSettings.begin() + selectedWeatherIndex);
+			selectedWeatherIndex = -1;
+		}
+
+		// Display the list box of weather items
+		std::vector<const char*> weatherNames;
+		for (const auto& weather : configManager->WeatherSettings) {
+			weatherNames.push_back(weather->Name.c_str());
+		}
+
+		ImGui::ListBox("Weather List", &selectedWeatherIndex, weatherNames.data(), static_cast<int>(weatherNames.size()));
+
+
+		ImGui::Spacing();
+		
+		ImGui::Indent();
+		// Display the selected weather item's settings
+		if (selectedWeatherIndex >= 0 && selectedWeatherIndex < static_cast<int>(configManager->WeatherSettings.size())) {
+			const auto& selectedWeather = configManager->WeatherSettings[selectedWeatherIndex];
+
+			selectedWeather->Draw();
+		}
+		ImGui::Unindent();
+	}
+
+	ImGui::End();
+	ImGuiStyle& style = ImGui::GetStyle();
+	style = oldStyle;
 }
 
 void Menu::DrawOverlay()
@@ -527,10 +670,18 @@ void Menu::DrawOverlay()
 	}
 
 	if (IsEnabled) {
+
 		ImGui::GetIO().MouseDrawCursor = true;
+		ImGui::GetIO().WantCaptureKeyboard = true;
 		DrawSettings();
+
+		if (_showWeatherMenu) {
+			DrawWeatherPanel();
+		}
+
 	} else {
 		ImGui::GetIO().MouseDrawCursor = false;
+		ImGui::GetIO().WantCaptureKeyboard = false;
 	}
 
 	ImGui::Render();
