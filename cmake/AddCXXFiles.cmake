@@ -12,7 +12,7 @@ function(add_cxx_files TARGET)
 		PREFIX "Header Files"
 		FILES ${INCLUDE_FILES})
 
-	target_sources("${TARGET}" PUBLIC ${INCLUDE_FILES} "../src/Configuration/Macros.h")
+	target_sources("${TARGET}" PUBLIC ${INCLUDE_FILES} "../src/Macros.h")
 
 	file(GLOB_RECURSE HEADER_FILES
 		LIST_DIRECTORIES false

@@ -222,7 +222,7 @@ RE::BSEventNotifyControl Menu::ProcessEvent(RE::InputEvent* const* a_event, RE::
 			}
 
 			auto& io = ImGui::GetIO();
-			switch (button->device.get()) {
+			switch (buttonEvent->device.get()) {
 			case RE::INPUT_DEVICE::kKeyboard:
 				if (!buttonEvent->IsPressed()) 
 				{
@@ -237,7 +237,7 @@ RE::BSEventNotifyControl Menu::ProcessEvent(RE::InputEvent* const* a_event, RE::
 							controlMap->GetRuntimeData().ignoreKeyboardMouse = IsEnabled;
 						}
 					} else {
-						io.AddKeyEvent(VirtualKeyToImGuiKey(key), button->IsPressed());
+						io.AddKeyEvent(VirtualKeyToImGuiKey(key), buttonEvent->IsPressed());
 					}
 				} 
 				else 
@@ -468,43 +468,15 @@ void Menu::DrawSettings()
 
 		ImGui::Separator();
 
-		if (ImGui::BeginTable("Feature Table", 2, ImGuiTableFlags_SizingStretchProp | ImGuiTableFlags_Resizable)) {
-			ImGui::TableSetupColumn("##ListOfFeatures", 0, 3);
-			ImGui::TableSetupColumn("##FeatureConfig", 0, 7);
-
-			static size_t selectedFeature = 0;
-			auto& featureList = Feature::GetFeatureList();
-
-			ImGui::TableNextColumn();
-			if (ImGui::BeginListBox("##FeatureList", { -FLT_MIN, -FLT_MIN })) {
-				for (size_t i = 0; i < featureList.size(); i++)
-					if (ImGui::Selectable(featureList[i]->GetName().c_str(), selectedFeature == i))
-						selectedFeature = i;
-				ImGui::EndListBox();
-			}
-	if (ImGui::CollapsingHeader("Features", ImGuiTreeNodeFlags_DefaultOpen)) {
-		Configuration::ConfigurationManager::GetSingleton()->DefaultSettings.Draw();
-	}
-
-	if (ImGui::CollapsingHeader("Current", ImGuiTreeNodeFlags_DefaultOpen)) {
-		Configuration::ConfigurationManager::GetSingleton()->CurrentConfig.Draw("Current");
-	}
-
-			ImGui::TableNextColumn();
-			if (ImGui::BeginChild("##FeatureConfigFrame", { 0, 0 }, true)) {
-				bool shownFeature = false;
-				for (size_t i = 0; i < featureList.size(); i++)
-					if (i == selectedFeature) {
-						shownFeature = true;
-						featureList[i]->DrawSettings();
-					}
-				if (!shownFeature)
-					ImGui::TextDisabled("Please select a feature on the left.");
-			}
-			ImGui::EndChild();
-
-			ImGui::EndTable();
+		if (ImGui::CollapsingHeader("Features", ImGuiTreeNodeFlags_DefaultOpen)) {
+			Configuration::ConfigurationManager::GetSingleton()->DefaultSettings.Draw();
 		}
+
+		if (ImGui::CollapsingHeader("Current", ImGuiTreeNodeFlags_DefaultOpen)) {
+			Configuration::ConfigurationManager::GetSingleton()->CurrentConfig.Draw("Current");
+		}
+
+		
 		// if (ImGui::BeginTabBar("Features", ImGuiTabBarFlags_None)) {
 		// 	for (auto* feature : Feature::GetFeatureList())
 		// 		feature->DrawSettings();

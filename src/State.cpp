@@ -6,10 +6,16 @@
 
 #include "ShaderCache.h"
 #include "Menu.h"
-#include "ShaderCache.h"
 
-#include "Configuration/Feature.h"
+#include "Feature.h"
 #include "Features/Clustered.h"
+
+#include "Features/DistantTreeLighting.h"
+#include "Features/GrassCollision.h"
+#include "Features/GrassLighting.h"
+#include "Features/ScreenSpaceShadows.h"
+#include "Features/WaterBlending.h"
+#include "Features/ExtendedMaterials.h"
 
  void State::Draw()
 {
@@ -30,7 +36,7 @@
 					context->PSSetShader(pixelShader->shader, NULL, NULL);
 				}
 
-				for (auto& feature : Features) {
+				for (auto& feature : Feature::GetFeatureList()) {
 					feature->Draw(currentShader, currentPixelDescriptor);
 				}
 			}
@@ -44,14 +50,14 @@ void State::Reset()
 {
 	Clustered::GetSingleton()->Reset();
 
-	for (auto& feature : Features) {
+	for (auto& feature : Feature::GetFeatureList()) {
 		feature->Reset();
 	}
 }
 
 void State::Setup()
 {
-	for (auto& feature : Features) {
+	for (auto& feature : Feature::GetFeatureList()) {
 		feature->SetupResources();
 	}
 }
@@ -112,14 +118,7 @@ void State::Load()
 		}
 	}
 
-	
-	Features.clear(); // TODO: Needed because load seems to be called twice on startup
-	Features.push_back(std::static_pointer_cast<Feature>(std::make_shared<DistantTreeLighting>()));
-	Features.push_back(std::static_pointer_cast<Feature>(std::make_shared<GrassCollision>()));
-	Features.push_back(std::static_pointer_cast<Feature>(std::make_shared<GrassLighting>()));
-	Features.push_back(std::static_pointer_cast<Feature>(std::make_shared<ScreenSpaceShadows>()));
-
-	for (auto& feature : Features) {
+	for (auto& feature : Feature::GetFeatureList()) {
 		feature->Init();
 		feature->LoadAndApplyConfig(settings);
 	}
@@ -160,18 +159,9 @@ void State::Save()
 	o << settings.dump(1);
 }
 
-std::shared_ptr<Configuration::Feature> State::GetFeatureByName(std::string name)
-{
-	for (const auto& feature : Features) {
-		if (feature->GetName() == name)
-			return feature;
-	}
-	return nullptr;
-}
-
 void State::ClearComputeShaders()
 {
-	for (auto& feature : Features) {
+	for (auto& feature : Feature::GetFeatureList()) {
 		feature->ClearComputeShader();
 	}
 }
@@ -179,7 +169,7 @@ void State::ClearComputeShaders()
 bool State::ValidateCache(CSimpleIniA& a_ini)
 {
 	bool valid = false;
-	for (auto& feature : Features) {
+	for (auto& feature : Feature::GetFeatureList()) {
 		valid = valid && feature->ValidateCache(a_ini);
 	}
 
@@ -188,7 +178,7 @@ bool State::ValidateCache(CSimpleIniA& a_ini)
 
 void State::WriteDiskCacheInfo(CSimpleIniA& a_ini)
 {
-	for (auto& feature : Features) {
+	for (auto& feature : Feature::GetFeatureList()) {
 		feature->WriteDiskCacheInfo(a_ini);
 	}
 }

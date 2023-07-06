@@ -1,7 +1,7 @@
 #pragma once
 
 #include <nlohmann/json.hpp>
-#include "Configuration/Feature.h"
+#include "Feature.h"
 
 using json = nlohmann::json;
 
@@ -13,8 +13,6 @@ public:
 		static State singleton;
 		return &singleton;
 	}
-	
-	std::vector<std::shared_ptr<Configuration::Feature>> Features;
 
 	bool enabledClasses[RE::BSShader::Type::Total - 1];
 
@@ -29,8 +27,6 @@ public:
 
 	void Load();
 	void Save();
-
-	std::shared_ptr<Configuration::Feature> GetFeatureByName(std::string name);
 
 	void ClearComputeShaders();
 	bool ValidateCache(CSimpleIniA& a_ini);

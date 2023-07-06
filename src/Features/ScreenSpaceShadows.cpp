@@ -458,6 +458,21 @@ void ScreenSpaceShadows::Draw(const RE::BSShader* shader, const uint32_t descrip
 	}
 }
 
+std::vector<std::string> ScreenSpaceShadows::GetAdditionalRequiredShaderDefines(RE::BSShader::Type shaderType)
+{
+	std::vector<std::string> defines;
+
+	switch (shaderType) {
+	case RE::BSShader::Type::Grass:
+	case RE::BSShader::Type::Lighting:
+	case RE::BSShader::Type::DistantTree:
+		defines.push_back("SCREEN_SPACE_SHADOWS");
+		break;
+	}
+
+	return defines;
+}
+
 void ScreenSpaceShadows::SetupResources()
 {
 	perPass = new ConstantBuffer(ConstantBufferDesc<PerPass>());

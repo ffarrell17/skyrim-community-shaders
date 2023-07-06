@@ -1,9 +1,6 @@
 #pragma once
 #include "PCH.h"
-#include "Features/DistantTreeLighting.h"
-#include "Features/GrassCollision.h"
-#include "Features/GrassLighting.h"
-#include "Features/ScreenSpaceShadows.h"
+#include "FeatureSettings.h"
 
 namespace Configuration
 {

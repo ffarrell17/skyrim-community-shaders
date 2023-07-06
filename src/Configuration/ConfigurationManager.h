@@ -8,6 +8,7 @@
 #include "Helpers/Location.h"
 #include "Helpers/Weather.h"
 #include "Helpers/Math.h"
+#include "FeatureSettings.h"
 
 namespace Configuration
 {

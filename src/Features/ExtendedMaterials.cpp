@@ -1,7 +1,7 @@
 #include "ExtendedMaterials.h"
 
 NLOHMANN_DEFINE_TYPE_NON_INTRUSIVE_WITH_DEFAULT(
-	ExtendedMaterials::Settings,
+	ExtendedMaterials::ConfigSettings,
 	EnableParallax,
 	EnableTerrain,
 	EnableComplexMaterial,
@@ -14,64 +14,96 @@ NLOHMANN_DEFINE_TYPE_NON_INTRUSIVE_WITH_DEFAULT(
 	ShadowsStartFade,
 	ShadowsEndFade)
 
-void ExtendedMaterials::DrawSettings()
+bool ExtendedMaterials::ConfigSettings::DrawSettings(bool& featureEnabled, bool isConfigOverride)
 {
-	if (ImGui::TreeNodeEx("Complex Material", ImGuiTreeNodeFlags_DefaultOpen)) {
+	bool updated = false;
+
+	featureEnabled = featureEnabled; //to hide warning
+
+	if (!isConfigOverride && ImGui::TreeNodeEx("Complex Material", ImGuiTreeNodeFlags_DefaultOpen)) {
 		ImGui::TextWrapped(
 			"Enables support for the Complex Material specification which makes use of the environment mask.\n"
 			"This includes parallax, as well as more realistic metals and specular reflections.\n"
 			"May lead to some warped textures on modded content which have an invalid alpha channel in their environment mask.");
-		ImGui::Checkbox("Enable Complex Material", (bool*)&settings.EnableComplexMaterial);
+		updated = updated || ImGui::Checkbox("Enable Complex Material", (bool*)&EnableComplexMaterial);
 
 		ImGui::TreePop();
 	}
 
 	if (ImGui::TreeNodeEx("Contact Refinement Parallax Mapping", ImGuiTreeNodeFlags_DefaultOpen)) {
-		ImGui::TextWrapped("Enables parallax on standard meshes made for parallax.");
-		ImGui::Checkbox("Enable Parallax", (bool*)&settings.EnableParallax);
+		
+		if (!isConfigOverride) {
+			ImGui::TextWrapped("Enables parallax on standard meshes made for parallax.");
+			updated = updated || ImGui::Checkbox("Enable Parallax", (bool*)&EnableParallax);
 
-		ImGui::TextWrapped(
-			"Enables terrain parallax using the alpha channel of each landscape texture.\n"
-			"Therefore, all landscape textures must support parallax for this effect to work properly.");
-		ImGui::Checkbox("Enable Terrain", (bool*)&settings.EnableTerrain);
+			ImGui::TextWrapped(
+				"Enables terrain parallax using the alpha channel of each landscape texture.\n"
+				"Therefore, all landscape textures must support parallax for this effect to work properly.");
+			updated = updated || ImGui::Checkbox("Enable Terrain", (bool*)&EnableTerrain);
 
-		ImGui::TextWrapped(
-			"Doubles the sample count and approximates the intersection point using Parallax Occlusion Mapping.\n"
-			"Significantly improves the quality and removes aliasing.\n"
-			"TAA or the Skyrim Upscaler is recommended when using this option due to CRPM artifacts.");
-		ImGui::Checkbox("Enable High Quality", (bool*)&settings.EnableHighQuality);
+			ImGui::TextWrapped(
+				"Doubles the sample count and approximates the intersection point using Parallax Occlusion Mapping.\n"
+				"Significantly improves the quality and removes aliasing.\n"
+				"TAA or the Skyrim Upscaler is recommended when using this option due to CRPM artifacts.");
+			updated = updated || ImGui::Checkbox("Enable High Quality", (bool*)&EnableHighQuality);
+		}
 
 		ImGui::TextWrapped("The furthest distance from the camera which uses parallax.");
-		ImGui::SliderInt("Max Distance", (int*)&settings.MaxDistance, 0, 4096);
+		updated = updated || MaxDistance->DrawSliderScalar("Max Distance", ImGuiDataType_U32, 0, 4096);
 
 		ImGui::TextWrapped("The percentage of the max distance which uses CRPM.");
-		ImGui::SliderFloat("CRPM Range", &settings.CRPMRange, 0.0f, 1.0f);
+		updated = updated || CRPMRange->DrawSliderScalar("CRPM Range", ImGuiDataType_Float, 0.0f, 1.0f);
 
 		ImGui::TextWrapped(
 			"The range that parallax blends from POM to bump mapping, and bump mapping to nothing.\n"
 			"This value should be set as low as possible due to the performance impact of blending POM and relief mapping.");
-		ImGui::SliderFloat("Blend Range", &settings.BlendRange, 0.0f, settings.CRPMRange);
+		updated = updated || BlendRange->DrawSliderScalar("Blend Range", ImGuiDataType_Float, 0.0f, CRPMRange.value());
 
 		ImGui::TextWrapped("The range between the highest and lowest point a surface can be offset by.");
-		ImGui::SliderFloat("Height", &settings.Height, 0, 0.2f);
+		updated = updated || Height->DrawSliderScalar("Height", ImGuiDataType_Float, 0, 0.2f);
 
 		ImGui::TreePop();
 	}
 
 	if (ImGui::TreeNodeEx("Approximate Soft Shadows", ImGuiTreeNodeFlags_DefaultOpen)) {
-		ImGui::TextWrapped(
-			"Enables cheap soft shadows when using parallax.\n"
-			"This applies to all directional and point lights.");
-		ImGui::Checkbox("Enable Shadows", (bool*)&settings.EnableShadows);
+		
+		
+		if (!isConfigOverride) {
+			ImGui::TextWrapped(
+				"Enables cheap soft shadows when using parallax.\n"
+				"This applies to all directional and point lights.");
+			ImGui::Checkbox("Enable Shadows", (bool*)&EnableShadows);
+		}
 
 		ImGui::TextWrapped("Modifying the start and end fade can improve performance and hide obvious texture tiling.");
-		ImGui::SliderInt("Shadows Start Fade", (int*)&settings.ShadowsStartFade, 0, settings.ShadowsEndFade);
-		ImGui::SliderInt("Shadows End Fade", (int*)&settings.ShadowsEndFade, settings.ShadowsStartFade, 4096);
+		updated = updated || ShadowsStartFade->DrawSliderScalar("Max Distance", ImGuiDataType_U32, 0, ShadowsEndFade.value());
+		updated = updated || ShadowsEndFade->DrawSliderScalar("Max Distance", ImGuiDataType_U32, ShadowsStartFade.value(), 4096);
 
 		ImGui::TreePop();
 	}
 
-	ImGui::EndTabItem();
+	return updated;
+}
+
+ExtendedMaterials::ShaderSettings ExtendedMaterials::ConfigSettings::ToShaderSettings()
+{
+	ShaderSettings settings;
+
+	settings.EnableComplexMaterial = EnableComplexMaterial;
+
+	settings.EnableParallax = EnableParallax;
+	settings.EnableTerrain = EnableTerrain;
+	settings.EnableHighQuality = EnableHighQuality;
+
+	settings.MaxDistance = MaxDistance->Get();
+	settings.CRPMRange = CRPMRange->Get();
+	settings.BlendRange = BlendRange->Get();
+	settings.Height = Height->Get();
+
+	settings.EnableShadows = EnableShadows;
+	settings.ShadowsStartFade = ShadowsStartFade->Get();
+	settings.ShadowsEndFade = ShadowsEndFade->Get();
+	return settings;
 }
 
 void ExtendedMaterials::ModifyLighting(const RE::BSShader*, const uint32_t)
@@ -81,7 +113,7 @@ void ExtendedMaterials::ModifyLighting(const RE::BSShader*, const uint32_t)
 	{
 		PerPass data{};
 		data.CullingMode = RE::BSGraphics::RendererShadowState::GetSingleton()->GetRuntimeData().rasterStateCullMode;
-		data.settings = settings;
+		data.settings = configSettings->ToShaderSettings();
 
 		D3D11_MAPPED_SUBRESOURCE mapped;
 		DX::ThrowIfFailed(context->Map(perPass->resource.get(), 0, D3D11_MAP_WRITE_DISCARD, 0, &mapped));
@@ -140,15 +172,40 @@ void ExtendedMaterials::SetupResources()
 	DX::ThrowIfFailed(device->CreateSamplerState(&samplerDesc, &terrainSampler));
 }
 
-void ExtendedMaterials::Load(json& o_json)
+std::vector<std::string> ExtendedMaterials::GetAdditionalRequiredShaderDefines(RE::BSShader::Type shaderType)
 {
-	if (o_json[GetName()].is_object())
-		settings = o_json[GetName()];
+	std::vector<std::string> defines;
 
-	Feature::Load(o_json);
+	switch (shaderType) {
+	case RE::BSShader::Type::Lighting:
+		defines.push_back("COMPLEX_PARALLAX_MATERIALS");
+		break;
+	}
+
+	return defines;
 }
 
-void ExtendedMaterials::Save(json& o_json)
+std::shared_ptr<FeatureSettings> ExtendedMaterials::CreateConfig()
 {
-	o_json[GetName()] = settings;
+	return std::make_shared<ExtendedMaterials::ConfigSettings>();
+}
+
+std::shared_ptr<FeatureSettings> ExtendedMaterials::ParseConfig(json& o_json)
+{
+	auto emConfig = std::dynamic_pointer_cast<ExtendedMaterials::ConfigSettings>(CreateConfig());
+	*emConfig = o_json;
+	return emConfig;
+}
+
+void ExtendedMaterials::SaveConfig(json& o_json, std::shared_ptr<FeatureSettings> config)
+{
+	auto emConfig = std::dynamic_pointer_cast<ExtendedMaterials::ConfigSettings>(config);
+	if (emConfig) {
+		o_json = *emConfig;
+	}
+}
+
+void ExtendedMaterials::ApplyConfig(std::shared_ptr<FeatureSettings> config)
+{
+	configSettings = std::dynamic_pointer_cast<ExtendedMaterials::ConfigSettings>(config);
 }

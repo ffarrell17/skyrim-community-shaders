@@ -2,46 +2,70 @@
 
 #include "Buffer.h"
 #include "Feature.h"
+#include "Configuration/TODValue.h"
+
+using namespace Configuration;
 
 struct WaterBlending : Feature
 {
 public:
+
 	static WaterBlending* GetSingleton()
 	{
 		static WaterBlending singleton;
 		return &singleton;
 	}
 
-	virtual inline std::string GetName() { return "Water Blending"; }
-	virtual inline std::string GetShortName() { return "WaterBlending"; }
-
-	struct Settings
+	virtual std::string GetName() override
 	{
-		uint32_t EnableWaterBlending = 1;
-		uint32_t EnableWaterBlendingSSR = 1;
-		float WaterBlendRange = 1;
-		float SSRBlendRange = 1;
+		return "Water Blending";
+	}
+
+	struct ShaderSettings
+	{
+		uint32_t EnableWaterBlending;
+		uint32_t EnableWaterBlendingSSR;
+		float WaterBlendRange;
+		float SSRBlendRange;
 	};
+
+	struct ConfigSettings : FeatureSettings
+	{
+		bool EnableWaterBlending = 1;
+		bool EnableWaterBlendingSSR = 1;
+		std::optional<TODValue<float>> WaterBlendRange = 1;
+		std::optional<TODValue<float>> SSRBlendRange = 1;
+
+		ShaderSettings ToShaderSettings();
+		virtual bool DrawSettings(bool& featureEnabled, bool isConfigOverride) override;
+
+		FEATURE_SETTINGS_OVERRIDES(
+			ConfigSettings,
+			WaterBlendRange,
+			SSRBlendRange)
+	};	
 
 	struct alignas(16) PerPass
 	{
 		float waterHeight;
-		Settings settings;
+		ShaderSettings settings;
 		float pad[3];
 	};
 
-	Settings settings;
+	std::shared_ptr<ConfigSettings> configSettings;
 
 	std::unique_ptr<Buffer> perPass = nullptr;
 
 	
 	virtual void SetupResources();
-	virtual inline void Reset() {}
 
-	virtual void DrawSettings();
+	virtual void Draw(const RE::BSShader* shader, const uint32_t descriptor) override;
 
-	virtual void Draw(const RE::BSShader* shader, const uint32_t descriptor);
-	
-	virtual void Load(json& o_json);
-	virtual void Save(json& o_json);
+	std::vector<std::string> GetAdditionalRequiredShaderDefines(RE::BSShader::Type shaderType);
+
+	virtual std::shared_ptr<FeatureSettings> CreateConfig() override;
+	virtual std::shared_ptr<FeatureSettings> ParseConfig(json& o_json) override;
+	virtual void SaveConfig(json& o_json, std::shared_ptr<FeatureSettings> config) override;
+	virtual void ApplyConfig(std::shared_ptr<FeatureSettings> config) override;
 };
+

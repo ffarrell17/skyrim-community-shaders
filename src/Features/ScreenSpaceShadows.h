@@ -1,9 +1,8 @@
 #pragma once
 
 #include "Buffer.h"
+#include "Feature.h"
 #include "Configuration/TODValue.h"
-#include "Configuration/Feature.h"
-#include "Configuration/FeatureSettings.h"
 
 using namespace Configuration;
 
@@ -11,9 +10,15 @@ class ScreenSpaceShadows : public Feature
 {
 public:
 
-	ScreenSpaceShadows()
+	static ScreenSpaceShadows* GetSingleton()
 	{
-		_featureName = "Screen-Space Shadows";
+		static ScreenSpaceShadows singleton;
+		return &singleton;
+	}
+
+	virtual std::string GetName() override
+	{
+		return "Screen-Space Shadows";
 	}
 
 	struct ShaderSettings
@@ -107,6 +112,8 @@ public:
 
 	void ModifyLighting(const RE::BSShader* shader, const uint32_t descriptor);
 	virtual void Draw(const RE::BSShader* shader, const uint32_t descriptor) override;
+
+	std::vector<std::string> GetAdditionalRequiredShaderDefines(RE::BSShader::Type shaderType);
 
 	virtual std::shared_ptr<FeatureSettings> CreateConfig() override;
 	virtual std::shared_ptr<FeatureSettings> ParseConfig(json& o_json) override;

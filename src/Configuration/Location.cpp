@@ -1,5 +1,6 @@
 #include "Location.h"
 
+using namespace Configuration;
 
 Location::Location(json& json)
 {

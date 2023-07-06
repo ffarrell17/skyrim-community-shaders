@@ -43,6 +43,19 @@ namespace SIE
 			return 0x3F & (descriptor >> 24);
 		}
 
+		std::set<std::string> GetAdditionalRequiredFeatureDefines(RE::BSShader::Type shaderType)
+		{
+			std::set<std::string> additionalDefines;
+			for (const auto& feature : Feature::GetFeatureList()) {
+				if (feature->IsEnabled()) {
+					for (const auto featureDefine : feature->GetAdditionalRequiredShaderDefines(shaderType)) {
+						additionalDefines.insert(featureDefine);
+					}
+				}
+			}
+			return additionalDefines;
+		}
+
 		enum class LightingShaderTechniques
 		{
 			None = 0,
@@ -105,16 +118,8 @@ namespace SIE
 				++defines;
 			}
 
-			// TODO: Update to add generically
-			const auto& screenSpaceShadows = State::GetSingleton()->GetFeatureByName("Screen-Space Shadows");
-			if (screenSpaceShadows && screenSpaceShadows->IsEnabled())
-			{
-				defines[0] = { "SCREEN_SPACE_SHADOWS", nullptr };
-				++defines;
-			}
-
-			if (ExtendedMaterials::GetSingleton()->loaded) {
-				defines[0] = { "COMPLEX_PARALLAX_MATERIALS", nullptr };
+			for (const auto& define : GetAdditionalRequiredFeatureDefines(RE::BSShader::Type::Lighting)) {
+				defines[0] = { define.c_str(), nullptr };
 				++defines;
 			}
 
@@ -136,6 +141,12 @@ namespace SIE
 				defines[0] = { "FLARE", nullptr };
 				++defines;
 			}
+
+			for (const auto& define : GetAdditionalRequiredFeatureDefines(RE::BSShader::Type::Lighting)) {
+				defines[0] = { define.c_str(), nullptr };
+				++defines;
+			}
+
 			defines[0] = { nullptr, nullptr };
 		}
 
@@ -162,11 +173,8 @@ namespace SIE
 				++defines;
 			}
 
-			// TODO: Update to add generically
-			const auto& screenSpaceShadows = State::GetSingleton()->GetFeatureByName("Screen-Space Shadows");
-			if (screenSpaceShadows && screenSpaceShadows->IsEnabled())
-			{
-				defines[0] = { "SCREEN_SPACE_SHADOWS", nullptr };
+			for (const auto& define : GetAdditionalRequiredFeatureDefines(RE::BSShader::Type::Lighting)) {
+				defines[0] = { define.c_str(), nullptr };
 				++defines;
 			}
 
@@ -253,6 +261,11 @@ namespace SIE
 				}
 			}
 
+			for (const auto& define : GetAdditionalRequiredFeatureDefines(RE::BSShader::Type::Lighting)) {
+				defines[0] = { define.c_str(), nullptr };
+				++defines;
+			}
+
 			defines[0] = { nullptr, nullptr };
 		}
 
@@ -278,19 +291,8 @@ namespace SIE
 				++defines;
 			}
 
-			// TODO: Update to add generically
-			const auto& grassCollision = State::GetSingleton()->GetFeatureByName("Grass Collision");
-			if (grassCollision && grassCollision->IsEnabled())
-			{
-				defines[0] = { "GRASS_COLLISION", nullptr };		
-				++defines;
-			}
-
-			// TODO: Update to add generically
-			const auto& screenSpaceShadows = State::GetSingleton()->GetFeatureByName("Screen-Space Shadows");
-			if (screenSpaceShadows && screenSpaceShadows->IsEnabled())
-			{
-				defines[0] = { "SCREEN_SPACE_SHADOWS", nullptr };
+			for (const auto& define : GetAdditionalRequiredFeatureDefines(RE::BSShader::Type::Lighting)) {
+				defines[0] = { define.c_str(), nullptr };
 				++defines;
 			}
 
@@ -344,6 +346,11 @@ namespace SIE
 					defines += 2;
 					break;
 				}
+			}
+
+			for (const auto& define : GetAdditionalRequiredFeatureDefines(RE::BSShader::Type::Lighting)) {
+				defines[0] = { define.c_str(), nullptr };
+				++defines;
 			}
 
 			defines[0] = { nullptr, nullptr };
@@ -486,6 +493,11 @@ namespace SIE
 				++defines;
 			}
 
+			for (const auto& define : GetAdditionalRequiredFeatureDefines(RE::BSShader::Type::Lighting)) {
+				defines[0] = { define.c_str(), nullptr };
+				++defines;
+			}
+
 			defines[0] = { nullptr, nullptr };
 		}
 
@@ -584,8 +596,8 @@ namespace SIE
 				defines += 2;
 			}
 
-			if (WaterBlending::GetSingleton()->loaded) {
-				defines[0] = { "WATER_BLENDING", nullptr };
+			for (const auto& define : GetAdditionalRequiredFeatureDefines(RE::BSShader::Type::Lighting)) {
+				defines[0] = { define.c_str(), nullptr };
 				++defines;
 			}
 

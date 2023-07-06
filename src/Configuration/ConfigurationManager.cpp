@@ -1,6 +1,8 @@
 #include "ConfigurationManager.h"
 #include "State.h"
 
+using namespace Configuration;
+
 void ConfigurationManager::Load(json& o_json)
 {
 	DefaultSettings.Load(o_json, true);
@@ -93,10 +95,10 @@ void ConfigurationManager::Update()
 			}
 		}
 
-		logger::trace("Detected relevant settings change");	
-
 		if (!updated)
 			return;
+
+		logger::trace("Detected relevant settings change");	
 	}
 
 	logger::trace("Updating Current Configs");
@@ -183,7 +185,7 @@ void ConfigurationManager::OverrideConfig(ShaderSettings& targetSettings, Shader
 			continue;
 
 		if (targetSettings.FeatureSettings[i] == nullptr)
-			targetSettings.FeatureSettings[i] = State::GetSingleton()->Features[i]->CreateConfig();
+			targetSettings.FeatureSettings[i] = Feature::GetFeatureList()[i]->CreateConfig();
 
 		targetSettings.FeatureSettings[i]->Override(newSettings.FeatureSettings[i]);
 	}
@@ -191,10 +193,8 @@ void ConfigurationManager::OverrideConfig(ShaderSettings& targetSettings, Shader
 
 void ConfigurationManager::ApplyCurrentConfig()
 {
-	const auto& state = State::GetSingleton();
-
 	for (int i = 0; i < CurrentConfig.FeatureSettings.size(); i++) {
-		state->Features[i]->ApplyConfig(CurrentConfig.FeatureSettings[i]);
+		Feature::GetFeatureList()[i]->ApplyConfig(CurrentConfig.FeatureSettings[i]);
 	}
 }
 

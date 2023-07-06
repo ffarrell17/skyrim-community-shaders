@@ -7,48 +7,76 @@
 #include "Features/ExtendedMaterials.h"
 #include "Features/WaterBlending.h"
 
-void Feature::Load(json&)
+std::string Feature::GetNameNoSpaces()
 {
-	// convert string to wstring
-	auto ini_filename = std::format("{}.ini", GetShortName());
-	std::wstring ini_filename_w;
-	std::ranges::copy(ini_filename, std::back_inserter(ini_filename_w));
-	auto ini_path = L"Data\\Shaders\\Features\\" + ini_filename_w;
+	return RemoveSpaces(GetName());
+}
+
+std::string Feature::GetVersion()
+{
+	return _featureVersion;
+}
+
+bool Feature::IsEnabled()
+{
+	return _enabled;
+}
+
+void Feature::Enable(bool enable)
+{
+	_enabled = enable;
+}
+
+bool Feature::IsLoaded()
+{
+	return _loaded;
+}
+
+std::string Feature::GetIniPath()
+{
+	return "Data\\Shaders\\Features\\" + GetNameNoSpaces() + ".ini";
+}
+
+void Feature::Init()
+{
+	std::string iniPath = GetIniPath();
 
 	CSimpleIniA ini;
 	ini.SetUnicode();
-	ini.LoadFile(ini_path.c_str());
+	ini.LoadFile(iniPath.c_str());
 	if (auto value = ini.GetValue("Info", "Version")) {
-		loaded = true;
-		version = value;
-		logger::info("{} successfully loaded", ini_filename);
+		_loaded = true;
+		_featureVersion = value;
+		logger::info("{} successfully loaded", iniPath.c_str());
 	} else {
-		loaded = false;
-		logger::warn("{} not successfully loaded", ini_filename);
+		_loaded = false;
+		logger::warn("{} not successfully loaded", iniPath.c_str());
 	}
+}
+
+std::vector<std::string> Feature::GetAdditionalRequiredShaderDefines(RE::BSShader::Type shaderType)
+{
+	return std::vector<std::string>();
 }
 
 bool Feature::ValidateCache(CSimpleIniA& a_ini)
 {
-	auto name = GetName();
-	auto ini_name = GetShortName();
+	logger::info("Validating {}", GetName());
 
-	logger::info("Validating {}", name);
-
-	auto enabledInCache = a_ini.GetBoolValue(ini_name.c_str(), "Enabled", false);
-	if (enabledInCache && !loaded) {
+	auto enabledInCache = a_ini.GetBoolValue(GetName().c_str(), "Enabled", false);
+	if (enabledInCache && !_loaded) {
 		logger::info("Feature was uninstalled");
 		return false;
 	}
-	if (!enabledInCache && loaded) {
+	if (!enabledInCache && _loaded) {
 		logger::info("Feature was installed");
 		return false;
 	}
 
-	if (loaded) {
-		auto versionInCache = a_ini.GetValue(ini_name.c_str(), "Version");
-		if (strcmp(versionInCache, version.c_str()) != 0) {
-			logger::info("Change in version detected. Installed {} but {} in Disk Cache", version, versionInCache);
+	if (_enabled) {
+		auto versionInCache = a_ini.GetValue(GetName().c_str(), "Version");
+		if (strcmp(versionInCache, _featureVersion.c_str()) != 0) {
+			logger::info("Change in version detected. Installed {} but {} in Disk Cache", _featureVersion, versionInCache);
 			return false;
 		} else {
 			logger::info("Installed version and cached version match.");
@@ -61,9 +89,30 @@ bool Feature::ValidateCache(CSimpleIniA& a_ini)
 
 void Feature::WriteDiskCacheInfo(CSimpleIniA& a_ini)
 {
-	auto ini_name = GetShortName();
-	a_ini.SetBoolValue(ini_name.c_str(), "Enabled", loaded);
-	a_ini.SetValue(ini_name.c_str(), "Version", version.c_str());
+	a_ini.SetBoolValue(GetName().c_str(), "Enabled", _loaded);
+	a_ini.SetValue(GetName().c_str(), "Version", _featureVersion.c_str());
+}
+
+std::shared_ptr<FeatureSettings> Feature::LoadAndApplyConfig(json& o_json)
+{
+	auto config = ParseConfig(o_json);
+	if (config)
+		ApplyConfig(config);
+	return config;
+}
+
+std::shared_ptr<FeatureSettings> Feature::CopyConfig(std::shared_ptr<FeatureSettings> settings)
+{
+	json defaultJson;
+	SaveConfig(defaultJson, settings);
+	return ParseConfig(defaultJson);
+}
+
+std::string Feature::RemoveSpaces(const std::string& str)
+{
+	std::string result = str;
+	result.erase(std::remove_if(result.begin(), result.end(), [](unsigned char c) { return std::isspace(c); }), result.end());
+	return result;
 }
 
 const std::vector<Feature*>& Feature::GetFeatureList()

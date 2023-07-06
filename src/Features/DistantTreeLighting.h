@@ -1,20 +1,24 @@
 #pragma once
 
 #include "Buffer.h"
+#include "Feature.h"
 #include "Configuration/TODValue.h"
-#include "Configuration/Feature.h"
-#include "Configuration/FeatureSettings.h"
-
 
 using namespace Configuration;
 
 class DistantTreeLighting : public Feature
 {
 public:
-
-	DistantTreeLighting()
+	
+	static DistantTreeLighting* GetSingleton()
 	{
-		_featureName = "Tree LOD Lighting";
+		static DistantTreeLighting singleton;
+		return &singleton;
+	}
+
+	virtual std::string GetName() override
+	{
+		return "Tree LOD Lighting";
 	}
 
 	struct ShaderSettings

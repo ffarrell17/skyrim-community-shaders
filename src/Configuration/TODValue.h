@@ -33,6 +33,12 @@ namespace Configuration
 			SetAll(static_cast<T>(defaultVal));
 		}
 
+		template <typename U = T>  // Only if T != int
+		TODValue(typename std::enable_if<!std::is_same<U, int>::value, int>::type defaultVal)
+		{
+			SetAll(static_cast<T>(defaultVal));
+		}
+
 		~TODValue()
 		{ }
 
@@ -188,6 +194,21 @@ namespace Configuration
 
 		bool DrawSliderScalar(std::string label, ImGuiDataType_ drawType, T min, T max, const char* format = NULL)
 		{
+			return DrawSliderScalar(label, drawType, TODValue<T>(min), TODValue<T>(max), format);
+		}
+
+		bool DrawSliderScalar(std::string label, ImGuiDataType_ drawType, TODValue<T> min, T max, const char* format = NULL)
+		{
+			return DrawSliderScalar(label, drawType, min, TODValue<T>(max), format);
+		}
+
+		bool DrawSliderScalar(std::string label, ImGuiDataType_ drawType, T min, TODValue<T> max, const char* format = NULL)
+		{
+			return DrawSliderScalar(label, drawType, TODValue<T>(min), max, format);
+		}
+		// Allowing other TODValues to mark the range per TOD
+		bool DrawSliderScalar(std::string label, ImGuiDataType_ drawType, TODValue<T> min, TODValue<T> max, const char* format = NULL)
+		{
 			Helpers::UI::CustomCheckbox("TOD Value", &_drawAllVals);
 
 			bool updated = false;
@@ -201,14 +222,14 @@ namespace Configuration
 				std::string str = std::to_string(Get());
 				ImGui::InputText("Current Value", const_cast<char*>(str.c_str()), str.size() + 1, ImGuiInputTextFlags_ReadOnly);
 
-				updated = updated || ImGui::SliderScalar((label + " Dawn").c_str(), drawType, static_cast<void*>(&Dawn), &min, &max, format);
-				updated = updated || ImGui::SliderScalar((label + " Sunrise").c_str(), drawType, static_cast<void*>(&Sunrise), &min, &max, format);
-				updated = updated || ImGui::SliderScalar((label + " Day").c_str(), drawType, static_cast<void*>(&Day), &min, &max, format);
-				updated = updated || ImGui::SliderScalar((label + " Sunset").c_str(), drawType, static_cast<void*>(&Sunset), &min, &max, format);
-				updated = updated || ImGui::SliderScalar((label + " Dusk").c_str(), drawType, static_cast<void*>(&Dusk), &min, &max, format);
-				updated = updated || ImGui::SliderScalar((label + " Night").c_str(), drawType, static_cast<void*>(&Night), &min, &max, format);
-				updated = updated || ImGui::SliderScalar((label + " InteriorDay").c_str(), drawType, static_cast<void*>(&InteriorDay), &min, &max, format);
-				updated = updated || ImGui::SliderScalar((label + " InteriorNight").c_str(), drawType, static_cast<void*>(&InteriorNight), &min, &max, format);
+				updated = updated || ImGui::SliderScalar((label + " Dawn").c_str(), drawType, static_cast<void*>(&Dawn), &min.Dawn, &max.Dawn, format);
+				updated = updated || ImGui::SliderScalar((label + " Sunrise").c_str(), drawType, static_cast<void*>(&Sunrise), &min.Sunrise, &max.Sunrise, format);
+				updated = updated || ImGui::SliderScalar((label + " Day").c_str(), drawType, static_cast<void*>(&Day), &min.Day, &max.Day, format);
+				updated = updated || ImGui::SliderScalar((label + " Sunset").c_str(), drawType, static_cast<void*>(&Sunset), &min.Sunset, &max.Sunset, format);
+				updated = updated || ImGui::SliderScalar((label + " Dusk").c_str(), drawType, static_cast<void*>(&Dusk), &min.Dusk, &max.Dusk, format);
+				updated = updated || ImGui::SliderScalar((label + " Night").c_str(), drawType, static_cast<void*>(&Night), &min.Night, &max.Night, format);
+				updated = updated || ImGui::SliderScalar((label + " InteriorDay").c_str(), drawType, static_cast<void*>(&InteriorDay), &min.InteriorDay, &max.InteriorDay, format);
+				updated = updated || ImGui::SliderScalar((label + " InteriorNight").c_str(), drawType, static_cast<void*>(&InteriorNight), &min.InteriorNight, &max.InteriorNight, format);
 			} else {
 				if (ImGui::SliderScalar(label.c_str(), drawType, static_cast<void*>(&Day), &min, &max, format)) {
 					SetAll(Day);

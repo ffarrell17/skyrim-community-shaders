@@ -1,9 +1,8 @@
 #pragma once
 
 #include "Buffer.h"
+#include "Feature.h"
 #include "Configuration/TODValue.h"
-#include "Configuration/Feature.h"
-#include "Configuration/FeatureSettings.h"
 
 using namespace Configuration;
 
@@ -11,9 +10,15 @@ class GrassCollision : public Feature
 {
 public:
 
-	GrassCollision()
+	static GrassCollision* GetSingleton()
 	{
-		_featureName = "Grass Collision";
+		static GrassCollision singleton;
+		return &singleton;
+	}
+
+	virtual std::string GetName() override
+	{
+		return "Grass Collision";
 	}
 
 	struct ShaderSettings

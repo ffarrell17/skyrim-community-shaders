@@ -16,7 +16,7 @@ bool DistantTreeLighting::ConfigSettings::DrawSettings(bool& featureEnabled, boo
 {
 	bool updated = false;
 
-	featureEnabled = featureEnabled;
+	featureEnabled = featureEnabled;  //to hide warning
 
 	if (!isConfigOverride && ImGui::TreeNodeEx("Complex Tree LOD", ImGuiTreeNodeFlags_DefaultOpen)) {
 			
