@@ -21,7 +21,6 @@ public:
 	RE::BSEventNotifyControl ProcessEvent(RE::InputEvent* const* a_event,
 		RE::BSTEventSource<RE::InputEvent*>* a_eventSource) override;
 
-
 	void Init(IDXGISwapChain* swapchain, ID3D11Device* device, ID3D11DeviceContext* context);
 	void DrawSettings();
 	void DrawOverlay();
@@ -35,6 +34,8 @@ private:
 
 	int selectedWeatherIndex = -1;
 	int selectedLocationIndex = -1;
+
+	float fontScale = 0.f;  // exponential
 
 	Menu() { }
 	const char* KeyIdToString(uint32_t key);

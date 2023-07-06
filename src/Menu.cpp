@@ -13,86 +13,53 @@
 #include "Features/WaterBlending.h"
 
 #define SETTING_MENU_TOGGLEKEY "Toggle Key"
+#define SETTING_MENU_FONTSCALE "Font Scale"
 
 void SetupImGuiStyle()
 {
-	constexpr auto bg_alpha = 0.68f;
-	constexpr auto disabled_alpha = 0.30f;
-
-	constexpr auto background = ImVec4(0.0f, 0.0f, 0.0f, bg_alpha);
-	constexpr auto border = ImVec4(0.396f, 0.404f, 0.412f, bg_alpha);
-
 	auto& style = ImGui::GetStyle();
 	auto& colors = style.Colors;
 
-	colors[ImGuiCol_Text] = ImVec4(1.00f, 1.00f, 1.00f, 1.00f);
-	colors[ImGuiCol_TextDisabled] = ImVec4(0.50f, 0.50f, 0.50f, 1.00f);
-	colors[ImGuiCol_WindowBg] = ImVec4(0.13f, 0.14f, 0.15f, 1.00f);
-	colors[ImGuiCol_ChildBg] = ImVec4(0.13f, 0.14f, 0.15f, 1.00f);
-	colors[ImGuiCol_PopupBg] = ImVec4(0.13f, 0.14f, 0.15f, 1.00f);
-	colors[ImGuiCol_Border] = ImVec4(0.43f, 0.43f, 0.50f, 0.50f);
-	colors[ImGuiCol_BorderShadow] = ImVec4(0.00f, 0.00f, 0.00f, 0.00f);
-	colors[ImGuiCol_FrameBg] = ImVec4(0.25f, 0.25f, 0.25f, 1.00f);
-	colors[ImGuiCol_FrameBgHovered] = ImVec4(0.38f, 0.38f, 0.38f, 1.00f);
-	colors[ImGuiCol_FrameBgActive] = ImVec4(0.67f, 0.67f, 0.67f, 0.39f);
-	colors[ImGuiCol_TitleBg] = ImVec4(0.08f, 0.08f, 0.09f, 1.00f);
-	colors[ImGuiCol_TitleBgActive] = ImVec4(0.08f, 0.08f, 0.09f, 1.00f);
-	colors[ImGuiCol_TitleBgCollapsed] = ImVec4(0.00f, 0.00f, 0.00f, 0.51f);
-	colors[ImGuiCol_MenuBarBg] = ImVec4(0.14f, 0.14f, 0.14f, 1.00f);
-	colors[ImGuiCol_ScrollbarBg] = ImVec4(0.02f, 0.02f, 0.02f, 0.53f);
-	colors[ImGuiCol_ScrollbarGrab] = ImVec4(0.31f, 0.31f, 0.31f, 1.00f);
-	colors[ImGuiCol_ScrollbarGrabHovered] = ImVec4(0.41f, 0.41f, 0.41f, 1.00f);
-	colors[ImGuiCol_ScrollbarGrabActive] = ImVec4(0.51f, 0.51f, 0.51f, 1.00f);
-	colors[ImGuiCol_CheckMark] = ImVec4(0.11f, 0.64f, 0.92f, 1.00f);
-	colors[ImGuiCol_SliderGrab] = ImVec4(0.11f, 0.64f, 0.92f, 1.00f);
-	colors[ImGuiCol_SliderGrabActive] = ImVec4(0.08f, 0.50f, 0.72f, 1.00f);
-	colors[ImGuiCol_Button] = ImVec4(0.25f, 0.25f, 0.25f, 1.00f);
-	colors[ImGuiCol_ButtonHovered] = ImVec4(0.38f, 0.38f, 0.38f, 1.00f);
-	colors[ImGuiCol_ButtonActive] = ImVec4(0.67f, 0.67f, 0.67f, 0.39f);
-	colors[ImGuiCol_Header] = ImVec4(0.22f, 0.22f, 0.22f, 1.00f);
-	colors[ImGuiCol_HeaderHovered] = ImVec4(0.25f, 0.25f, 0.25f, 1.00f);
-	colors[ImGuiCol_HeaderActive] = ImVec4(0.67f, 0.67f, 0.67f, 0.39f);
-	colors[ImGuiCol_Separator] = colors[ImGuiCol_Border];
-	colors[ImGuiCol_SeparatorHovered] = ImVec4(0.41f, 0.42f, 0.44f, 1.00f);
-	colors[ImGuiCol_SeparatorActive] = ImVec4(0.26f, 0.59f, 0.98f, 0.95f);
-	colors[ImGuiCol_ResizeGrip] = ImVec4(0.00f, 0.00f, 0.00f, 0.00f);
-	colors[ImGuiCol_ResizeGripHovered] = ImVec4(0.29f, 0.30f, 0.31f, 0.67f);
-	colors[ImGuiCol_ResizeGripActive] = ImVec4(0.26f, 0.59f, 0.98f, 0.95f);
-	colors[ImGuiCol_Tab] = ImVec4(0.23f, 0.23f, 0.24f, 0.25f);
-	colors[ImGuiCol_TabHovered] = ImVec4(0.23f, 0.23f, 0.24f, 1.0f);
-	colors[ImGuiCol_TabActive] = ImVec4(0.23f, 0.23f, 0.24f, 0.75f);
-	colors[ImGuiCol_TabUnfocused] = ImVec4(0.08f, 0.08f, 0.09f, 1.00f);
-	colors[ImGuiCol_TabUnfocusedActive] = ImVec4(0.13f, 0.14f, 0.15f, 1.00f);
-	colors[ImGuiCol_PlotLines] = ImVec4(0.61f, 0.61f, 0.61f, 1.00f);
-	colors[ImGuiCol_PlotLinesHovered] = ImVec4(1.00f, 0.43f, 0.35f, 1.00f);
-	colors[ImGuiCol_PlotHistogram] = ImVec4(0.90f, 0.70f, 0.00f, 1.00f);
-	colors[ImGuiCol_PlotHistogramHovered] = ImVec4(1.00f, 0.60f, 0.00f, 1.00f);
-	colors[ImGuiCol_TextSelectedBg] = ImVec4(0.26f, 0.59f, 0.98f, 0.35f);
-	colors[ImGuiCol_DragDropTarget] = ImVec4(0.11f, 0.64f, 0.92f, 1.00f);
-	colors[ImGuiCol_NavHighlight] = ImVec4(0.26f, 0.59f, 0.98f, 1.00f);
-	colors[ImGuiCol_NavWindowingHighlight] = ImVec4(1.00f, 1.00f, 1.00f, 0.70f);
-	colors[ImGuiCol_NavWindowingDimBg] = ImVec4(0.80f, 0.80f, 0.80f, 0.20f);
-	colors[ImGuiCol_ModalWindowDimBg] = ImVec4(0.80f, 0.80f, 0.80f, 0.35f);
+	// Theme from https://github.com/ArranzCNL/ImprovedCameraSE-NG
 
-	colors[ImGuiCol_WindowBg] = background;
-	colors[ImGuiCol_ChildBg] = background;
+	style.WindowTitleAlign = ImVec2(0.5, 0.5);
+	style.FramePadding = ImVec2(4, 4);
 
-	colors[ImGuiCol_Border] = border;
-	colors[ImGuiCol_Separator] = border;
+	// Rounded slider grabber
+	style.GrabRounding = 12.0f;
 
-	colors[ImGuiCol_TextDisabled] = ImVec4(1.0f, 1.0f, 1.0f, disabled_alpha);
+	// Window
+	colors[ImGuiCol_WindowBg] = ImVec4{ 0.118f, 0.118f, 0.118f, 0.784f };
+	colors[ImGuiCol_ResizeGrip] = ImVec4{ 0.2f, 0.2f, 0.2f, 0.5f };
+	colors[ImGuiCol_ResizeGripHovered] = ImVec4{ 0.3f, 0.3f, 0.3f, 0.75f };
+	colors[ImGuiCol_ResizeGripActive] = ImVec4{ 0.15f, 0.15f, 0.15f, 1.0f };
 
-	colors[ImGuiCol_FrameBg] = ImVec4(0.2f, 0.2f, 0.2f, bg_alpha);
-	colors[ImGuiCol_FrameBgHovered] = colors[ImGuiCol_FrameBg];
-	colors[ImGuiCol_FrameBgActive] = colors[ImGuiCol_FrameBg];
+	// Header
+	colors[ImGuiCol_Header] = ImVec4{ 0.2f, 0.2f, 0.2f, 1.0f };
+	colors[ImGuiCol_HeaderHovered] = ImVec4{ 0.3f, 0.3f, 0.3f, 1.0f };
+	colors[ImGuiCol_HeaderActive] = ImVec4{ 0.15f, 0.15f, 0.15f, 1.0f };
 
-	colors[ImGuiCol_SliderGrab] = ImVec4(1.0f, 1.0f, 1.0f, 0.245f);
-	colors[ImGuiCol_SliderGrabActive] = ImVec4(1.0f, 1.0f, 1.0f, 0.531f);
+	// Title
+	colors[ImGuiCol_TitleBg] = ImVec4{ 0.15f, 0.15f, 0.15f, 1.0f };
+	colors[ImGuiCol_TitleBgActive] = ImVec4{ 0.15f, 0.15f, 0.15f, 1.0f };
+	colors[ImGuiCol_TitleBgCollapsed] = ImVec4{ 0.15f, 0.15f, 0.15f, 1.0f };
 
-	colors[ImGuiCol_CheckMark] = ImVec4(1.0f, 1.0f, 1.0f, 0.9f);
+	// Frame Background
+	colors[ImGuiCol_FrameBg] = ImVec4{ 0.2f, 0.2f, 0.2f, 1.0f };
+	colors[ImGuiCol_FrameBgHovered] = ImVec4{ 0.3f, 0.3f, 0.3f, 1.0f };
+	colors[ImGuiCol_FrameBgActive] = ImVec4{ 0.15f, 0.15f, 0.15f, 1.0f };
 
-	style.WindowBorderSize = 3.0f;
-	style.TabRounding = 0.0f;
+	// Button
+	colors[ImGuiCol_Button] = ImVec4{ 0.2f, 0.2f, 0.2f, 1.0f };
+	colors[ImGuiCol_ButtonHovered] = ImVec4{ 0.3f, 0.3f, 0.3f, 1.0f };
+	colors[ImGuiCol_ButtonActive] = ImVec4{ 0.15f, 0.15f, 0.15f, 1.0f };
+
+	// Tab
+	colors[ImGuiCol_Tab] = ImVec4{ 0.15f, 0.15f, 0.15f, 1.0f };
+	colors[ImGuiCol_TabHovered] = ImVec4{ 0.38f, 0.38f, 0.38f, 1.0f };
+	colors[ImGuiCol_TabActive] = ImVec4{ 0.28f, 0.28f, 0.28f, 1.0f };
+	colors[ImGuiCol_TabUnfocused] = ImVec4{ 0.15f, 0.15f, 0.15f, 1.0f };
+	colors[ImGuiCol_TabUnfocusedActive] = ImVec4{ 0.2f, 0.2f, 0.2f, 1.0f };
 }
 
 Menu::~Menu()
@@ -107,20 +74,27 @@ void Menu::Load(json& o_json)
 	if (o_json[SETTING_MENU_TOGGLEKEY].is_number_unsigned()) {
 		toggleKey = o_json[SETTING_MENU_TOGGLEKEY];
 	}
+	if (o_json[SETTING_MENU_FONTSCALE].is_number_float()) {
+		o_json[SETTING_MENU_FONTSCALE].get_to(fontScale);
+	}
 }
 
 void Menu::Save(json& o_json)
 {
 	json menu;
 	menu[SETTING_MENU_TOGGLEKEY] = toggleKey;
+	menu[SETTING_MENU_FONTSCALE] = fontScale;
 
 	o_json["Menu"] = menu;
 }
 
+#define IM_VK_KEYPAD_ENTER (VK_RETURN + 256)
 RE::BSEventNotifyControl Menu::ProcessEvent(RE::InputEvent* const* a_event, RE::BSTEventSource<RE::InputEvent*>* a_eventSource)
 {
 	if (!a_event || !a_eventSource)
 		return RE::BSEventNotifyControl::kContinue;
+
+	auto& io = ImGui::GetIO();
 
 	for (auto event = *a_event; event; event = event->next) {
 		if (event->eventType == RE::INPUT_EVENT_TYPE::kChar) {
@@ -199,12 +173,27 @@ RE::BSEventNotifyControl Menu::ProcessEvent(RE::InputEvent* const* a_event, RE::
 			case DIK_DECIMAL:
 				key = VK_DECIMAL;
 				break;
+			case DIK_NUMPADENTER:
+				key = IM_VK_KEYPAD_ENTER;
+				break;
+			case DIK_LMENU:
+				key = VK_LMENU;
+				break;  // left alt
+			case DIK_LCONTROL:
+				key = VK_LCONTROL;
+				break;  // left control
+			case DIK_LSHIFT:
+				key = VK_LSHIFT;
+				break;  // left shift
 			case DIK_RMENU:
 				key = VK_RMENU;
 				break;  // right alt
 			case DIK_RCONTROL:
 				key = VK_RCONTROL;
 				break;  // right control
+			case DIK_RSHIFT:
+				key = VK_RSHIFT;
+				break;  // right shift
 			case DIK_LWIN:
 				key = VK_LWIN;
 				break;  // left win
@@ -224,11 +213,8 @@ RE::BSEventNotifyControl Menu::ProcessEvent(RE::InputEvent* const* a_event, RE::
 			auto& io = ImGui::GetIO();
 			switch (buttonEvent->device.get()) {
 			case RE::INPUT_DEVICE::kKeyboard:
-				if (!buttonEvent->IsPressed()) 
-				{
-					logger::trace("Detect keyboard scan code {} value {}", key, buttonEvent->Value());
-					if (settingToggleKey) 
-					{
+				if (!buttonEvent->IsPressed()) {
+					if (settingToggleKey) {
 						toggleKey = key;
 						settingToggleKey = false;
 					} else if (key == toggleKey) {
@@ -236,15 +222,17 @@ RE::BSEventNotifyControl Menu::ProcessEvent(RE::InputEvent* const* a_event, RE::
 						if (const auto controlMap = RE::ControlMap::GetSingleton()) {
 							controlMap->GetRuntimeData().ignoreKeyboardMouse = IsEnabled;
 						}
-					} else {
-						io.AddKeyEvent(VirtualKeyToImGuiKey(key), buttonEvent->IsPressed());
 					}
-				} 
-				else 
-				{
-					if (key == VK_BACK || key == VK_DELETE || key == VK_CONTROL || key == VK_TAB || key == VK_RETURN)
-						io.AddKeyEvent(VirtualKeyToImGuiKey(key), buttonEvent->IsPressed());
 				}
+
+				io.AddKeyEvent(VirtualKeyToImGuiKey(key), buttonEvent->IsPressed());
+
+				if (key == VK_LCONTROL || key == VK_RCONTROL)
+					io.AddKeyEvent(ImGuiMod_Ctrl, buttonEvent->IsPressed());
+				else if (key == VK_LSHIFT || key == VK_RSHIFT)
+					io.AddKeyEvent(ImGuiMod_Shift, buttonEvent->IsPressed());
+				else if (key == VK_LMENU || key == VK_RMENU)
+					io.AddKeyEvent(ImGuiMod_Alt, buttonEvent->IsPressed());
 				break;
 			case RE::INPUT_DEVICE::kMouse:
 				logger::trace("Detect mouse scan code {} value {} pressed: {}", scan_code, buttonEvent->Value(), buttonEvent->IsPressed());
@@ -275,7 +263,7 @@ void Menu::Init(IDXGISwapChain* swapchain, ID3D11Device* device, ID3D11DeviceCon
 	imgui_io.ConfigFlags = ImGuiConfigFlags_NavEnableKeyboard | ImGuiConfigFlags_DockingEnable;
 	imgui_io.BackendFlags = ImGuiBackendFlags_HasMouseCursors | ImGuiBackendFlags_RendererHasVtxOffset;
 
-	imgui_io.Fonts->AddFontFromFileTTF("Data\\Interface\\CommunityShaders\\Fonts\\Atkinson-Hyperlegible-Regular-102.ttf", 18);
+	imgui_io.Fonts->AddFontFromFileTTF("Data\\Interface\\CommunityShaders\\Fonts\\Atkinson-Hyperlegible-Regular-102.ttf", 24);
 
 	DXGI_SWAP_CHAIN_DESC desc;
 	swapchain->GetDesc(&desc);
@@ -283,6 +271,12 @@ void Menu::Init(IDXGISwapChain* swapchain, ID3D11Device* device, ID3D11DeviceCon
 	// Setup Platform/Renderer backends
 	ImGui_ImplWin32_Init(desc.OutputWindow);
 	ImGui_ImplDX11_Init(device, context);
+
+	//float trueScale = exp2(fontScale);
+	//auto& style = ImGui::GetStyle();
+	//style.ScaleAllSizes(trueScale);
+	//auto& io = ImGui::GetIO();
+	//io.FontGlobalScale = trueScale;
 }
 
 void Menu::DrawSettings()
@@ -687,7 +681,6 @@ const char* Menu::KeyIdToString(uint32_t key)
 	return keyboard_keys_international[key];
 }
 
-#define IM_VK_KEYPAD_ENTER (VK_RETURN + 256)
 const ImGuiKey Menu::VirtualKeyToImGuiKey(WPARAM vkKey)
 {
 	switch (vkKey) {

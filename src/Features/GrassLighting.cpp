@@ -50,6 +50,7 @@ bool GrassLighting::ConfigSettings::DrawSettings(bool& featureEnabled, bool isCo
 			"Combined to model the transport of light through the surface.");
 			
 		if (isConfigOverride) Helpers::UI::BeginOptionalSection<TODValue<float>>(SubsurfaceScatteringAmount, 0.5f);
+		ImGui::PushItemWidth(ImGui::GetWindowWidth() * 0.5f);
 		updated = updated || SubsurfaceScatteringAmount->DrawSliderScalar("Subsurface Scattering Amount", ImGuiDataType_Float, 0.0f, 1.0f);
 		if (isConfigOverride) Helpers::UI::EndOptionalSection(SubsurfaceScatteringAmount);
 
