@@ -39,7 +39,7 @@ public:
 
 protected:
 
-	std::string _featureVersion;
+	std::string _feature;
 	bool _enabled = true;
 	bool _loaded = false;
 

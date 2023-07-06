@@ -14,7 +14,7 @@ std::string Feature::GetNameNoSpaces()
 
 std::string Feature::GetVersion()
 {
-	return _featureVersion;
+	return _feature;
 }
 
 bool Feature::IsEnabled()
@@ -46,7 +46,7 @@ void Feature::Init()
 	ini.LoadFile(iniPath.c_str());
 	if (auto value = ini.GetValue("Info", "Version")) {
 		_loaded = true;
-		_featureVersion = value;
+		_feature = value;
 		logger::info("{} successfully loaded", iniPath.c_str());
 	} else {
 		_loaded = false;
@@ -54,6 +54,7 @@ void Feature::Init()
 	}
 }
 
+#pragma warning(suppress: 4100)
 std::vector<std::string> Feature::GetAdditionalRequiredShaderDefines(RE::BSShader::Type shaderType)
 {
 	return std::vector<std::string>();
@@ -73,10 +74,10 @@ bool Feature::ValidateCache(CSimpleIniA& a_ini)
 		return false;
 	}
 
-	if (_enabled) {
+	if (_loaded) {
 		auto versionInCache = a_ini.GetValue(GetName().c_str(), "Version");
-		if (strcmp(versionInCache, _featureVersion.c_str()) != 0) {
-			logger::info("Change in version detected. Installed {} but {} in Disk Cache", _featureVersion, versionInCache);
+		if (strcmp(versionInCache, _feature.c_str()) != 0) {
+			logger::info("Change in version detected. Installed {} but {} in Disk Cache", _feature, versionInCache);
 			return false;
 		} else {
 			logger::info("Installed version and cached version match.");
@@ -90,7 +91,7 @@ bool Feature::ValidateCache(CSimpleIniA& a_ini)
 void Feature::WriteDiskCacheInfo(CSimpleIniA& a_ini)
 {
 	a_ini.SetBoolValue(GetName().c_str(), "Enabled", _loaded);
-	a_ini.SetValue(GetName().c_str(), "Version", _featureVersion.c_str());
+	a_ini.SetValue(GetName().c_str(), "Version", _feature.c_str());
 }
 
 std::shared_ptr<FeatureSettings> Feature::LoadAndApplyConfig(json& o_json)

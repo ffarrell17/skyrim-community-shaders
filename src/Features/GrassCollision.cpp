@@ -212,7 +212,7 @@ void GrassCollision::UpdateCollisions()
 
 void GrassCollision::ModifyGrass(const RE::BSShader*, const uint32_t)
 {
-	if (!_enabled)
+	if (!_loaded)
 		return;
 
 	if (updatePerFrame) {

@@ -47,7 +47,7 @@ namespace SIE
 		{
 			std::set<std::string> additionalDefines;
 			for (const auto& feature : Feature::GetFeatureList()) {
-				if (feature->IsEnabled()) {
+				if (feature->IsLoaded()) {
 					for (const auto featureDefine : feature->GetAdditionalRequiredShaderDefines(shaderType)) {
 						additionalDefines.insert(featureDefine);
 					}
