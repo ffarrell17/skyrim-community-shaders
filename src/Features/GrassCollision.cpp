@@ -7,17 +7,12 @@
 #include "Features/Clustered.h"
 #include <Helpers/UI.h>
 
-NLOHMANN_DEFINE_TYPE_NON_INTRUSIVE_WITH_DEFAULT(
-	GrassCollision::ConfigSettings,
-	RadiusMultiplier,
-	DisplacementMultiplier)
-
 enum class GrassShaderTechniques
 {
 	RenderDepth = 8,
 };
 
-bool GrassCollision::ConfigSettings::DrawSettings(bool& featureEnabled, bool isConfigOverride)
+bool GrassCollision::ConfigSettings::DrawSettings(bool& featureEnabled, bool isConfigOverride, std::shared_ptr<FeatureSettings> defaultSettings)
 {
 	bool updated = false;
 

@@ -12,7 +12,7 @@ struct FeatureSettings
 	/// <param name="featureEnabled">Reference to toggle the feature enabled state</param>
 	/// <param name="isConfigOverride">Whether the config is overriding the default config</param>
 	/// <returns>If the settings have been updated by the user</returns>
-	virtual bool DrawSettings(bool& featureEnabled, bool isConfigOverride = false) = 0;
+	virtual bool DrawSettings(bool& featureEnabled, bool isConfigOverride = false, std::shared_ptr<FeatureSettings> defaultSettings = nullptr) = 0;
 
 	
 	// Can be auto generated with FEATURE_SETTINGS_OVERRIDES macro

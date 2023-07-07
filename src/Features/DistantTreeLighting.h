@@ -37,7 +37,7 @@ public:
 		std::optional<TODValue<float>> FogDimmerAmount = 1.0f;
 
 		ShaderSettings ToShaderSettings();
-		virtual bool DrawSettings(bool& featureEnabled, bool isConfigOverride) override;
+		virtual bool DrawSettings(bool& featureEnabled, bool isConfigOverride, std::shared_ptr<FeatureSettings> defaultSettings) override;
 
 		FEATURE_SETTINGS_OPTIONALS(ConfigSettings, SubsurfaceScatteringAmount, FogDimmerAmount)
 		FEATURE_SETTINGS_ALL(ConfigSettings, EnableComplexTreeLOD, EnableDirLightFix, SubsurfaceScatteringAmount, FogDimmerAmount)

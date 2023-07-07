@@ -636,7 +636,6 @@ void Menu::DrawOverlay()
 	}
 
 	if (isEnabled) {
-		logger::info("IsEnabled");
 		ImGui::GetIO().MouseDrawCursor = true;
 		ImGui::GetIO().WantCaptureKeyboard = true;
 		DrawSettings();

@@ -27,12 +27,51 @@ namespace Helpers
 				ImGui::BeginDisabled();
 		}
 
+		template <typename T1, typename T2>
+		static void BeginOptionalSection(std::optional<T1>& option1, T1 defaultVal1, std::optional<T2>& option2, T2 defaultVal2)
+		{
+			ImGui::Unindent();
+
+			bool option1IsNull = !option1.has_value();
+			bool option2IsNull = !option2.has_value();
+
+			bool eitherIsNull = option1IsNull || option2IsNull;
+			bool bothNotNull = !eitherIsNull;
+
+			if (CustomCheckbox("Override", &bothNotNull)) {
+				if (bothNotNull) {
+					option1 = defaultVal1;
+					option2 = defaultVal2;
+				} else {
+					option1 = std::nullopt;
+					option2 = std::nullopt;
+				}
+			}
+
+			ImGui::Indent();
+
+			if (eitherIsNull)
+				ImGui::BeginDisabled();
+		}
+
 		template <typename T>
 		static void EndOptionalSection(std::optional<T>& option)
 		{
 			bool notNull = option.has_value();
 
 			if (!notNull)
+				ImGui::EndDisabled();
+		}
+
+		template <typename T1, typename T2>
+		static void EndOptionalSection(std::optional<T1>& option1, std::optional<T1>& option2)
+		{
+			bool option1IsNull = option1.has_value();
+			bool option2IsNull = option2.has_value();
+
+			bool eitherIsNull = option1IsNull || option2IsNull;
+
+			if (eitherIsNull)
 				ImGui::EndDisabled();
 		}
 

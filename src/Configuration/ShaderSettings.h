@@ -31,7 +31,7 @@ namespace Configuration
 		bool HasUpdated();
 		void ResetUpdatedState();
 
-		void Draw(std::string tabBarName = "Features", bool allowAndRemoveFeature = false, bool allowOverrides = false);
+		void Draw(std::string tabBarName = "Features", bool isOptional = false);
 
 	private:
 		bool _updated = false;

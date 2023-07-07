@@ -23,7 +23,7 @@ public:
 
 	struct ShaderSettings
 	{
-		uint32_t EnableComplexMaterial ;
+		uint32_t EnableComplexMaterial;
 
 		uint32_t EnableParallax;
 		uint32_t EnableTerrain;
@@ -41,8 +41,6 @@ public:
 
 	struct ConfigSettings : FeatureSettings
 	{
-		uint32_t EnableComplexMaterial = 1;
-
 		uint32_t EnableParallax = 1;
 		uint32_t EnableTerrain = 0;
 		uint32_t EnableHighQuality = 0;
@@ -57,7 +55,7 @@ public:
 		std::optional<TODValue<uint32_t>> ShadowsEndFade = 1024;
 
 		ShaderSettings ToShaderSettings();
-		virtual bool DrawSettings(bool& featureEnabled, bool isConfigOverride) override;
+		virtual bool DrawSettings(bool& featureEnabled, bool isConfigOverride, std::shared_ptr<FeatureSettings> defaultSettings) override;
 
 		FEATURE_SETTINGS_OPTIONALS(
 			ConfigSettings,
@@ -70,7 +68,6 @@ public:
 
 		FEATURE_SETTINGS_ALL(
 			ConfigSettings,
-			EnableComplexMaterial,
 			EnableParallax,
 			EnableTerrain,
 			EnableHighQuality,

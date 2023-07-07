@@ -34,7 +34,7 @@ public:
 		std::optional<TODValue<float>> DisplacementMultiplier = 8.0f;
 
 		ShaderSettings ToShaderSettings();
-		virtual bool DrawSettings(bool& featureEnabled, bool isConfigOverride) override;
+		virtual bool DrawSettings(bool& featureEnabled, bool isConfigOverride, std::shared_ptr<FeatureSettings> defaultSettings) override;
 
 		FEATURE_SETTINGS_OPTIONALS(ConfigSettings, RadiusMultiplier, DisplacementMultiplier)
 		FEATURE_SETTINGS_ALL(ConfigSettings, RadiusMultiplier, DisplacementMultiplier)

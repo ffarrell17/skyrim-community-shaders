@@ -5,14 +5,7 @@
 #include "Util.h"
 #include "Helpers/UI.h"
 
-NLOHMANN_DEFINE_TYPE_NON_INTRUSIVE_WITH_DEFAULT(
-	DistantTreeLighting::ConfigSettings,
-	EnableComplexTreeLOD,
-	EnableDirLightFix,
-	SubsurfaceScatteringAmount,
-	FogDimmerAmount)
-
-bool DistantTreeLighting::ConfigSettings::DrawSettings(bool& featureEnabled, bool isConfigOverride)
+bool DistantTreeLighting::ConfigSettings::DrawSettings(bool& featureEnabled, bool isConfigOverride, std::shared_ptr<FeatureSettings> defaultSettings)
 {
 	bool updated = false;
 

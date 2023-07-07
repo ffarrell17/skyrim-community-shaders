@@ -1,29 +1,24 @@
 #include "WaterBlending.h"
 
- NLOHMANN_DEFINE_TYPE_NON_INTRUSIVE_WITH_DEFAULT(
-	WaterBlending::ConfigSettings,
-	EnableWaterBlending,
-	WaterBlendRange,
-	EnableWaterBlendingSSR,
-	SSRBlendRange)
-
-bool WaterBlending::ConfigSettings::DrawSettings(bool& featureEnabled, bool isConfigOverride)
-{
+bool WaterBlending::ConfigSettings::DrawSettings(bool& featureEnabled, bool isConfigOverride, std::shared_ptr<FeatureSettings> defaultSettings)
+ {
 	 bool updated = false;
-
-	featureEnabled = featureEnabled;
 
 	if (ImGui::TreeNodeEx("General", ImGuiTreeNodeFlags_DefaultOpen)) {
 		
 		if (!isConfigOverride)
-			updated = updated || ImGui::Checkbox("Enable Water Blending", &EnableWaterBlending);
+			updated = updated || ImGui::Checkbox("Enable Water Blending", &featureEnabled);
 
+		if (isConfigOverride) Helpers::UI::BeginOptionalSection<TODValue<float>>(WaterBlendRange, 1.0f);
 		updated = updated || WaterBlendRange->DrawSliderScalar("Water Blend Range", ImGuiDataType_Float, 0.0f, 3.0f);
+		if (isConfigOverride) Helpers::UI::EndOptionalSection(WaterBlendRange);
 
 		if (!isConfigOverride)
 			updated = updated || ImGui::Checkbox("Enable Water Blending SSR", &EnableWaterBlendingSSR);
 
+		if (isConfigOverride) Helpers::UI::BeginOptionalSection<TODValue<float>>(SSRBlendRange, 1.0f);
 		updated = updated || SSRBlendRange->DrawSliderScalar("SSR Blend Range", ImGuiDataType_Float, 0.0f, 3.0f);
+		if (isConfigOverride) Helpers::UI::EndOptionalSection(SSRBlendRange);
 
 		ImGui::TreePop();
 	}
@@ -38,6 +33,7 @@ void WaterBlending::Draw(const RE::BSShader* shader, const uint32_t)
 
 		PerPass data{};
 		data.settings = configSettings->ToShaderSettings();
+		data.settings.EnableWaterBlending = _enabled;
 
 		auto shadowState = RE::BSGraphics::RendererShadowState::GetSingleton();
 
@@ -75,7 +71,6 @@ void WaterBlending::Draw(const RE::BSShader* shader, const uint32_t)
 WaterBlending::ShaderSettings WaterBlending::ConfigSettings::ToShaderSettings()
 {
 	ShaderSettings settings;
-	settings.EnableWaterBlending = EnableWaterBlending;
 	settings.WaterBlendRange = WaterBlendRange->Get();
 	settings.EnableWaterBlendingSSR = EnableWaterBlendingSSR;
 	settings.SSRBlendRange = SSRBlendRange->Get();

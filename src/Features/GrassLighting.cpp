@@ -7,27 +7,18 @@
 #include "Features/Clustered.h"
 #include <Helpers/UI.h>
 
-NLOHMANN_DEFINE_TYPE_NON_INTRUSIVE_WITH_DEFAULT(
-	GrassLighting::ConfigSettings,
-	Glossiness,
-	SpecularStrength,
-	SubsurfaceScatteringAmount,
-	EnableDirLightFix,
-	EnablePointLights)
-
 enum class GrassShaderTechniques
 {
 	RenderDepth = 8,
 };
 
-bool GrassLighting::ConfigSettings::DrawSettings(bool& featureEnabled, bool isConfigOverride)
+bool GrassLighting::ConfigSettings::DrawSettings(bool& featureEnabled, bool isConfigOverride, std::shared_ptr<FeatureSettings> defaultSettings)
 {
 	bool updated = false;
 
 	featureEnabled = featureEnabled;
-	isConfigOverride = isConfigOverride;
 
-	/* if (ImGui::TreeNodeEx("Complex Grass", ImGuiTreeNodeFlags_DefaultOpen)) {
+	 if (ImGui::TreeNodeEx("Complex Grass", ImGuiTreeNodeFlags_DefaultOpen)) {
 			
 			
 		ImGui::TextWrapped(
@@ -62,14 +53,14 @@ bool GrassLighting::ConfigSettings::DrawSettings(bool& featureEnabled, bool isCo
 	if (!isConfigOverride && ImGui::TreeNodeEx("Lights", ImGuiTreeNodeFlags_DefaultOpen)) {
 
 		ImGui::TextWrapped("Fix for grass not being affected by sunlight scale.");
-		updated = updated || ImGui::Checkbox("Enable Directional Light Fix", &EnableDirLightFix);
+		updated = updated || ImGui::Checkbox("Enable Directional Light Fix", (bool*)&EnableDirLightFix);
 
 		ImGui::TextWrapped("Enables point lights on grass like other objects. Slightly impacts performance if there are a lot of lights.");
 
-		updated = updated || ImGui::Checkbox("Enable Point Lights", &EnablePointLights);
+		updated = updated || ImGui::Checkbox("Enable Point Lights", (bool*)&EnablePointLights);
 
 		ImGui::TreePop();
-	}*/
+	}
 
 	return updated;
 }
@@ -77,9 +68,9 @@ bool GrassLighting::ConfigSettings::DrawSettings(bool& featureEnabled, bool isCo
 GrassLighting::ShaderSettings GrassLighting::ConfigSettings::ToShaderSettings()
 {
 	ShaderSettings settings;
-	//settings.Glossiness = Glossiness->Get();
-	//settings.SpecularStrength = SpecularStrength->Get();
-	//settings.SubsurfaceScatteringAmount = SubsurfaceScatteringAmount->Get();
+	settings.Glossiness = Glossiness->Get();
+	settings.SpecularStrength = SpecularStrength->Get();
+	settings.SubsurfaceScatteringAmount = SubsurfaceScatteringAmount->Get();
 	settings.EnableDirLightFix = (bool)EnableDirLightFix;
 	settings.EnablePointLights = (bool)EnablePointLights;
 	return settings;

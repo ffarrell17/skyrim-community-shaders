@@ -1,35 +1,26 @@
 #include "ExtendedMaterials.h"
+#include "Configuration/ConfigurationManager.h"
 
-NLOHMANN_DEFINE_TYPE_NON_INTRUSIVE_WITH_DEFAULT(
-	ExtendedMaterials::ConfigSettings,
-	EnableParallax,
-	EnableTerrain,
-	EnableComplexMaterial,
-	EnableHighQuality,
-	MaxDistance,
-	CRPMRange,
-	BlendRange,
-	Height,
-	EnableShadows,
-	ShadowsStartFade,
-	ShadowsEndFade)
-
-bool ExtendedMaterials::ConfigSettings::DrawSettings(bool& featureEnabled, bool isConfigOverride)
+bool ExtendedMaterials::ConfigSettings::DrawSettings(bool& featureEnabled, bool isConfigOverride, std::shared_ptr<FeatureSettings> defaultSettings)
 {
 	bool updated = false;
 
 	featureEnabled = featureEnabled; //to hide warning
 
+	const auto defaultEM = std::dynamic_pointer_cast<ExtendedMaterials::ConfigSettings>(defaultSettings);
+
+	logger::info("1");
 	if (!isConfigOverride && ImGui::TreeNodeEx("Complex Material", ImGuiTreeNodeFlags_DefaultOpen)) {
 		ImGui::TextWrapped(
 			"Enables support for the Complex Material specification which makes use of the environment mask.\n"
 			"This includes parallax, as well as more realistic metals and specular reflections.\n"
 			"May lead to some warped textures on modded content which have an invalid alpha channel in their environment mask.");
-		updated = updated || ImGui::Checkbox("Enable Complex Material", (bool*)&EnableComplexMaterial);
+		updated = updated || ImGui::Checkbox("Enable Complex Material", &featureEnabled);
 
 		ImGui::TreePop();
 	}
 
+	logger::info("2");
 	if (ImGui::TreeNodeEx("Contact Refinement Parallax Mapping", ImGuiTreeNodeFlags_DefaultOpen)) {
 		
 		if (!isConfigOverride) {
@@ -48,23 +39,32 @@ bool ExtendedMaterials::ConfigSettings::DrawSettings(bool& featureEnabled, bool 
 			updated = updated || ImGui::Checkbox("Enable High Quality", (bool*)&EnableHighQuality);
 		}
 
+		if (isConfigOverride) Helpers::UI::BeginOptionalSection<TODValue<uint32_t>>(MaxDistance, 2048.0f);
 		ImGui::TextWrapped("The furthest distance from the camera which uses parallax.");
-		updated = updated || MaxDistance->DrawSliderScalar("Max Distance", ImGuiDataType_U32, 0, 4096);
+		updated = updated || MaxDistance->DrawSliderScalar("CRPM Distance", ImGuiDataType_U32, 0, 4096);
+		if (isConfigOverride) Helpers::UI::EndOptionalSection(MaxDistance);
 
+		if (isConfigOverride) Helpers::UI::BeginOptionalSection<TODValue<float>>(CRPMRange, 0.5f);
 		ImGui::TextWrapped("The percentage of the max distance which uses CRPM.");
 		updated = updated || CRPMRange->DrawSliderScalar("CRPM Range", ImGuiDataType_Float, 0.0f, 1.0f);
+		if (isConfigOverride) Helpers::UI::EndOptionalSection(CRPMRange);
 
+		if (isConfigOverride) Helpers::UI::BeginOptionalSection<TODValue<float>>(BlendRange, 0.05f);
 		ImGui::TextWrapped(
 			"The range that parallax blends from POM to bump mapping, and bump mapping to nothing.\n"
 			"This value should be set as low as possible due to the performance impact of blending POM and relief mapping.");
-		updated = updated || BlendRange->DrawSliderScalar("Blend Range", ImGuiDataType_Float, 0.0f, CRPMRange.value());
+		updated = updated || BlendRange->DrawSliderScalar("Blend Range", ImGuiDataType_Float, 0.0f, CRPMRange.value_or(defaultEM->CRPMRange.value()));
+		if (isConfigOverride) Helpers::UI::EndOptionalSection(BlendRange);
 
+		if (isConfigOverride) Helpers::UI::BeginOptionalSection<TODValue<float>>(Height, 0.01f);
 		ImGui::TextWrapped("The range between the highest and lowest point a surface can be offset by.");
 		updated = updated || Height->DrawSliderScalar("Height", ImGuiDataType_Float, 0, 0.2f);
+		if (isConfigOverride) Helpers::UI::EndOptionalSection(BlendRange);
 
 		ImGui::TreePop();
 	}
 
+	logger::info("3");
 	if (ImGui::TreeNodeEx("Approximate Soft Shadows", ImGuiTreeNodeFlags_DefaultOpen)) {
 		
 		
@@ -75,21 +75,22 @@ bool ExtendedMaterials::ConfigSettings::DrawSettings(bool& featureEnabled, bool 
 			ImGui::Checkbox("Enable Shadows", (bool*)&EnableShadows);
 		}
 
+		if (isConfigOverride) Helpers::UI::BeginOptionalSection<TODValue<uint32_t>, TODValue<uint32_t>>(ShadowsStartFade, 512, ShadowsEndFade, 1024);
 		ImGui::TextWrapped("Modifying the start and end fade can improve performance and hide obvious texture tiling.");
-		updated = updated || ShadowsStartFade->DrawSliderScalar("Max Distance", ImGuiDataType_U32, 0, ShadowsEndFade.value());
-		updated = updated || ShadowsEndFade->DrawSliderScalar("Max Distance", ImGuiDataType_U32, ShadowsStartFade.value(), 4096);
+		updated = updated || ShadowsStartFade->DrawSliderScalar("Shadows Start Fade", ImGuiDataType_U32, 0, ShadowsEndFade.value_or(512));
+		updated = updated || ShadowsEndFade->DrawSliderScalar("Shadows End Fade", ImGuiDataType_U32, ShadowsStartFade.value_or(1024), 4096);
+		if (isConfigOverride) Helpers::UI::EndOptionalSection<TODValue<uint32_t>, TODValue<uint32_t>>(ShadowsStartFade, ShadowsEndFade);
 
 		ImGui::TreePop();
 	}
 
+	logger::info("4");
 	return updated;
 }
 
 ExtendedMaterials::ShaderSettings ExtendedMaterials::ConfigSettings::ToShaderSettings()
 {
 	ShaderSettings settings;
-
-	settings.EnableComplexMaterial = EnableComplexMaterial;
 
 	settings.EnableParallax = EnableParallax;
 	settings.EnableTerrain = EnableTerrain;
@@ -114,6 +115,7 @@ void ExtendedMaterials::ModifyLighting(const RE::BSShader*, const uint32_t)
 		PerPass data{};
 		data.CullingMode = RE::BSGraphics::RendererShadowState::GetSingleton()->GetRuntimeData().rasterStateCullMode;
 		data.settings = configSettings->ToShaderSettings();
+		data.settings.EnableComplexMaterial = _enabled;
 
 		D3D11_MAPPED_SUBRESOURCE mapped;
 		DX::ThrowIfFailed(context->Map(perPass->resource.get(), 0, D3D11_MAP_WRITE_DISCARD, 0, &mapped));

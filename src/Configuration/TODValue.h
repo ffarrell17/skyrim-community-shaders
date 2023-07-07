@@ -195,7 +195,7 @@ namespace Configuration
 				updated = updated || ImGui::SliderScalar((label + " Sunrise End").c_str(), drawType, static_cast<void*>(&SunriseEnd), &min.SunriseEnd, &max.SunriseEnd, format);
 				updated = updated || ImGui::SliderScalar((label + " Day").c_str(), drawType, static_cast<void*>(&Day), &min.Day, &max.Day, format);
 				updated = updated || ImGui::SliderScalar((label + " Sunset Start").c_str(), drawType, static_cast<void*>(&SunsetStart), &min.SunsetStart, &max.SunsetStart, format);
-				updated = updated || ImGui::SliderScalar((label + " Sunrise End").c_str(), drawType, static_cast<void*>(&SunsetEnd), &min.SunsetEnd, &max.SunsetEnd, format);
+				updated = updated || ImGui::SliderScalar((label + " Sunset End").c_str(), drawType, static_cast<void*>(&SunsetEnd), &min.SunsetEnd, &max.SunsetEnd, format);
 				updated = updated || ImGui::SliderScalar((label + " Night").c_str(), drawType, static_cast<void*>(&Night), &min.Night, &max.Night, format);
 				updated = updated || ImGui::SliderScalar((label + " InteriorDay").c_str(), drawType, static_cast<void*>(&InteriorDay), &min.InteriorDay, &max.InteriorDay, format);
 				updated = updated || ImGui::SliderScalar((label + " InteriorNight").c_str(), drawType, static_cast<void*>(&InteriorNight), &min.InteriorNight, &max.InteriorNight, format);
@@ -222,7 +222,7 @@ namespace Configuration
 				updated = updated || ImGui::Checkbox(label + " Sunrise End", &SunriseEnd);
 				updated = updated || ImGui::Checkbox(label + " Day", &Day);
 				updated = updated || ImGui::Checkbox(label + " Sunset Start", &SunsetStart);
-				updated = updated || ImGui::Checkbox(label + " Sunrise End", &SunsetEnd);
+				updated = updated || ImGui::Checkbox(label + " Sunset End", &SunsetEnd);
 				updated = updated || ImGui::Checkbox(label + " Night", &Night);
 				updated = updated || ImGui::Checkbox(label + " InteriorDay", &InteriorDay);
 				updated = updated || ImGui::Checkbox(label + " InteriorNight", &InteriorNight);

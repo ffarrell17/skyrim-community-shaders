@@ -39,7 +39,7 @@ public:
 		uint32_t EnablePointLights = 1;
 
 		ShaderSettings ToShaderSettings();
-		virtual bool DrawSettings(bool& featureEnabled, bool isConfigOverride) override;
+		virtual bool DrawSettings(bool& featureEnabled, bool isConfigOverride, std::shared_ptr<FeatureSettings> defaultSettings) override;
 
 		FEATURE_SETTINGS_OPTIONALS(
 			ConfigSettings,

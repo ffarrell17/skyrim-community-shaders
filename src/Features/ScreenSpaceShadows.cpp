@@ -5,20 +5,7 @@
 
 using RE::RENDER_TARGETS;
 
-NLOHMANN_DEFINE_TYPE_NON_INTRUSIVE_WITH_DEFAULT(
-	ScreenSpaceShadows::ConfigSettings,
-	MaxSamples,
-	FarDistanceScale,
-	FarThicknessScale,
-	FarHardness,
-	NearDistance,
-	NearThickness,
-	NearHardness,
-	BlurRadius,
-	BlurDropoff)
-
-
-bool ScreenSpaceShadows::ConfigSettings::DrawSettings(bool& featureEnabled, bool isConfigOverride)
+bool ScreenSpaceShadows::ConfigSettings::DrawSettings(bool& featureEnabled, bool isConfigOverride, std::shared_ptr<FeatureSettings> defaultSettings)
 {
 	bool updated = false;
 

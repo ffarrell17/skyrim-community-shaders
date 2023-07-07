@@ -71,7 +71,7 @@ public:
 			BlurDropoff)
 
 		ShaderSettings ToShaderSettings();
-		virtual bool DrawSettings(bool& featureEnabled, bool isConfigOverride) override;
+		virtual bool DrawSettings(bool& featureEnabled, bool isConfigOverride, std::shared_ptr<FeatureSettings> defaultSettings) override;
 	};	
 
 	struct alignas(16) PerPass

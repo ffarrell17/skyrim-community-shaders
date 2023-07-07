@@ -31,13 +31,12 @@ public:
 
 	struct ConfigSettings : FeatureSettings
 	{
-		bool EnableWaterBlending = 1;
 		bool EnableWaterBlendingSSR = 1;
 		std::optional<TODValue<float>> WaterBlendRange = 1;
 		std::optional<TODValue<float>> SSRBlendRange = 1;
 
 		ShaderSettings ToShaderSettings();
-		virtual bool DrawSettings(bool& featureEnabled, bool isConfigOverride) override;
+		virtual bool DrawSettings(bool& featureEnabled, bool isConfigOverride, std::shared_ptr<FeatureSettings> defaultSettings) override;
 
 		FEATURE_SETTINGS_OPTIONALS(
 			ConfigSettings,
@@ -46,7 +45,6 @@ public:
 
 		FEATURE_SETTINGS_ALL(
 			ConfigSettings,
-			EnableWaterBlending,
 			EnableWaterBlendingSSR,
 			WaterBlendRange,
 			SSRBlendRange)

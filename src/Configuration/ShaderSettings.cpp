@@ -78,11 +78,11 @@ void ShaderSettings::Save(json& o_json, bool isOptional)
 	}
 }
 
-void ShaderSettings::Draw(std::string tabBarName, bool allowAndRemoveFeature, bool allowOverrides)
+void ShaderSettings::Draw(std::string tabBarName, bool isOptional)
 {
 	_updated = false;
 
-	if (allowAndRemoveFeature) {
+	if (isOptional) {
 		// Creating a combo box for all feature names that this config doesn't have
 		// If the user selects one the default config is added
 
@@ -114,7 +114,6 @@ void ShaderSettings::Draw(std::string tabBarName, bool allowAndRemoveFeature, bo
 		}
 	}
 
-	logger::info("a");
 	if (ImGui::BeginTable(tabBarName.c_str(), 2, ImGuiTableFlags_SizingStretchProp | ImGuiTableFlags_Resizable)) {
 		ImGui::TableSetupColumn("##ListOfFeatures", 0, 3);
 		ImGui::TableSetupColumn("##FeatureConfig", 0, 7);
@@ -137,7 +136,8 @@ void ShaderSettings::Draw(std::string tabBarName, bool allowAndRemoveFeature, bo
 						shownFeature = true;
 						bool featureEnabled = Settings[i].Feature->IsEnabled();
 
-						_updated = Settings[i].Settings->DrawSettings(featureEnabled, allowOverrides);
+						auto defaults = ConfigurationManager::GetSingleton()->DefaultSettings.Settings[i].Settings;
+						_updated = Settings[i].Settings->DrawSettings(featureEnabled, isOptional, defaults);
 
 						Settings[i].Feature->Enable(featureEnabled);
 					}
@@ -149,35 +149,6 @@ void ShaderSettings::Draw(std::string tabBarName, bool allowAndRemoveFeature, bo
 
 		ImGui::EndTable();
 	}
-	logger::info("b");
-
-
-	/* if (ImGui::BeginTabBar(tabBarName.c_str(), allowOverrides ? ImGuiTabBarFlags_Reorderable : ImGuiTabBarFlags_None)) {
-		for (int i = 0; i < FeatureSettings.size(); i++) {
-			if (FeatureSettings[i]) {
-				std::string featureName = state->Features[i]->GetName();
-
-				bool tabOpen = true;
-				if (!allowAndRemoveFeature && ImGui::BeginTabItem(featureName.c_str()) ||
-					allowAndRemoveFeature && ImGui::BeginTabItem(featureName.c_str(), &tabOpen)) {
-
-					bool featureEnabled = state->Features[i]->IsEnabled();
-
-					_updated = FeatureSettings[i]->DrawSettings(featureEnabled, allowOverrides);
-
-					state->Features[i]->Enable(featureEnabled);
-
-					ImGui::EndTabItem();
-				}
-
-				if (!tabOpen) {  // Tab closed. Remove config
-					FeatureSettings[i].reset();
-				}
-			}
-		}
-
-		ImGui::EndTabBar();
-	}*/
 }
 
 

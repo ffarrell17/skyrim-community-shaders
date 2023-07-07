@@ -135,7 +135,7 @@ void Weather::Draw()
 	ImGui::Spacing();
 	ImGui::Spacing();
 
-	Settings.Draw("weatherFeatures", true, true);
+	Settings.Draw("weatherFeatures", true);
 }
 
 bool Configuration::Weather::HasUpdated()
