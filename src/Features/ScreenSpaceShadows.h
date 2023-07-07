@@ -46,8 +46,19 @@ public:
 		std::optional<TODValue<float>> BlurRadius = 0.5f;
 		std::optional<TODValue<float>> BlurDropoff = 0.005f;
 
-		
-		FEATURE_SETTINGS_OVERRIDES(
+		FEATURE_SETTINGS_OPTIONALS(
+			ConfigSettings,
+			MaxSamples,
+			FarDistanceScale,
+			FarThicknessScale,
+			FarHardness,
+			NearDistance,
+			NearThickness,
+			NearHardness,
+			BlurRadius,
+			BlurDropoff)
+
+		FEATURE_SETTINGS_ALL(
 			ConfigSettings,
 			MaxSamples,
 			FarDistanceScale,
@@ -116,7 +127,5 @@ public:
 	std::vector<std::string> GetAdditionalRequiredShaderDefines(RE::BSShader::Type shaderType);
 
 	virtual std::shared_ptr<FeatureSettings> CreateConfig() override;
-	virtual std::shared_ptr<FeatureSettings> ParseConfig(json& o_json) override;
-	virtual void SaveConfig(json& o_json, std::shared_ptr<FeatureSettings> config) override;
 	virtual void ApplyConfig(std::shared_ptr<FeatureSettings> config) override;
 };

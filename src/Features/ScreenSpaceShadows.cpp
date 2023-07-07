@@ -489,21 +489,6 @@ std::shared_ptr<FeatureSettings> ScreenSpaceShadows::CreateConfig()
 	return std::make_shared<ScreenSpaceShadows::ConfigSettings>();
 }
 
-std::shared_ptr<FeatureSettings> ScreenSpaceShadows::ParseConfig(json& o_json)
-{
-	auto sssConfig = std::dynamic_pointer_cast<ScreenSpaceShadows::ConfigSettings>(CreateConfig());
-	*sssConfig = o_json;
-	return sssConfig;
-}
-
-void ScreenSpaceShadows::SaveConfig(json& o_json, std::shared_ptr<FeatureSettings> config)
-{
-	auto sssConfig = std::dynamic_pointer_cast<ScreenSpaceShadows::ConfigSettings>(config);
-	if (sssConfig) {
-		o_json = *sssConfig;
-	}
-}
-
 void ScreenSpaceShadows::ApplyConfig(std::shared_ptr<FeatureSettings> config)
 {
 	configSettings = std::dynamic_pointer_cast<ScreenSpaceShadows::ConfigSettings>(config);

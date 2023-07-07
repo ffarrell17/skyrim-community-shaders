@@ -1,6 +1,8 @@
 #include "ShaderSettings.h"
 #include "ConfigurationManager.h"
 #include "State.h"
+#include "PCH.h"
+#include "FeatureSettings.h"
 
 using namespace Configuration;
 
@@ -17,7 +19,7 @@ void Configuration::ShaderSettings::ClearConfig()
 	}
 }
 
-void ShaderSettings::Load(json& o_json, bool isDefault)
+void ShaderSettings::Load(json& o_json, bool isOptional)
 {
 	ClearConfig();
 
@@ -29,7 +31,15 @@ void ShaderSettings::Load(json& o_json, bool isDefault)
 
 			logger::trace("Parsing config for feature [{}]. Json [{}]", settingsMap.GetFeatureName(), featureJson.dump());
 			try {
-				settingsMap.Settings = settingsMap.Feature->ParseConfig(featureJson);
+
+				settingsMap.Settings = settingsMap.Feature->CreateConfig();
+
+				if (isOptional) {
+					settingsMap.Settings->FromJsonOptionals(featureJson);
+				} else {
+					settingsMap.Settings->FromJson(featureJson);
+				}
+
 			} 
 			catch (const std::exception& ex)
 			{
@@ -37,7 +47,7 @@ void ShaderSettings::Load(json& o_json, bool isDefault)
 				throw ex;
 			}
 				
-			if (isDefault) {
+			if (!isOptional) {
 				if (featureJson["Enabled"].is_boolean()) {
 					settingsMap.Feature->Enable(featureJson["Enabled"]);
 				}
@@ -47,14 +57,24 @@ void ShaderSettings::Load(json& o_json, bool isDefault)
 	}
 }
 
-void ShaderSettings::Save(json& o_json, bool isDefault)
+void ShaderSettings::Save(json& o_json, bool isOptional)
 {
 	for (auto& settingsMap : Settings) {
-		json fJson;
-		settingsMap.Feature->SaveConfig(fJson, settingsMap.Settings);
-		o_json[settingsMap.GetFeatureName()] = fJson;
-		if (isDefault)
-			o_json[settingsMap.GetFeatureName()]["Enabled"] = settingsMap.Feature->IsEnabled();
+		
+		if (settingsMap.Settings != nullptr) {
+			json fJson;
+
+			logger::info("Save {}", settingsMap.GetFeatureName());
+			if (isOptional) {
+				settingsMap.Settings->ToJsonOptionals(fJson);
+			} else {
+				settingsMap.Settings->ToJson(fJson);
+			}
+
+			o_json[settingsMap.GetFeatureName()] = fJson;
+			if (!isOptional)
+				o_json[settingsMap.GetFeatureName()]["Enabled"] = settingsMap.Feature->IsEnabled();
+		}
 	}
 }
 
@@ -87,6 +107,7 @@ void ShaderSettings::Draw(std::string tabBarName, bool allowAndRemoveFeature, bo
 						
 						Settings[i].Settings = Settings[i].Feature->CreateConfig();
 						Settings[i].Settings->ResetOptionals();
+						_selectedFeature = i;
 					}
 				}
 			}
@@ -98,14 +119,12 @@ void ShaderSettings::Draw(std::string tabBarName, bool allowAndRemoveFeature, bo
 		ImGui::TableSetupColumn("##ListOfFeatures", 0, 3);
 		ImGui::TableSetupColumn("##FeatureConfig", 0, 7);
 
-		static int selectedFeature = -1;
-
 		ImGui::TableNextColumn();
 		if (ImGui::BeginListBox("##FeatureList", { -FLT_MIN, -FLT_MIN })) {
 			for (int i = 0; i < Settings.size(); i++)
 				if (Settings[i].Settings != nullptr)
-					if (ImGui::Selectable(Settings[i].GetFeatureName().c_str(), selectedFeature == i))
-						selectedFeature = i;
+					if (ImGui::Selectable(Settings[i].GetFeatureName().c_str(), _selectedFeature == i))
+						_selectedFeature = i;
 			ImGui::EndListBox();
 		}
 
@@ -114,7 +133,7 @@ void ShaderSettings::Draw(std::string tabBarName, bool allowAndRemoveFeature, bo
 			bool shownFeature = false;
 			for (int i = 0; i < Settings.size(); i++)
 				if (Settings[i].Settings != nullptr) {
-					if (i == selectedFeature) {
+					if (i == _selectedFeature) {
 						shownFeature = true;
 						bool featureEnabled = Settings[i].Feature->IsEnabled();
 

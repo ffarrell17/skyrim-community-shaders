@@ -29,17 +29,12 @@ namespace nlohmann
 		static void to_json(json& j, const std::optional<T>& opt)
 		{
 			if (opt.has_value()) {
-
 				j = opt.value();
-				 
-			} else {
-				j = nullptr;
 			}
 		}
 
 		static void from_json(const json& j, std::optional<T>& opt)
 		{
-			logger::trace("here 3");
 			if (j.is_null()) {
 				opt = std::nullopt;
 			} else {

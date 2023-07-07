@@ -187,21 +187,6 @@ std::shared_ptr<FeatureSettings> DistantTreeLighting::CreateConfig()
 	return std::make_shared<DistantTreeLighting::ConfigSettings>();
 }
 
-std::shared_ptr<FeatureSettings> DistantTreeLighting::ParseConfig(json& o_json)
-{
-	auto dtlConfig = std::dynamic_pointer_cast<DistantTreeLighting::ConfigSettings>(CreateConfig());
-	*dtlConfig = o_json;
-	return dtlConfig;
-}
-
-void DistantTreeLighting::SaveConfig(json& o_json, std::shared_ptr<FeatureSettings> config)
-{
-	auto dtlConfig = std::dynamic_pointer_cast<DistantTreeLighting::ConfigSettings>(config);
-	if (dtlConfig) {
-		o_json = *dtlConfig;
-	}
-}
-
 void DistantTreeLighting::ApplyConfig(std::shared_ptr<FeatureSettings> config)
 {
 	configSettings = std::dynamic_pointer_cast<DistantTreeLighting::ConfigSettings>(config);

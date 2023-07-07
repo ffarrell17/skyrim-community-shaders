@@ -41,11 +41,19 @@ public:
 		ShaderSettings ToShaderSettings();
 		virtual bool DrawSettings(bool& featureEnabled, bool isConfigOverride) override;
 
-		FEATURE_SETTINGS_OVERRIDES(
+		FEATURE_SETTINGS_OPTIONALS(
 			ConfigSettings,
 			Glossiness,
 			SpecularStrength,
 			SubsurfaceScatteringAmount)
+
+		FEATURE_SETTINGS_ALL(
+			ConfigSettings,
+			Glossiness,
+			SpecularStrength,
+			SubsurfaceScatteringAmount,
+			EnableDirLightFix,
+			EnablePointLights)
 	};
 
 	struct alignas(16) PerFrame
@@ -70,7 +78,5 @@ public:
 	virtual void Draw(const RE::BSShader* shader, const uint32_t descriptor) override;
 
 	virtual std::shared_ptr<FeatureSettings> CreateConfig() override;
-	virtual std::shared_ptr<FeatureSettings> ParseConfig(json& o_json) override;
-	virtual void SaveConfig(json& o_json, std::shared_ptr<FeatureSettings> config) override;
 	virtual void ApplyConfig(std::shared_ptr<FeatureSettings> config) override;
 };

@@ -28,12 +28,8 @@ public:
 	virtual void WriteDiskCacheInfo(CSimpleIniA& a_ini);
 
 	virtual std::shared_ptr<FeatureSettings> CreateConfig() = 0;
-	virtual std::shared_ptr<FeatureSettings> ParseConfig(json& o_json) = 0;
-	virtual void SaveConfig(json& o_json, std::shared_ptr<FeatureSettings> config) = 0;
 	virtual void ApplyConfig(std::shared_ptr<FeatureSettings> config) = 0;
-	std::shared_ptr<FeatureSettings> LoadAndApplyConfig(json& o_json);
 	void LoadAndApplyDefaultConfig();
-	std::shared_ptr<FeatureSettings> CopyConfig(std::shared_ptr<FeatureSettings> settings);
 
 	// Cat: add all the features in here
 	static const std::vector<Feature*>& GetFeatureList();

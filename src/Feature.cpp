@@ -96,24 +96,9 @@ void Feature::WriteDiskCacheInfo(CSimpleIniA& a_ini)
 	a_ini.SetValue(GetName().c_str(), "Version", _version.c_str());
 }
 
-std::shared_ptr<FeatureSettings> Feature::LoadAndApplyConfig(json& o_json)
-{
-	auto config = ParseConfig(o_json);
-	if (config)
-		ApplyConfig(config);
-	return config;
-}
-
 void Feature::LoadAndApplyDefaultConfig()
 {
 	ApplyConfig(CreateConfig());
-}
-
-std::shared_ptr<FeatureSettings> Feature::CopyConfig(std::shared_ptr<FeatureSettings> settings)
-{
-	json defaultJson;
-	SaveConfig(defaultJson, settings);
-	return ParseConfig(defaultJson);
 }
 
 std::string Feature::RemoveSpaces(const std::string& str)

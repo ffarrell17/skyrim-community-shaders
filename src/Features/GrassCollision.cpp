@@ -283,21 +283,6 @@ std::shared_ptr<FeatureSettings> GrassCollision::CreateConfig()
 	return std::make_shared<GrassCollision::ConfigSettings>();
 }
 
-std::shared_ptr<FeatureSettings> GrassCollision::ParseConfig(json& o_json)
-{
-	auto config = std::dynamic_pointer_cast<GrassCollision::ConfigSettings>(CreateConfig());
-	*config = o_json;
-	return config;
-}
-
-void GrassCollision::SaveConfig(json& o_json, std::shared_ptr<FeatureSettings> config)
-{
-	auto gcConfig = std::dynamic_pointer_cast<GrassCollision::ConfigSettings>(config);
-	if (gcConfig) {
-		o_json = *gcConfig;
-	}
-}
-
 void GrassCollision::ApplyConfig(std::shared_ptr<FeatureSettings> config)
 {
 	configSettings = std::dynamic_pointer_cast<GrassCollision::ConfigSettings>(config);

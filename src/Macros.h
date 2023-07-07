@@ -85,6 +85,15 @@
 #define GENERATE_RESET_MEMBER(Member)   \
 		Member = std::nullopt;			   \
 
+#define DELETE_NULL_JSON(json_obj) \
+		for (auto it = (json_obj).begin(); it != (json_obj).end();) { \
+		if (it.value().is_null()) {                               \
+			it = (json_obj).erase(it);                            \
+		} else {                                                  \
+			++it;                                                 \
+		}                                                         \
+	}  
+
 
 template <typename T>
 T Interpolate(const T& start, const T& end, double progress)

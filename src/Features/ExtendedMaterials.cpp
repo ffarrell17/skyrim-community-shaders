@@ -190,21 +190,6 @@ std::shared_ptr<FeatureSettings> ExtendedMaterials::CreateConfig()
 	return std::make_shared<ExtendedMaterials::ConfigSettings>();
 }
 
-std::shared_ptr<FeatureSettings> ExtendedMaterials::ParseConfig(json& o_json)
-{
-	auto emConfig = std::dynamic_pointer_cast<ExtendedMaterials::ConfigSettings>(CreateConfig());
-	*emConfig = o_json;
-	return emConfig;
-}
-
-void ExtendedMaterials::SaveConfig(json& o_json, std::shared_ptr<FeatureSettings> config)
-{
-	auto emConfig = std::dynamic_pointer_cast<ExtendedMaterials::ConfigSettings>(config);
-	if (emConfig) {
-		o_json = *emConfig;
-	}
-}
-
 void ExtendedMaterials::ApplyConfig(std::shared_ptr<FeatureSettings> config)
 {
 	configSettings = std::dynamic_pointer_cast<ExtendedMaterials::ConfigSettings>(config);

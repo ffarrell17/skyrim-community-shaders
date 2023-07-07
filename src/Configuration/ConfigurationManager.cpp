@@ -5,15 +5,11 @@ using namespace Configuration;
 
 void ConfigurationManager::Load(json& o_json)
 {
-	logger::info("a");
-	DefaultSettings.Load(o_json, true);
+	DefaultSettings.Load(o_json);
 
-	logger::info("b");
 	WeatherSettings.clear();
 	if (o_json["Weathers"].is_array()) {
-		logger::info("c");
 		for (auto& weatherO : o_json["Weathers"]) {
-			logger::info("d");
 			WeatherSettings.push_back(std::make_shared<Weather>(weatherO));
 		}
 	}
@@ -26,7 +22,6 @@ void ConfigurationManager::Load(json& o_json)
 			LocationSettings.push_back(std::make_shared<Location>(locationO));
 		}
 	}
-	logger::info("g");
 }
 
 void ConfigurationManager::Save(json& o_json)

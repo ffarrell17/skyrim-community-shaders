@@ -119,23 +119,6 @@ std::shared_ptr<FeatureSettings> WaterBlending::CreateConfig()
 	return std::make_shared<WaterBlending::ConfigSettings>();
 }
 
-std::shared_ptr<FeatureSettings> WaterBlending::ParseConfig(json& o_json)
-{
-	o_json = o_json;
-	auto wbConfig = std::dynamic_pointer_cast<WaterBlending::ConfigSettings>(CreateConfig());
-	//*wbConfig = o_json;
-	return wbConfig;
-}
-
-void WaterBlending::SaveConfig(json& o_json, std::shared_ptr<FeatureSettings> config)
-{
-	o_json = o_json;
-	auto wbConfig = std::dynamic_pointer_cast<WaterBlending::ConfigSettings>(config);
-	//if (wbConfig) {
-	//	o_json = *wbConfig;
-	//}
-}
-
 void WaterBlending::ApplyConfig(std::shared_ptr<FeatureSettings> config)
 {
 	configSettings = std::dynamic_pointer_cast<WaterBlending::ConfigSettings>(config);

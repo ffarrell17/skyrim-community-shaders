@@ -25,8 +25,8 @@ namespace Configuration
 
 		std::vector<FeatureSettingMap> Settings;
 
-		void Load(json& o_json, bool isDefault);
-		void Save(json& o_json, bool isDefault);
+		void Load(json& o_json, bool isOptional = false);
+		void Save(json& o_json, bool isOptional = false);
 
 		bool HasUpdated();
 		void ResetUpdatedState();
@@ -35,6 +35,7 @@ namespace Configuration
 
 	private:
 		bool _updated = false;
+		int _selectedFeature = -1;
 
 		void ClearConfig();
 	};

@@ -37,14 +37,14 @@ Weather::Weather(json& o_json)
 		Ids.push_back(id);
 	}
 
-	Settings.Load(o_json["Settings"], false);
+	Settings.Load(o_json["Settings"], true);
 }
 
 void Weather::Save(json& o_json)
 {
 	o_json["Name"] = Name;
 	o_json["Ids"] = Ids;
-	Settings.Save(o_json["Settings"], false);
+	Settings.Save(o_json["Settings"], true);
 }
 
 bool TryGetHex(const std::string& input, int& val)

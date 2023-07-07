@@ -158,21 +158,6 @@ std::shared_ptr<FeatureSettings> GrassLighting::CreateConfig()
 	return std::make_shared<GrassLighting::ConfigSettings>();
 }
 
-std::shared_ptr<FeatureSettings> GrassLighting::ParseConfig(json& o_json)
-{
-	auto glConfig = std::dynamic_pointer_cast<GrassLighting::ConfigSettings>(CreateConfig());
-	*glConfig = o_json;
-	return glConfig;
-}
-
-void GrassLighting::SaveConfig(json& o_json, std::shared_ptr<FeatureSettings> config)
-{
-	auto glConfig = std::dynamic_pointer_cast<GrassLighting::ConfigSettings>(config);
-	if (glConfig) {
-		o_json = *glConfig;
-	}
-}
-
 void GrassLighting::ApplyConfig(std::shared_ptr<FeatureSettings> config)
 {
 	configSettings = std::dynamic_pointer_cast<GrassLighting::ConfigSettings>(config);

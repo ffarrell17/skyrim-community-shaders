@@ -277,7 +277,6 @@ void Menu::Init(IDXGISwapChain* swapchain, ID3D11Device* device, ID3D11DeviceCon
 
 void Menu::DrawSettings()
 {
-	logger::info("A");
 	ImGuiStyle oldStyle = ImGui::GetStyle();
 	SetupImGuiStyle();
 
@@ -354,7 +353,6 @@ void Menu::DrawSettings()
 		}
 	}
 
-		logger::info("B");
 		if (ImGui::CollapsingHeader("Advanced", ImGuiTreeNodeFlags_DefaultOpen)) {
 			bool useDump = shaderCache.IsDump();
 			if (ImGui::Checkbox("Dump Shaders", &useDump)) {
@@ -391,7 +389,6 @@ void Menu::DrawSettings()
 			}
 		}
 
-		logger::info("C");
 		if (ImGui::CollapsingHeader("General", ImGuiTreeNodeFlags_DefaultOpen)) {
 			bool useCustomShaders = shaderCache.IsEnabled();
 			if (ImGui::BeginTable("##GeneralToggles", 3, ImGuiTableFlags_SizingStretchSame)) {
@@ -437,7 +434,6 @@ void Menu::DrawSettings()
 			}
 		}
 
-		logger::trace("D");
 		if (ImGui::CollapsingHeader("Replace Original Shaders", ImGuiTreeNodeFlags_DefaultOpen)) {
 			auto state = State::GetSingleton();
 			if (ImGui::BeginTable("##ReplaceToggles", 3, ImGuiTableFlags_SizingStretchSame)) {
@@ -461,7 +457,7 @@ void Menu::DrawSettings()
 
 		ImGui::Separator();
 
-		logger::info("E");
+
 		if (ImGui::CollapsingHeader("Features", ImGuiTreeNodeFlags_DefaultOpen)) {
 			Configuration::ConfigurationManager::GetSingleton()->DefaultSettings.Draw();
 		}
