@@ -5,7 +5,7 @@ struct Feature
 {
 public:
 	virtual std::string GetName() = 0;
-	std::string GetNameNoSpaces();
+	std::string GetShortName();
 
 	std::string GetVersion();
 
@@ -39,7 +39,7 @@ public:
 
 protected:
 
-	std::string _feature;
+	std::string _version;
 	bool _enabled = true;
 	bool _loaded = false;
 

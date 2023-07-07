@@ -168,7 +168,7 @@ void State::ClearComputeShaders()
 
 bool State::ValidateCache(CSimpleIniA& a_ini)
 {
-	bool valid = false;
+	bool valid = true;
 	for (auto& feature : Feature::GetFeatureList()) {
 		valid = valid && feature->ValidateCache(a_ini);
 	}

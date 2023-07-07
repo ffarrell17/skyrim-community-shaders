@@ -9,11 +9,11 @@ namespace Configuration
 	template <typename T>
 	struct TODValue
 	{
-		T Dawn;  // sunrise starting
-		T Sunrise;
+		T SunriseStart;
+		T SunriseEnd;
 		T Day;
-		T Sunset;
-		T Dusk;  // sunset finished
+		T SunsetStart;
+		T SunsetEnd;
 		T Night;
 		T InteriorDay;
 		T InteriorNight;
@@ -63,41 +63,6 @@ namespace Configuration
 			return Get() < other.Get();
 		}
 
-
-
-		/* TODValue<T> operator*(double f) const
-		{
-			return TODValue<T>(static_cast<T>(Get() * f));
-		}
-
-		TODValue<T> operator*(T f) const
-		{
-			return TODValue<T>(static_cast<T>(Get() * f));
-		}
-
-		TODValue<T> operator*(const TODValue<T>& other) const
-		{
-			return TODValue<T>(Get() * other.Get());
-		}
-
-		TODValue<T> operator/(const TODValue<T>& other) const
-		{
-			if (other.Get() == 0) {
-				throw std::runtime_error("Division by zero!");
-			}
-			return TODValue<T>(Get() / other.Get());
-		}
-
-		TODValue<T> operator-(const TODValue<T>& other) const
-		{
-			return TODValue<T>(Get() - other.Get());
-		}
-
-		TODValue<T> operator+(const TODValue<T>& other) const
-		{
-			return TODValue<T>(Get() + other.Get());
-		}*/
-
 		double operator*(double f) const
 		{
 			return Get() * f;
@@ -134,13 +99,13 @@ namespace Configuration
 
 		void SetAll(T val)
 		{
-			Dawn = Sunrise = Day = Sunset = Dusk = Night = InteriorDay = InteriorNight = val;
+			SunriseStart = SunriseEnd = Day = SunsetStart = SunsetEnd = Night = InteriorDay = InteriorNight = val;
 			_drawAllVals = false;
 		}
 
 		bool AllEqual() const
 		{
-			return (Dawn == Sunrise && Sunrise == Day && Day == Sunset && Sunset == Dusk && Dusk == Night && Night == InteriorDay && InteriorDay == InteriorNight);
+			return (SunriseStart == SunriseEnd && SunriseEnd == Day && Day == SunsetStart && SunsetStart == SunsetEnd && SunsetEnd == Night && Night == InteriorDay && InteriorDay == InteriorNight);
 		}
 
 		T Get() const
@@ -157,22 +122,22 @@ namespace Configuration
 				if (todInfo.Exterior) {
 					switch (todInfo.TimePeriodType) {
 					case Configuration::TODInfo::TimePeriod::NightToDawn:
-						return Helpers::Math::Lerp(Night, Dawn, todInfo.TimePeriodPercentage);
+						return Helpers::Math::Lerp(Night, SunriseStart, todInfo.TimePeriodPercentage);
 
 					case Configuration::TODInfo::TimePeriod::DawnToSunrise:
-						return Helpers::Math::Lerp(Dawn, Sunrise, todInfo.TimePeriodPercentage);
+						return Helpers::Math::Lerp(SunriseStart, SunriseEnd, todInfo.TimePeriodPercentage);
 
 					case Configuration::TODInfo::TimePeriod::SunriseToDay:
-						return Helpers::Math::Lerp(Sunrise, Day, todInfo.TimePeriodPercentage);
+						return Helpers::Math::Lerp(SunriseEnd, Day, todInfo.TimePeriodPercentage);
 
 					case Configuration::TODInfo::TimePeriod::DayToSunset:
-						return Helpers::Math::Lerp(Day, Sunset, todInfo.TimePeriodPercentage);
+						return Helpers::Math::Lerp(Day, SunsetStart, todInfo.TimePeriodPercentage);
 
 					case Configuration::TODInfo::TimePeriod::SunsetToDusk:
-						return Helpers::Math::Lerp(Sunset, Dusk, todInfo.TimePeriodPercentage);
+						return Helpers::Math::Lerp(SunsetStart, SunsetEnd, todInfo.TimePeriodPercentage);
 
 					case Configuration::TODInfo::TimePeriod::DuskToNight:
-						return Helpers::Math::Lerp(Dusk, Night, todInfo.TimePeriodPercentage);
+						return Helpers::Math::Lerp(SunsetEnd, Night, todInfo.TimePeriodPercentage);
 
 					default:
 						return Day;
@@ -194,20 +159,24 @@ namespace Configuration
 
 		bool DrawSliderScalar(std::string label, ImGuiDataType_ drawType, T min, T max, const char* format = NULL)
 		{
-			return DrawSliderScalar(label, drawType, TODValue<T>(min), TODValue<T>(max), format);
+			TODValue<T> todMin(min);
+			TODValue<T> todMax(max);
+			return DrawSliderScalar(label, drawType, todMin, todMax, format);
 		}
 
 		bool DrawSliderScalar(std::string label, ImGuiDataType_ drawType, TODValue<T> min, T max, const char* format = NULL)
 		{
-			return DrawSliderScalar(label, drawType, min, TODValue<T>(max), format);
+			TODValue<T> todMax(max);
+			return DrawSliderScalar(label, drawType, min, todMax, format);
 		}
 
 		bool DrawSliderScalar(std::string label, ImGuiDataType_ drawType, T min, TODValue<T> max, const char* format = NULL)
 		{
-			return DrawSliderScalar(label, drawType, TODValue<T>(min), max, format);
+			TODValue<T> todMin(min);
+			return DrawSliderScalar(label, drawType, todMin, max, format);
 		}
 		// Allowing other TODValues to mark the range per TOD
-		bool DrawSliderScalar(std::string label, ImGuiDataType_ drawType, TODValue<T> min, TODValue<T> max, const char* format = NULL)
+		bool DrawSliderScalar(std::string label, ImGuiDataType_ drawType, TODValue<T>& min, TODValue<T>& max, const char* format = NULL)
 		{
 			Helpers::UI::CustomCheckbox("TOD Value", &_drawAllVals);
 
@@ -222,11 +191,11 @@ namespace Configuration
 				std::string str = std::to_string(Get());
 				ImGui::InputText("Current Value", const_cast<char*>(str.c_str()), str.size() + 1, ImGuiInputTextFlags_ReadOnly);
 
-				updated = updated || ImGui::SliderScalar((label + " Dawn").c_str(), drawType, static_cast<void*>(&Dawn), &min.Dawn, &max.Dawn, format);
-				updated = updated || ImGui::SliderScalar((label + " Sunrise").c_str(), drawType, static_cast<void*>(&Sunrise), &min.Sunrise, &max.Sunrise, format);
+				updated = updated || ImGui::SliderScalar((label + " Sunrise Start").c_str(), drawType, static_cast<void*>(&SunriseStart), &min.SunriseStart, &max.SunriseStart, format);
+				updated = updated || ImGui::SliderScalar((label + " Sunrise End").c_str(), drawType, static_cast<void*>(&SunriseEnd), &min.SunriseEnd, &max.SunriseEnd, format);
 				updated = updated || ImGui::SliderScalar((label + " Day").c_str(), drawType, static_cast<void*>(&Day), &min.Day, &max.Day, format);
-				updated = updated || ImGui::SliderScalar((label + " Sunset").c_str(), drawType, static_cast<void*>(&Sunset), &min.Sunset, &max.Sunset, format);
-				updated = updated || ImGui::SliderScalar((label + " Dusk").c_str(), drawType, static_cast<void*>(&Dusk), &min.Dusk, &max.Dusk, format);
+				updated = updated || ImGui::SliderScalar((label + " Sunset Start").c_str(), drawType, static_cast<void*>(&SunsetStart), &min.SunsetStart, &max.SunsetStart, format);
+				updated = updated || ImGui::SliderScalar((label + " Sunrise End").c_str(), drawType, static_cast<void*>(&SunsetEnd), &min.SunsetEnd, &max.SunsetEnd, format);
 				updated = updated || ImGui::SliderScalar((label + " Night").c_str(), drawType, static_cast<void*>(&Night), &min.Night, &max.Night, format);
 				updated = updated || ImGui::SliderScalar((label + " InteriorDay").c_str(), drawType, static_cast<void*>(&InteriorDay), &min.InteriorDay, &max.InteriorDay, format);
 				updated = updated || ImGui::SliderScalar((label + " InteriorNight").c_str(), drawType, static_cast<void*>(&InteriorNight), &min.InteriorNight, &max.InteriorNight, format);
@@ -249,11 +218,11 @@ namespace Configuration
 			if (_drawAllVals) {
 				// Current val goes here
 
-				updated = updated || ImGui::Checkbox(label + " Dawn", &Dawn);
-				updated = updated || ImGui::Checkbox(label + " Sunrise", &Sunrise);
+				updated = updated || ImGui::Checkbox(label + " Sunrise Start", &SunriseStart);
+				updated = updated || ImGui::Checkbox(label + " Sunrise End", &SunriseEnd);
 				updated = updated || ImGui::Checkbox(label + " Day", &Day);
-				updated = updated || ImGui::Checkbox(label + " Sunset", &Sunset);
-				updated = updated || ImGui::Checkbox(label + " Dusk", &Dusk);
+				updated = updated || ImGui::Checkbox(label + " Sunset Start", &SunsetStart);
+				updated = updated || ImGui::Checkbox(label + " Sunrise End", &SunsetEnd);
 				updated = updated || ImGui::Checkbox(label + " Night", &Night);
 				updated = updated || ImGui::Checkbox(label + " InteriorDay", &InteriorDay);
 				updated = updated || ImGui::Checkbox(label + " InteriorNight", &InteriorNight);
@@ -306,15 +275,15 @@ namespace nlohmann
 		static void to_json(json& j, const Configuration::TODValue<T>& value)
 		{
 			//if (value.AllEqual()) {
-			if (value.Dawn == value.Sunrise && value.Sunrise == value.Day && value.Day == value.Sunset && value.Sunset == value.Dusk && value.Dusk == value.Night && value.Night == value.InteriorDay && value.InteriorDay == value.InteriorNight) {
+			if (value.SunriseStart == value.SunriseEnd && value.SunriseEnd == value.Day && value.Day == value.SunsetStart && value.SunsetStart == value.SunsetEnd && value.SunsetEnd == value.Night && value.Night == value.InteriorDay && value.InteriorDay == value.InteriorNight) {
 				j = value.Day;  // Store as a single value
 			} else {
 				j = nlohmann::json{
-					{ "Dawn", value.Dawn },
-					{ "Sunrise", value.Sunrise },
+					{ "Dawn", value.SunriseStart },
+					{ "Sunrise", value.SunriseEnd },
 					{ "Day", value.Day },
-					{ "Sunset", value.Sunset },
-					{ "Dusk", value.Dusk },
+					{ "Sunset", value.SunsetStart },
+					{ "Dusk", value.SunsetEnd },
 					{ "Night", value.Night },
 					{ "InteriorDay", value.InteriorDay },
 					{ "InteriorNight", value.InteriorNight }
@@ -325,11 +294,11 @@ namespace nlohmann
 		static void from_json(const json& j, Configuration::TODValue<T>& value)
 		{
 			if (j.is_object()) {
-				value.Dawn = j.at("Dawn").get<T>();
-				value.Sunrise = j.at("Sunrise").get<T>();
+				value.SunriseStart = j.at("Dawn").get<T>();
+				value.SunriseEnd = j.at("Sunrise").get<T>();
 				value.Day = j.at("Day").get<T>();
-				value.Sunset = j.at("Sunset").get<T>();
-				value.Dusk = j.at("Dusk").get<T>();
+				value.SunsetStart = j.at("Sunset").get<T>();
+				value.SunsetEnd = j.at("Dusk").get<T>();
 				value.Night = j.at("Night").get<T>();
 				value.InteriorDay = j.at("InteriorDay").get<T>();
 				value.InteriorNight = j.at("InteriorNight").get<T>();

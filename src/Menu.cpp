@@ -98,17 +98,15 @@ RE::BSEventNotifyControl Menu::ProcessEvent(RE::InputEvent* const* a_event, RE::
 
 	for (auto event = *a_event; event; event = event->next) {
 		if (event->eventType == RE::INPUT_EVENT_TYPE::kChar) {
-			const auto& charEvent = event->AsCharEvent();
-			ImGui::GetIO().AddInputCharacter(charEvent->keycode);
+			io.AddInputCharacter(event->AsCharEvent()->keycode);
 		} else if (event->eventType == RE::INPUT_EVENT_TYPE::kButton) {
-
-			const auto& buttonEvent = event->AsButtonEvent();
-			if (!buttonEvent || (buttonEvent->IsPressed() && !buttonEvent->IsDown()))
+			const auto button = static_cast<RE::ButtonEvent*>(event);
+			if (!button || (button->IsPressed() && !button->IsDown()))
 				continue;
 
-			auto scan_code = buttonEvent->GetIDCode();
+			auto scan_code = button->GetIDCode();
 			uint32_t key = MapVirtualKeyEx(scan_code, MAPVK_VSC_TO_VK_EX, GetKeyboardLayout(0));
-			
+
 			switch (scan_code) {
 			case DIK_LEFTARROW:
 				key = VK_LEFT;
@@ -203,17 +201,13 @@ RE::BSEventNotifyControl Menu::ProcessEvent(RE::InputEvent* const* a_event, RE::
 			case DIK_APPS:
 				key = VK_APPS;
 				break;
-			case DIK_BACK:
-				key = VK_BACK;
-				break;
 			default:
 				break;
 			}
 
-			auto& io = ImGui::GetIO();
-			switch (buttonEvent->device.get()) {
+			switch (button->device.get()) {
 			case RE::INPUT_DEVICE::kKeyboard:
-				if (!buttonEvent->IsPressed()) {
+				if (!button->IsPressed()) {
 					if (settingToggleKey) {
 						toggleKey = key;
 						settingToggleKey = false;
@@ -225,23 +219,23 @@ RE::BSEventNotifyControl Menu::ProcessEvent(RE::InputEvent* const* a_event, RE::
 					}
 				}
 
-				io.AddKeyEvent(VirtualKeyToImGuiKey(key), buttonEvent->IsPressed());
+				io.AddKeyEvent(VirtualKeyToImGuiKey(key), button->IsPressed());
 
 				if (key == VK_LCONTROL || key == VK_RCONTROL)
-					io.AddKeyEvent(ImGuiMod_Ctrl, buttonEvent->IsPressed());
+					io.AddKeyEvent(ImGuiMod_Ctrl, button->IsPressed());
 				else if (key == VK_LSHIFT || key == VK_RSHIFT)
-					io.AddKeyEvent(ImGuiMod_Shift, buttonEvent->IsPressed());
+					io.AddKeyEvent(ImGuiMod_Shift, button->IsPressed());
 				else if (key == VK_LMENU || key == VK_RMENU)
-					io.AddKeyEvent(ImGuiMod_Alt, buttonEvent->IsPressed());
+					io.AddKeyEvent(ImGuiMod_Alt, button->IsPressed());
 				break;
 			case RE::INPUT_DEVICE::kMouse:
-				logger::trace("Detect mouse scan code {} value {} pressed: {}", scan_code, buttonEvent->Value(), buttonEvent->IsPressed());
+				logger::trace("Detect mouse scan code {} value {} pressed: {}", scan_code, button->Value(), button->IsPressed());
 				if (scan_code > 7)  // middle scroll
-					io.AddMouseWheelEvent(0, buttonEvent->Value() * (scan_code == 8 ? 1 : -1));
+					io.AddMouseWheelEvent(0, button->Value() * (scan_code == 8 ? 1 : -1));
 				else {
 					if (scan_code > 5)
 						scan_code = 5;
-					io.AddMouseButtonEvent(scan_code, buttonEvent->IsPressed());
+					io.AddMouseButtonEvent(scan_code, button->IsPressed());
 				}
 				break;
 			default:
@@ -636,7 +630,7 @@ void Menu::DrawOverlay()
 	}
 
 	if (IsEnabled) {
-
+		logger::trace("IsEnabled");
 		ImGui::GetIO().MouseDrawCursor = true;
 		ImGui::GetIO().WantCaptureKeyboard = true;
 		DrawSettings();

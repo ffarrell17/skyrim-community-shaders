@@ -7,14 +7,16 @@
 #include "Features/ExtendedMaterials.h"
 #include "Features/WaterBlending.h"
 
-std::string Feature::GetNameNoSpaces()
+std::string Feature::GetShortName()
 {
-	return RemoveSpaces(GetName());
+	auto shortName = RemoveSpaces(GetName());
+	std::erase(shortName, '-');
+	return shortName;
 }
 
 std::string Feature::GetVersion()
 {
-	return _feature;
+	return _version;
 }
 
 bool Feature::IsEnabled()
@@ -34,7 +36,7 @@ bool Feature::IsLoaded()
 
 std::string Feature::GetIniPath()
 {
-	return "Data\\Shaders\\Features\\" + GetNameNoSpaces() + ".ini";
+	return "Data\\Shaders\\Features\\" + GetShortName() + ".ini";
 }
 
 void Feature::Init()
@@ -46,7 +48,7 @@ void Feature::Init()
 	ini.LoadFile(iniPath.c_str());
 	if (auto value = ini.GetValue("Info", "Version")) {
 		_loaded = true;
-		_feature = value;
+		_version = value;
 		logger::info("{} successfully loaded", iniPath.c_str());
 	} else {
 		_loaded = false;
@@ -76,8 +78,8 @@ bool Feature::ValidateCache(CSimpleIniA& a_ini)
 
 	if (_loaded) {
 		auto versionInCache = a_ini.GetValue(GetName().c_str(), "Version");
-		if (strcmp(versionInCache, _feature.c_str()) != 0) {
-			logger::info("Change in version detected. Installed {} but {} in Disk Cache", _feature, versionInCache);
+		if (strcmp(versionInCache, _version.c_str()) != 0) {
+			logger::info("Change in version detected. Installed {} but {} in Disk Cache", _version, versionInCache);
 			return false;
 		} else {
 			logger::info("Installed version and cached version match.");
@@ -91,7 +93,7 @@ bool Feature::ValidateCache(CSimpleIniA& a_ini)
 void Feature::WriteDiskCacheInfo(CSimpleIniA& a_ini)
 {
 	a_ini.SetBoolValue(GetName().c_str(), "Enabled", _loaded);
-	a_ini.SetValue(GetName().c_str(), "Version", _feature.c_str());
+	a_ini.SetValue(GetName().c_str(), "Version", _version.c_str());
 }
 
 std::shared_ptr<FeatureSettings> Feature::LoadAndApplyConfig(json& o_json)

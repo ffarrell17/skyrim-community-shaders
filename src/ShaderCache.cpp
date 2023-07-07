@@ -1415,24 +1415,43 @@ namespace SIE
 
 	void ShaderCache::ValidateDiskCache()
 	{
+		logger::info("Validating Disk Cache");
+
 		CSimpleIniA ini;
 		ini.SetUnicode();
 		ini.LoadFile(L"Data\\ShaderCache\\Info.ini");
 		bool valid = true;
 
+		std::string cacheVersion = SHADER_CACHE_VERSION.string();
+		logger::trace("Checking cache version equals {}", cacheVersion);
+		
 		if (auto version = ini.GetValue("Cache", "Version")) {
-			if (strcmp(SHADER_CACHE_VERSION.string().c_str(), version) != 0 || !(State::GetSingleton()->ValidateCache(ini))) {
-				logger::info("Disk cache outdated or invalid");
+		
+			if (strcmp(cacheVersion.c_str(), version) != 0) {
+				logger::info("Disk cache version out of date. Expected: {} Got: {}", cacheVersion, version);
+				valid = false;
+			} 
+			else {
+				logger::trace("Disk cache version is correct");
+			}		
+		} else {
+			logger::info("No cache version found");
+			valid = false;
+		}
+
+		if (valid) {
+
+			logger::trace("Validating Feauture Caches");
+			if (!(State::GetSingleton()->ValidateCache(ini))) {
+				logger::info("A features disk cache version was out of date");
 				valid = false;
 			}
-		} else {
-			logger::info("Disk cache outdated or invalid");
-			valid = false;
 		}
 
 		if (valid) {
 			logger::info("Using disk cache");
 		} else {
+			logger::info("Disk cache outdated or invalid");
 			DeleteDiskCache();
 		}
 	}
