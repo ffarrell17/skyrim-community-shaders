@@ -82,6 +82,9 @@
 		Member = newSettings->Member;      \
 	} \
 
+#define GENERATE_RESET_MEMBER(Member)   \
+		Member = std::nullopt;			   \
+
 
 template <typename T>
 T Interpolate(const T& start, const T& end, double progress)

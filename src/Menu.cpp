@@ -8,9 +8,6 @@
 #include "Configuration/ConfigurationManager.h"
 
 #include "Feature.h"
-#include "Features/ExtendedMaterials.h"
-#include "Features/ScreenSpaceShadows.h"
-#include "Features/WaterBlending.h"
 
 #define SETTING_MENU_TOGGLEKEY "Toggle Key"
 #define SETTING_MENU_FONTSCALE "Font Scale"
@@ -91,135 +88,136 @@ void Menu::Save(json& o_json)
 #define IM_VK_KEYPAD_ENTER (VK_RETURN + 256)
 RE::BSEventNotifyControl Menu::ProcessEvent(RE::InputEvent* const* a_event, RE::BSTEventSource<RE::InputEvent*>* a_eventSource)
 {
-	if (!a_event || !a_eventSource)
-		return RE::BSEventNotifyControl::kContinue;
+	try {
+		if (!a_event || !a_eventSource)
+			return RE::BSEventNotifyControl::kContinue;
 
-	auto& io = ImGui::GetIO();
+		auto& io = ImGui::GetIO();
 
-	for (auto event = *a_event; event; event = event->next) {
-		if (event->eventType == RE::INPUT_EVENT_TYPE::kChar) {
-			io.AddInputCharacter(event->AsCharEvent()->keycode);
-		} else if (event->eventType == RE::INPUT_EVENT_TYPE::kButton) {
-			const auto button = static_cast<RE::ButtonEvent*>(event);
-			if (!button || (button->IsPressed() && !button->IsDown()))
-				continue;
+		for (auto event = *a_event; event; event = event->next) {
+			if (event->eventType == RE::INPUT_EVENT_TYPE::kChar) {
+				io.AddInputCharacter(event->AsCharEvent()->keycode);
+			} else if (event->eventType == RE::INPUT_EVENT_TYPE::kButton) {
+				const auto button = static_cast<RE::ButtonEvent*>(event);
+				if (!button || (button->IsPressed() && !button->IsDown()))
+					continue;
 
-			auto scan_code = button->GetIDCode();
-			uint32_t key = MapVirtualKeyEx(scan_code, MAPVK_VSC_TO_VK_EX, GetKeyboardLayout(0));
+				auto scan_code = button->GetIDCode();
+				uint32_t key = MapVirtualKeyEx(scan_code, MAPVK_VSC_TO_VK_EX, GetKeyboardLayout(0));
 
-			switch (scan_code) {
-			case DIK_LEFTARROW:
-				key = VK_LEFT;
-				break;
-			case DIK_RIGHTARROW:
-				key = VK_RIGHT;
-				break;
-			case DIK_UPARROW:
-				key = VK_UP;
-				break;
-			case DIK_DOWNARROW:
-				key = VK_DOWN;
-				break;
-			case DIK_DELETE:
-				key = VK_DELETE;
-				break;
-			case DIK_END:
-				key = VK_END;
-				break;
-			case DIK_HOME:
-				key = VK_HOME;
-				break;  // pos1
-			case DIK_PRIOR:
-				key = VK_PRIOR;
-				break;  // page up
-			case DIK_NEXT:
-				key = VK_NEXT;
-				break;  // page down
-			case DIK_INSERT:
-				key = VK_INSERT;
-				break;
-			case DIK_NUMPAD0:
-				key = VK_NUMPAD0;
-				break;
-			case DIK_NUMPAD1:
-				key = VK_NUMPAD1;
-				break;
-			case DIK_NUMPAD2:
-				key = VK_NUMPAD2;
-				break;
-			case DIK_NUMPAD3:
-				key = VK_NUMPAD3;
-				break;
-			case DIK_NUMPAD4:
-				key = VK_NUMPAD4;
-				break;
-			case DIK_NUMPAD5:
-				key = VK_NUMPAD5;
-				break;
-			case DIK_NUMPAD6:
-				key = VK_NUMPAD6;
-				break;
-			case DIK_NUMPAD7:
-				key = VK_NUMPAD7;
-				break;
-			case DIK_NUMPAD8:
-				key = VK_NUMPAD8;
-				break;
-			case DIK_NUMPAD9:
-				key = VK_NUMPAD9;
-				break;
-			case DIK_DECIMAL:
-				key = VK_DECIMAL;
-				break;
-			case DIK_NUMPADENTER:
-				key = IM_VK_KEYPAD_ENTER;
-				break;
-			case DIK_LMENU:
-				key = VK_LMENU;
-				break;  // left alt
-			case DIK_LCONTROL:
-				key = VK_LCONTROL;
-				break;  // left control
-			case DIK_LSHIFT:
-				key = VK_LSHIFT;
-				break;  // left shift
-			case DIK_RMENU:
-				key = VK_RMENU;
-				break;  // right alt
-			case DIK_RCONTROL:
-				key = VK_RCONTROL;
-				break;  // right control
-			case DIK_RSHIFT:
-				key = VK_RSHIFT;
-				break;  // right shift
-			case DIK_LWIN:
-				key = VK_LWIN;
-				break;  // left win
-			case DIK_RWIN:
-				key = VK_RWIN;
-				break;  // right win
-			case DIK_APPS:
-				key = VK_APPS;
-				break;
-			default:
-				break;
-			}
-
-			switch (button->device.get()) {
-			case RE::INPUT_DEVICE::kKeyboard:
-				if (!button->IsPressed()) {
-					if (settingToggleKey) {
-						toggleKey = key;
-						settingToggleKey = false;
-					} else if (key == toggleKey) {
-						IsEnabled = !IsEnabled;
-						if (const auto controlMap = RE::ControlMap::GetSingleton()) {
-							controlMap->GetRuntimeData().ignoreKeyboardMouse = IsEnabled;
-						}
-					}
+				switch (scan_code) {
+				case DIK_LEFTARROW:
+					key = VK_LEFT;
+					break;
+				case DIK_RIGHTARROW:
+					key = VK_RIGHT;
+					break;
+				case DIK_UPARROW:
+					key = VK_UP;
+					break;
+				case DIK_DOWNARROW:
+					key = VK_DOWN;
+					break;
+				case DIK_DELETE:
+					key = VK_DELETE;
+					break;
+				case DIK_END:
+					key = VK_END;
+					break;
+				case DIK_HOME:
+					key = VK_HOME;
+					break;  // pos1
+				case DIK_PRIOR:
+					key = VK_PRIOR;
+					break;  // page up
+				case DIK_NEXT:
+					key = VK_NEXT;
+					break;  // page down
+				case DIK_INSERT:
+					key = VK_INSERT;
+					break;
+				case DIK_NUMPAD0:
+					key = VK_NUMPAD0;
+					break;
+				case DIK_NUMPAD1:
+					key = VK_NUMPAD1;
+					break;
+				case DIK_NUMPAD2:
+					key = VK_NUMPAD2;
+					break;
+				case DIK_NUMPAD3:
+					key = VK_NUMPAD3;
+					break;
+				case DIK_NUMPAD4:
+					key = VK_NUMPAD4;
+					break;
+				case DIK_NUMPAD5:
+					key = VK_NUMPAD5;
+					break;
+				case DIK_NUMPAD6:
+					key = VK_NUMPAD6;
+					break;
+				case DIK_NUMPAD7:
+					key = VK_NUMPAD7;
+					break;
+				case DIK_NUMPAD8:
+					key = VK_NUMPAD8;
+					break;
+				case DIK_NUMPAD9:
+					key = VK_NUMPAD9;
+					break;
+				case DIK_DECIMAL:
+					key = VK_DECIMAL;
+					break;
+				case DIK_NUMPADENTER:
+					key = IM_VK_KEYPAD_ENTER;
+					break;
+				case DIK_LMENU:
+					key = VK_LMENU;
+					break;  // left alt
+				case DIK_LCONTROL:
+					key = VK_LCONTROL;
+					break;  // left control
+				case DIK_LSHIFT:
+					key = VK_LSHIFT;
+					break;  // left shift
+				case DIK_RMENU:
+					key = VK_RMENU;
+					break;  // right alt
+				case DIK_RCONTROL:
+					key = VK_RCONTROL;
+					break;  // right control
+				case DIK_RSHIFT:
+					key = VK_RSHIFT;
+					break;  // right shift
+				case DIK_LWIN:
+					key = VK_LWIN;
+					break;  // left win
+				case DIK_RWIN:
+					key = VK_RWIN;
+					break;  // right win
+				case DIK_APPS:
+					key = VK_APPS;
+					break;
+				default:
+					break;
 				}
 
-				io.AddKeyEvent(VirtualKeyToImGuiKey(key), button->IsPressed());
+				switch (button->device.get()) {
+				case RE::INPUT_DEVICE::kKeyboard:
+					if (!button->IsPressed()) {
+						if (settingToggleKey) {
+							toggleKey = key;
+							settingToggleKey = false;
+						} else if (key == toggleKey) {
+							isEnabled = !isEnabled;
+							if (const auto controlMap = RE::ControlMap::GetSingleton()) {
+								controlMap->GetRuntimeData().ignoreKeyboardMouse = isEnabled;
+							}
+						}
+					}
+
+					 io.AddKeyEvent(VirtualKeyToImGuiKey(key), button->IsPressed());
 
 				if (key == VK_LCONTROL || key == VK_RCONTROL)
 					io.AddKeyEvent(ImGuiMod_Ctrl, button->IsPressed());
@@ -227,21 +225,25 @@ RE::BSEventNotifyControl Menu::ProcessEvent(RE::InputEvent* const* a_event, RE::
 					io.AddKeyEvent(ImGuiMod_Shift, button->IsPressed());
 				else if (key == VK_LMENU || key == VK_RMENU)
 					io.AddKeyEvent(ImGuiMod_Alt, button->IsPressed());
-				break;
-			case RE::INPUT_DEVICE::kMouse:
-				logger::trace("Detect mouse scan code {} value {} pressed: {}", scan_code, button->Value(), button->IsPressed());
-				if (scan_code > 7)  // middle scroll
-					io.AddMouseWheelEvent(0, button->Value() * (scan_code == 8 ? 1 : -1));
-				else {
-					if (scan_code > 5)
-						scan_code = 5;
-					io.AddMouseButtonEvent(scan_code, button->IsPressed());
+					break;
+				case RE::INPUT_DEVICE::kMouse:
+					logger::trace("Detect mouse scan code {} value {} pressed: {}", scan_code, button->Value(), button->IsPressed());
+					if (scan_code > 7)  // middle scroll
+						io.AddMouseWheelEvent(0, button->Value() * (scan_code == 8 ? 1 : -1));
+					else {
+						if (scan_code > 5)
+							scan_code = 5;
+						io.AddMouseButtonEvent(scan_code, button->IsPressed());
+					}
+					break;
+				default:
+					continue;
 				}
-				break;
-			default:
-				continue;
 			}
 		}
+
+	} catch (const std::exception& ex) {
+		logger::error("{}", ex.what());
 	}
 
 	return RE::BSEventNotifyControl::kContinue;
@@ -275,15 +277,15 @@ void Menu::Init(IDXGISwapChain* swapchain, ID3D11Device* device, ID3D11DeviceCon
 
 void Menu::DrawSettings()
 {
+	logger::info("A");
 	ImGuiStyle oldStyle = ImGui::GetStyle();
 	SetupImGuiStyle();
-	static bool visible = false;
 
 	ImGui::DockSpaceOverViewport(NULL, ImGuiDockNodeFlags_PassthruCentralNode);
 
 	ImGui::SetNextWindowSize({ 1000, 1000 }, ImGuiCond_FirstUseEver);
 	ImGui::SetNextWindowPos({ 0, 0 }, ImGuiCond_FirstUseEver);
-	if (ImGui::Begin(std::format("Skyrim Community Shaders {}", Plugin::VERSION.string(".")).c_str(), &IsEnabled)) {
+	if (ImGui::Begin(std::format("Skyrim Community Shaders {}", Plugin::VERSION.string(".")).c_str(), &isEnabled)) {
 		auto& shaderCache = SIE::ShaderCache::Instance();
 
 		if (ImGui::BeginTable("##LeButtons", 4, ImGuiTableFlags_SizingStretchSame)) {
@@ -348,10 +350,11 @@ void Menu::DrawSettings()
 					settingToggleKey = true;
 				}
 
-			ImGui::Checkbox("Show Weather & Locations Menu", &_showWeatherMenu);
+			ImGui::Checkbox("Show Weather & Locations Menu", &showWeatherMenu);
 		}
 	}
 
+		logger::info("B");
 		if (ImGui::CollapsingHeader("Advanced", ImGuiTreeNodeFlags_DefaultOpen)) {
 			bool useDump = shaderCache.IsDump();
 			if (ImGui::Checkbox("Dump Shaders", &useDump)) {
@@ -388,6 +391,7 @@ void Menu::DrawSettings()
 			}
 		}
 
+		logger::info("C");
 		if (ImGui::CollapsingHeader("General", ImGuiTreeNodeFlags_DefaultOpen)) {
 			bool useCustomShaders = shaderCache.IsEnabled();
 			if (ImGui::BeginTable("##GeneralToggles", 3, ImGuiTableFlags_SizingStretchSame)) {
@@ -433,6 +437,7 @@ void Menu::DrawSettings()
 			}
 		}
 
+		logger::trace("D");
 		if (ImGui::CollapsingHeader("Replace Original Shaders", ImGuiTreeNodeFlags_DefaultOpen)) {
 			auto state = State::GetSingleton();
 			if (ImGui::BeginTable("##ReplaceToggles", 3, ImGuiTableFlags_SizingStretchSame)) {
@@ -456,13 +461,15 @@ void Menu::DrawSettings()
 
 		ImGui::Separator();
 
+		logger::info("E");
 		if (ImGui::CollapsingHeader("Features", ImGuiTreeNodeFlags_DefaultOpen)) {
 			Configuration::ConfigurationManager::GetSingleton()->DefaultSettings.Draw();
 		}
 
-		if (ImGui::CollapsingHeader("Current", ImGuiTreeNodeFlags_DefaultOpen)) {
-			Configuration::ConfigurationManager::GetSingleton()->CurrentConfig.Draw("Current");
-		}
+		//logger::info("F");
+		//if (ImGui::CollapsingHeader("Current", ImGuiTreeNodeFlags_DefaultOpen)) {
+		//	Configuration::ConfigurationManager::GetSingleton()->CurrentConfig.Draw("Current");
+		//}
 
 		
 		// if (ImGui::BeginTabBar("Features", ImGuiTabBarFlags_None)) {
@@ -483,8 +490,11 @@ void Menu::DrawWeatherPanel()
 	ImGuiStyle oldStyle = ImGui::GetStyle();
 	SetupImGuiStyle();
 
-	ImGui::SetNextWindowSize({ 1024, 1024 }, ImGuiCond_Once);
-	ImGui::Begin("Skyrim Community Shaders Weather & Location Menu", &IsEnabled);
+	ImGui::DockSpaceOverViewport(NULL, ImGuiDockNodeFlags_PassthruCentralNode);
+
+	ImGui::SetNextWindowSize({ 1000, 1000 }, ImGuiCond_FirstUseEver);
+	ImGui::SetNextWindowPos({ 1000, 0 }, ImGuiCond_FirstUseEver);
+	ImGui::Begin("Skyrim Community Shaders Weather & Location Menu", &isEnabled);
 
 	if (ImGui::CollapsingHeader("Stats", ImGuiTreeNodeFlags_DefaultOpen)) {
 
@@ -629,13 +639,13 @@ void Menu::DrawOverlay()
 		ImGui::End();
 	}
 
-	if (IsEnabled) {
-		logger::trace("IsEnabled");
+	if (isEnabled) {
+		logger::info("IsEnabled");
 		ImGui::GetIO().MouseDrawCursor = true;
 		ImGui::GetIO().WantCaptureKeyboard = true;
 		DrawSettings();
 
-		if (_showWeatherMenu) {
+		if (showWeatherMenu) {
 			DrawWeatherPanel();
 		}
 

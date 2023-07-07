@@ -27,10 +27,10 @@ public:
 	void DrawWeatherPanel();
 
 private:
-	bool IsEnabled = false;
+	bool isEnabled = false;
 	uint32_t toggleKey = VK_END;
 	bool settingToggleKey = false;
-	bool _showWeatherMenu = false;
+	bool showWeatherMenu = false;
 
 	int selectedWeatherIndex = -1;
 	int selectedLocationIndex = -1;

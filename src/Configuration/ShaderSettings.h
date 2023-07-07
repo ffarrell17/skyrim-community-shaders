@@ -1,5 +1,6 @@
 #pragma once
 #include "PCH.h"
+#include "Feature.h"
 #include "FeatureSettings.h"
 
 namespace Configuration
@@ -8,7 +9,21 @@ namespace Configuration
 	{
 		ShaderSettings();
 
-		std::vector<std::shared_ptr<FeatureSettings>> FeatureSettings;
+		struct FeatureSettingMap
+		{
+			Feature* Feature;
+			std::shared_ptr<FeatureSettings> Settings = nullptr;
+
+			FeatureSettingMap(::Feature* f) {
+				Feature = f;
+			}
+
+			std::string GetFeatureName() {
+				return Feature->GetName();
+			}
+		};
+
+		std::vector<FeatureSettingMap> Settings;
 
 		void Load(json& o_json, bool isDefault);
 		void Save(json& o_json, bool isDefault);
@@ -20,5 +35,7 @@ namespace Configuration
 
 	private:
 		bool _updated = false;
+
+		void ClearConfig();
 	};
 }

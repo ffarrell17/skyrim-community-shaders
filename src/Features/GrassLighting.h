@@ -35,8 +35,8 @@ public:
 		std::optional<TODValue<float>> Glossiness = 20.0f;
 		std::optional<TODValue<float>> SpecularStrength = 0.5f;
 		std::optional<TODValue<float>> SubsurfaceScatteringAmount = 0.5f;
-		bool EnableDirLightFix = true;
-		bool EnablePointLights = true;
+		uint32_t EnableDirLightFix = 1;
+		uint32_t EnablePointLights = 1;
 
 		ShaderSettings ToShaderSettings();
 		virtual bool DrawSettings(bool& featureEnabled, bool isConfigOverride) override;

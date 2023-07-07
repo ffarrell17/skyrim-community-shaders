@@ -104,6 +104,11 @@ std::shared_ptr<FeatureSettings> Feature::LoadAndApplyConfig(json& o_json)
 	return config;
 }
 
+void Feature::LoadAndApplyDefaultConfig()
+{
+	ApplyConfig(CreateConfig());
+}
+
 std::shared_ptr<FeatureSettings> Feature::CopyConfig(std::shared_ptr<FeatureSettings> settings)
 {
 	json defaultJson;

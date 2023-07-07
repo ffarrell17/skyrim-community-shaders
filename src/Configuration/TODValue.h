@@ -279,11 +279,11 @@ namespace nlohmann
 				j = value.Day;  // Store as a single value
 			} else {
 				j = nlohmann::json{
-					{ "Dawn", value.SunriseStart },
-					{ "Sunrise", value.SunriseEnd },
+					{ "SunriseStart", value.SunriseStart },
+					{ "SunriseEnd", value.SunriseEnd },
 					{ "Day", value.Day },
-					{ "Sunset", value.SunsetStart },
-					{ "Dusk", value.SunsetEnd },
+					{ "SunsetStart", value.SunsetStart },
+					{ "SunsetEnd", value.SunsetEnd },
 					{ "Night", value.Night },
 					{ "InteriorDay", value.InteriorDay },
 					{ "InteriorNight", value.InteriorNight }
@@ -293,18 +293,22 @@ namespace nlohmann
 
 		static void from_json(const json& j, Configuration::TODValue<T>& value)
 		{
+			logger::trace("here 3");
 			if (j.is_object()) {
-				value.SunriseStart = j.at("Dawn").get<T>();
-				value.SunriseEnd = j.at("Sunrise").get<T>();
+				value.SunriseStart = j.at("SunriseStart").get<T>();
+				value.SunriseEnd = j.at("SunriseEnd").get<T>();
 				value.Day = j.at("Day").get<T>();
-				value.SunsetStart = j.at("Sunset").get<T>();
-				value.SunsetEnd = j.at("Dusk").get<T>();
+				value.SunsetStart = j.at("SunsetStart").get<T>();
+				value.SunsetEnd = j.at("SunsetEnd").get<T>();
 				value.Night = j.at("Night").get<T>();
 				value.InteriorDay = j.at("InteriorDay").get<T>();
 				value.InteriorNight = j.at("InteriorNight").get<T>();
 			} else {
+				logger::trace("here");
 				T val = j.get<T>();
+				logger::trace("here2");
 				value.SetAll(val);
+				logger::trace("here3");
 			}
 		}
 	};

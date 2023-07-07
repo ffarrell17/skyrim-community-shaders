@@ -31,8 +31,8 @@ public:
 
 	struct ConfigSettings : FeatureSettings
 	{
-		bool EnableComplexTreeLOD = 1;
-		bool EnableDirLightFix = 1;
+		uint32_t EnableComplexTreeLOD = 1;
+		uint32_t EnableDirLightFix = 1;
 		std::optional<TODValue<float>> SubsurfaceScatteringAmount= 0.5f;
 		std::optional<TODValue<float>> FogDimmerAmount = 1.0f;
 

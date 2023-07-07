@@ -120,7 +120,12 @@ void State::Load()
 
 	for (auto& feature : Feature::GetFeatureList()) {
 		feature->Init();
-		feature->LoadAndApplyConfig(settings);
+		json featureJson = settings[feature->GetName()];
+		if (featureJson.is_object()) {
+			feature->LoadAndApplyConfig(featureJson);
+		} else {
+			feature->LoadAndApplyDefaultConfig();
+		}
 	}
 
 	Configuration::ConfigurationManager::GetSingleton()->Load(settings);

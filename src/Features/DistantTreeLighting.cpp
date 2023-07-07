@@ -24,7 +24,7 @@ bool DistantTreeLighting::ConfigSettings::DrawSettings(bool& featureEnabled, boo
 			"Enables advanced lighting simulation on tree LOD.\n"
 			"Requires DynDOLOD.\n"
 			"See https://dyndolod.info/ for more information.");
-		updated = updated || ImGui::Checkbox("Enable Complex Tree LOD", &EnableComplexTreeLOD);
+		updated = updated || ImGui::Checkbox("Enable Complex Tree LOD", (bool*)&EnableComplexTreeLOD);
 
 		ImGui::TreePop();
 	}
@@ -32,7 +32,7 @@ bool DistantTreeLighting::ConfigSettings::DrawSettings(bool& featureEnabled, boo
 	if (!isConfigOverride && ImGui::TreeNodeEx("Lights", ImGuiTreeNodeFlags_DefaultOpen)) {
 			
 		ImGui::TextWrapped("Fix for trees not being affected by sunlight scale.");
-		updated = updated || ImGui::Checkbox("Enable Directional Light Fix", &EnableDirLightFix);
+		updated = updated || ImGui::Checkbox("Enable Directional Light Fix", (bool*)&EnableDirLightFix);
 
 		ImGui::TreePop();
 	}

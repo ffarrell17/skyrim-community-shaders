@@ -39,6 +39,7 @@ namespace nlohmann
 
 		static void from_json(const json& j, std::optional<T>& opt)
 		{
+			logger::trace("here 3");
 			if (j.is_null()) {
 				opt = std::nullopt;
 			} else {

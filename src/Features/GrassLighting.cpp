@@ -2,6 +2,7 @@
 
 #include "State.h"
 #include "Util.h"
+#include "Helpers/Time.h"
 
 #include "Features/Clustered.h"
 #include <Helpers/UI.h>
@@ -24,8 +25,9 @@ bool GrassLighting::ConfigSettings::DrawSettings(bool& featureEnabled, bool isCo
 	bool updated = false;
 
 	featureEnabled = featureEnabled;
+	isConfigOverride = isConfigOverride;
 
-	if (ImGui::TreeNodeEx("Complex Grass", ImGuiTreeNodeFlags_DefaultOpen)) {
+	/* if (ImGui::TreeNodeEx("Complex Grass", ImGuiTreeNodeFlags_DefaultOpen)) {
 			
 			
 		ImGui::TextWrapped(
@@ -67,7 +69,7 @@ bool GrassLighting::ConfigSettings::DrawSettings(bool& featureEnabled, bool isCo
 		updated = updated || ImGui::Checkbox("Enable Point Lights", &EnablePointLights);
 
 		ImGui::TreePop();
-	}
+	}*/
 
 	return updated;
 }
@@ -75,9 +77,9 @@ bool GrassLighting::ConfigSettings::DrawSettings(bool& featureEnabled, bool isCo
 GrassLighting::ShaderSettings GrassLighting::ConfigSettings::ToShaderSettings()
 {
 	ShaderSettings settings;
-	settings.Glossiness = Glossiness->Get();
-	settings.SpecularStrength = SpecularStrength->Get();
-	settings.SubsurfaceScatteringAmount = SubsurfaceScatteringAmount->Get();
+	//settings.Glossiness = Glossiness->Get();
+	//settings.SpecularStrength = SpecularStrength->Get();
+	//settings.SubsurfaceScatteringAmount = SubsurfaceScatteringAmount->Get();
 	settings.EnableDirLightFix = (bool)EnableDirLightFix;
 	settings.EnablePointLights = (bool)EnablePointLights;
 	return settings;

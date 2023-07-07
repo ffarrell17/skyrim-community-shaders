@@ -13,12 +13,15 @@ struct FeatureSettings
 	/// <returns>If the settings have been updated by the user</returns>
 	virtual bool DrawSettings(bool& featureEnabled, bool isConfigOverride = false) = 0;
 
+	
 	// Can be auto generated with FEATURE_SETTINGS_OVERRIDES macro
-#pragma warning(suppress: 4100)
-	void Lerp(const std::shared_ptr<FeatureSettings> start, const std::shared_ptr<FeatureSettings> end, double t) {}
+	virtual void Lerp(const std::shared_ptr<FeatureSettings> start, const std::shared_ptr<FeatureSettings> end, double t) = 0;
+
 	// Can be auto generated with FEATURE_SETTINGS_OVERRIDES macro
-#pragma warning(suppress: 4100)
-	void Override(const std::shared_ptr<FeatureSettings> overrideSettings) {}
+	virtual void Override(const std::shared_ptr<FeatureSettings> overrideSettings) = 0;
+
+	// Can be auto generated with FEATURE_SETTINGS_OVERRIDES macro
+	virtual void ResetOptionals() = 0;
 };
 
 
@@ -34,7 +37,11 @@ struct FeatureSettings
 	{                                                                                                 \
 		const std::shared_ptr<StructType> newSettings = dynamic_pointer_cast<StructType>(overrideSettings);      \
 		APPLY_TO_STRUCT_MEMBERS(GENERATE_OVERRIDE_MEMBER, __VA_ARGS__)                                \
-	}
+	}	\
+	void ResetOptionals() \
+	{ \
+		APPLY_TO_STRUCT_MEMBERS(GENERATE_RESET_MEMBER, __VA_ARGS__)   \
+	}\
 
 #define FEATURE_SETTINGS_JSON_AND_OVERRIDES(structName, ...)       \
 	FEATURE_SETTINGS_OVERRIDES(structName, __VA_ARGS__); \

@@ -5,21 +5,28 @@ using namespace Configuration;
 
 void ConfigurationManager::Load(json& o_json)
 {
+	logger::info("a");
 	DefaultSettings.Load(o_json, true);
 
+	logger::info("b");
 	WeatherSettings.clear();
 	if (o_json["Weathers"].is_array()) {
+		logger::info("c");
 		for (auto& weatherO : o_json["Weathers"]) {
+			logger::info("d");
 			WeatherSettings.push_back(std::make_shared<Weather>(weatherO));
 		}
 	}
 
+	logger::info("e");
 	LocationSettings.clear();
 	if (o_json["Locations"].is_object()) {
+		logger::info("f");
 		for (auto& locationO : o_json["Locations"]) {
 			LocationSettings.push_back(std::make_shared<Location>(locationO));
 		}
 	}
+	logger::info("g");
 }
 
 void ConfigurationManager::Save(json& o_json)
@@ -172,29 +179,29 @@ void ConfigurationManager::Update()
 
 void ConfigurationManager::ApplyWeatherTransition(ShaderSettings& targetSettings, const ShaderSettings& outgoingSettings, const ShaderSettings& currentSettings, const float transition)
 {
-	for (int i = 0; i < targetSettings.FeatureSettings.size(); i++) {
-		targetSettings.FeatureSettings[i]->Lerp(outgoingSettings.FeatureSettings[i], currentSettings.FeatureSettings[i], transition);
+	for (int i = 0; i < targetSettings.Settings.size(); i++) {
+		targetSettings.Settings[i].Settings->Lerp(outgoingSettings.Settings[i].Settings, currentSettings.Settings[i].Settings, transition);
 	}
 }
 
 void ConfigurationManager::OverrideConfig(ShaderSettings& targetSettings, ShaderSettings& newSettings)
 {
-	for (int i = 0; i < targetSettings.FeatureSettings.size(); i++) {
+	for (int i = 0; i < targetSettings.Settings.size(); i++) {
 
-		if (newSettings.FeatureSettings[i] == nullptr)
+		if (newSettings.Settings[i].Settings == nullptr)
 			continue;
 
-		if (targetSettings.FeatureSettings[i] == nullptr)
-			targetSettings.FeatureSettings[i] = Feature::GetFeatureList()[i]->CreateConfig();
+		if (targetSettings.Settings[i].Settings == nullptr)
+			targetSettings.Settings[i].Settings = Feature::GetFeatureList()[i]->CreateConfig();
 
-		targetSettings.FeatureSettings[i]->Override(newSettings.FeatureSettings[i]);
+		targetSettings.Settings[i].Settings->Override(newSettings.Settings[i].Settings);
 	}
 }
 
 void ConfigurationManager::ApplyCurrentConfig()
 {
-	for (int i = 0; i < CurrentConfig.FeatureSettings.size(); i++) {
-		Feature::GetFeatureList()[i]->ApplyConfig(CurrentConfig.FeatureSettings[i]);
+	for (auto& settingsMap : CurrentConfig.Settings) {
+		settingsMap.Feature->ApplyConfig(settingsMap.Settings);
 	}
 }
 

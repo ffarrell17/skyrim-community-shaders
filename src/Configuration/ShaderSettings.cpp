@@ -6,51 +6,61 @@ using namespace Configuration;
 
 ShaderSettings::ShaderSettings()
 {
-	for (int i = 0; i < Feature::GetFeatureList().size(); i++) {
-		FeatureSettings.push_back(nullptr);
+	ClearConfig();
+}
+
+void Configuration::ShaderSettings::ClearConfig()
+{
+	Settings.clear();
+	for (const auto& feature : Feature::GetFeatureList()) {
+		Settings.push_back(FeatureSettingMap(feature));
 	}
 }
 
 void ShaderSettings::Load(json& o_json, bool isDefault)
 {
-	FeatureSettings.clear();
+	ClearConfig();
 
-	for (auto& feature : Feature::GetFeatureList()) {
-			
-		json& featureJson = o_json[feature->GetName()];
+	for (auto& settingsMap : Settings) {
+		
+		json featureJson = o_json[settingsMap.GetFeatureName()];
 
 		if (featureJson.is_object()) {
-			FeatureSettings.push_back(feature->ParseConfig(featureJson));
-			
+
+			logger::trace("Parsing config for feature [{}]. Json [{}]", settingsMap.GetFeatureName(), featureJson.dump());
+			try {
+				settingsMap.Settings = settingsMap.Feature->ParseConfig(featureJson);
+			} 
+			catch (const std::exception& ex)
+			{
+				logger::error("Exception parsing configuration for feature [{}]. Exception [{}]", settingsMap.GetFeatureName(), ex.what());
+				throw ex;
+			}
+				
 			if (isDefault) {
 				if (featureJson["Enabled"].is_boolean()) {
-					feature->Enable(featureJson["Enabled"]);
+					settingsMap.Feature->Enable(featureJson["Enabled"]);
 				}
 			}
 
-		} 
-		else
-			FeatureSettings.push_back(nullptr);
+		}
 	}
 }
 
 void ShaderSettings::Save(json& o_json, bool isDefault)
 {
-	for (int i = 0; i < FeatureSettings.size(); i++) {
-		const auto& feature = Feature::GetFeatureList()[i];
+	for (auto& settingsMap : Settings) {
 		json fJson;
-		feature->SaveConfig(fJson, FeatureSettings[i]);
-		o_json[feature->GetName()] = fJson;
+		settingsMap.Feature->SaveConfig(fJson, settingsMap.Settings);
+		o_json[settingsMap.GetFeatureName()] = fJson;
 		if (isDefault)
-			o_json[feature->GetName()]["Enabled"] = feature->IsEnabled();
+			o_json[settingsMap.GetFeatureName()]["Enabled"] = settingsMap.Feature->IsEnabled();
 	}
 }
 
 void ShaderSettings::Draw(std::string tabBarName, bool allowAndRemoveFeature, bool allowOverrides)
 {
 	_updated = false;
-
-	const auto& featureList = Feature::GetFeatureList();
 
 	if (allowAndRemoveFeature) {
 		// Creating a combo box for all feature names that this config doesn't have
@@ -59,9 +69,9 @@ void ShaderSettings::Draw(std::string tabBarName, bool allowAndRemoveFeature, bo
 		std::vector<std::string> featureNames;
 		std::vector<const char*> featureNamesCStr;
 
-		for (int i = 0; i < FeatureSettings.size(); i++) {
-			if (FeatureSettings[i] == nullptr) {
-				featureNames.push_back(featureList[i]->GetName());
+		for (auto& settingsMap : Settings) {
+			if (settingsMap.Settings == nullptr) {
+				featureNames.push_back(settingsMap.GetFeatureName());
 			}
 		}
 
@@ -72,43 +82,46 @@ void ShaderSettings::Draw(std::string tabBarName, bool allowAndRemoveFeature, bo
 		if (!featureNames.empty()) {
 			int selectedItem = -1;
 			if (ImGui::Combo("Add Feature Override", &selectedItem, featureNamesCStr.data(), static_cast<int>(featureNamesCStr.size()))) {
-				for (int i = 0; i < FeatureSettings.size(); i++) {
-					if (featureList[i]->GetName() == featureNames[selectedItem]) {
+				for (int i = 0; i < Settings.size(); i++) {
+					if (Settings[i].GetFeatureName() == featureNames[selectedItem]) {
 						
-						// TODO: Change from deep copy of default to new config with all optional configs null
-						FeatureSettings[i] = featureList[i]->CopyConfig(ConfigurationManager::GetSingleton()->DefaultSettings.FeatureSettings[i]);
+						Settings[i].Settings = Settings[i].Feature->CreateConfig();
+						Settings[i].Settings->ResetOptionals();
 					}
 				}
 			}
 		}
 	}
 
+	logger::info("a");
 	if (ImGui::BeginTable(tabBarName.c_str(), 2, ImGuiTableFlags_SizingStretchProp | ImGuiTableFlags_Resizable)) {
 		ImGui::TableSetupColumn("##ListOfFeatures", 0, 3);
 		ImGui::TableSetupColumn("##FeatureConfig", 0, 7);
 
-		static size_t selectedFeature = 0;
+		static int selectedFeature = -1;
 
 		ImGui::TableNextColumn();
 		if (ImGui::BeginListBox("##FeatureList", { -FLT_MIN, -FLT_MIN })) {
-			for (size_t i = 0; i < featureList.size(); i++)
-				if (ImGui::Selectable(featureList[i]->GetName().c_str(), selectedFeature == i))
-					selectedFeature = i;
+			for (int i = 0; i < Settings.size(); i++)
+				if (Settings[i].Settings != nullptr)
+					if (ImGui::Selectable(Settings[i].GetFeatureName().c_str(), selectedFeature == i))
+						selectedFeature = i;
 			ImGui::EndListBox();
 		}
 
 		ImGui::TableNextColumn();
 		if (ImGui::BeginChild("##FeatureConfigFrame", { 0, 0 }, true)) {
 			bool shownFeature = false;
-			for (size_t i = 0; i < FeatureSettings.size(); i++)
-				if (i == selectedFeature) {
-					shownFeature = true;
-					bool featureEnabled = featureList[i]->IsEnabled();
+			for (int i = 0; i < Settings.size(); i++)
+				if (Settings[i].Settings != nullptr) {
+					if (i == selectedFeature) {
+						shownFeature = true;
+						bool featureEnabled = Settings[i].Feature->IsEnabled();
 
-					_updated = FeatureSettings[i]->DrawSettings(featureEnabled, allowOverrides);
+						_updated = Settings[i].Settings->DrawSettings(featureEnabled, allowOverrides);
 
-					featureList[i]->Enable(featureEnabled);
-
+						Settings[i].Feature->Enable(featureEnabled);
+					}
 				}
 			if (!shownFeature)
 				ImGui::TextDisabled("Please select a feature on the left.");
@@ -117,6 +130,7 @@ void ShaderSettings::Draw(std::string tabBarName, bool allowAndRemoveFeature, bo
 
 		ImGui::EndTable();
 	}
+	logger::info("b");
 
 
 	/* if (ImGui::BeginTabBar(tabBarName.c_str(), allowOverrides ? ImGuiTabBarFlags_Reorderable : ImGuiTabBarFlags_None)) {
