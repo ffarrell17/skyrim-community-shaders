@@ -142,7 +142,7 @@ namespace SIE
 				++defines;
 			}
 
-			for (const auto& define : GetAdditionalRequiredFeatureDefines(RE::BSShader::Type::Lighting)) {
+			for (const auto& define : GetAdditionalRequiredFeatureDefines(RE::BSShader::Type::BloodSplatter)) {
 				defines[0] = { define.c_str(), nullptr };
 				++defines;
 			}
@@ -173,7 +173,7 @@ namespace SIE
 				++defines;
 			}
 
-			for (const auto& define : GetAdditionalRequiredFeatureDefines(RE::BSShader::Type::Lighting)) {
+			for (const auto& define : GetAdditionalRequiredFeatureDefines(RE::BSShader::Type::DistantTree)) {
 				defines[0] = { define.c_str(), nullptr };
 				++defines;
 			}
@@ -261,7 +261,7 @@ namespace SIE
 				}
 			}
 
-			for (const auto& define : GetAdditionalRequiredFeatureDefines(RE::BSShader::Type::Lighting)) {
+			for (const auto& define : GetAdditionalRequiredFeatureDefines(RE::BSShader::Type::Sky)) {
 				defines[0] = { define.c_str(), nullptr };
 				++defines;
 			}
@@ -291,7 +291,7 @@ namespace SIE
 				++defines;
 			}
 
-			for (const auto& define : GetAdditionalRequiredFeatureDefines(RE::BSShader::Type::Lighting)) {
+			for (const auto& define : GetAdditionalRequiredFeatureDefines(RE::BSShader::Type::Grass)) {
 				defines[0] = { define.c_str(), nullptr };
 				++defines;
 			}
@@ -348,7 +348,7 @@ namespace SIE
 				}
 			}
 
-			for (const auto& define : GetAdditionalRequiredFeatureDefines(RE::BSShader::Type::Lighting)) {
+			for (const auto& define : GetAdditionalRequiredFeatureDefines(RE::BSShader::Type::Particle)) {
 				defines[0] = { define.c_str(), nullptr };
 				++defines;
 			}
@@ -493,7 +493,7 @@ namespace SIE
 				++defines;
 			}
 
-			for (const auto& define : GetAdditionalRequiredFeatureDefines(RE::BSShader::Type::Lighting)) {
+			for (const auto& define : GetAdditionalRequiredFeatureDefines(RE::BSShader::Type::Effect)) {
 				defines[0] = { define.c_str(), nullptr };
 				++defines;
 			}
@@ -596,7 +596,7 @@ namespace SIE
 				defines += 2;
 			}
 
-			for (const auto& define : GetAdditionalRequiredFeatureDefines(RE::BSShader::Type::Lighting)) {
+			for (const auto& define : GetAdditionalRequiredFeatureDefines(RE::BSShader::Type::Water)) {
 				defines[0] = { define.c_str(), nullptr };
 				++defines;
 			}

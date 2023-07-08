@@ -22,7 +22,7 @@ public:
 
 	virtual void Draw(const RE::BSShader* shader, const uint32_t descriptor) = 0;
 
-	std::vector<std::string> GetAdditionalRequiredShaderDefines(RE::BSShader::Type shaderType);
+	virtual std::vector<std::string> GetAdditionalRequiredShaderDefines(RE::BSShader::Type shaderType);
 
 	virtual bool ValidateCache(CSimpleIniA& a_ini);
 	virtual void WriteDiskCacheInfo(CSimpleIniA& a_ini);
