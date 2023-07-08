@@ -9,7 +9,6 @@ bool ExtendedMaterials::ConfigSettings::DrawSettings(bool& featureEnabled, bool 
 
 	const auto defaultEM = std::dynamic_pointer_cast<ExtendedMaterials::ConfigSettings>(defaultSettings);
 
-	logger::info("1");
 	if (!isConfigOverride && ImGui::TreeNodeEx("Complex Material", ImGuiTreeNodeFlags_DefaultOpen)) {
 		ImGui::TextWrapped(
 			"Enables support for the Complex Material specification which makes use of the environment mask.\n"
@@ -20,7 +19,6 @@ bool ExtendedMaterials::ConfigSettings::DrawSettings(bool& featureEnabled, bool 
 		ImGui::TreePop();
 	}
 
-	logger::info("2");
 	if (ImGui::TreeNodeEx("Contact Refinement Parallax Mapping", ImGuiTreeNodeFlags_DefaultOpen)) {
 		
 		if (!isConfigOverride) {
@@ -64,7 +62,6 @@ bool ExtendedMaterials::ConfigSettings::DrawSettings(bool& featureEnabled, bool 
 		ImGui::TreePop();
 	}
 
-	logger::info("3");
 	if (ImGui::TreeNodeEx("Approximate Soft Shadows", ImGuiTreeNodeFlags_DefaultOpen)) {
 		
 		
@@ -84,7 +81,6 @@ bool ExtendedMaterials::ConfigSettings::DrawSettings(bool& featureEnabled, bool 
 		ImGui::TreePop();
 	}
 
-	logger::info("4");
 	return updated;
 }
 

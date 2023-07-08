@@ -348,9 +348,11 @@ void Menu::DrawSettings()
 				if (ImGui::Button("Change")) {
 					settingToggleKey = true;
 				}
-
+			}
+			
 			ImGui::Checkbox("Show Weather & Locations Menu", &showWeatherMenu);
-		}
+			ImGui::Checkbox("Show Generated Config", &showCurrentConfig);
+		
 	}
 
 		if (ImGui::CollapsingHeader("Advanced", ImGuiTreeNodeFlags_DefaultOpen)) {
@@ -462,17 +464,11 @@ void Menu::DrawSettings()
 			Configuration::ConfigurationManager::GetSingleton()->DefaultSettings.Draw();
 		}
 
-		//logger::info("F");
-		//if (ImGui::CollapsingHeader("Current", ImGuiTreeNodeFlags_DefaultOpen)) {
-		//	Configuration::ConfigurationManager::GetSingleton()->CurrentConfig.Draw("Current");
-		//}
-
-		
-		// if (ImGui::BeginTabBar("Features", ImGuiTabBarFlags_None)) {
-		// 	for (auto* feature : Feature::GetFeatureList())
-		// 		feature->DrawSettings();
-		// 	ImGui::EndTabBar();
-		// }
+		if (showCurrentConfig) {
+			if (ImGui::CollapsingHeader("Generated", ImGuiTreeNodeFlags_DefaultOpen)) {
+				Configuration::ConfigurationManager::GetSingleton()->CurrentConfig.Draw("Generated");
+			}
+		}
 	}
 
 	ImGui::End();
@@ -575,11 +571,15 @@ void Menu::DrawWeatherPanel()
 			logger::trace("Added new weather config");
 		}
 
+		
+		if (selectedWeatherIndex < 0) ImGui::BeginDisabled();
 		if (ImGui::Button("Remove Weather")) {
 			// TODO: add warning
 			configManager->WeatherSettings.erase(configManager->WeatherSettings.begin() + selectedWeatherIndex);
 			selectedWeatherIndex = -1;
 		}
+		if (selectedWeatherIndex < 0) ImGui::EndDisabled();
+		
 
 		// Display the list box of weather items
 		std::vector<const char*> weatherNames;
@@ -587,8 +587,11 @@ void Menu::DrawWeatherPanel()
 			weatherNames.push_back(weather->Name.c_str());
 		}
 
-		ImGui::ListBox("Weather List", &selectedWeatherIndex, weatherNames.data(), static_cast<int>(weatherNames.size()));
-
+		int preSelectedIndex = selectedWeatherIndex;
+		if (ImGui::ListBox("Weather List", &selectedWeatherIndex, weatherNames.data(), static_cast<int>(weatherNames.size()))) {
+			if (preSelectedIndex == selectedWeatherIndex)
+				preSelectedIndex = -1; //deselect
+		}
 
 		ImGui::Spacing();
 		

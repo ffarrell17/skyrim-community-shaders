@@ -14,7 +14,6 @@ void ConfigurationManager::Load(json& o_json)
 		}
 	}
 
-	logger::info("e");
 	LocationSettings.clear();
 	if (o_json["Locations"].is_object()) {
 		logger::info("f");

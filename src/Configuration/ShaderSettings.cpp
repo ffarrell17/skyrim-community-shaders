@@ -133,6 +133,7 @@ void ShaderSettings::Draw(std::string tabBarName, bool isOptional)
 			for (int i = 0; i < Settings.size(); i++)
 				if (Settings[i].Settings != nullptr) {
 					if (i == _selectedFeature) {
+
 						shownFeature = true;
 						bool featureEnabled = Settings[i].Feature->IsEnabled();
 
