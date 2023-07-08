@@ -16,10 +16,8 @@ public:
 		return &singleton;
 	}
 
-	virtual std::string GetName() override
-	{
-		return "Complex Parallax Materials";
-	}
+	virtual inline std::string GetName() { return "Complex Parallax Materials"; }
+	virtual inline std::string GetShortName() { return "ComplexParallaxMaterials"; }
 
 	struct ShaderSettings
 	{

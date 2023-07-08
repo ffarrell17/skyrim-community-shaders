@@ -16,10 +16,8 @@ public:
 		return &singleton;
 	}
 
-	virtual std::string GetName() override
-	{
-		return "Water Blending";
-	}
+	virtual inline std::string GetName() { return "Water Blending"; }
+	virtual inline std::string GetShortName() { return "WaterBlending"; }
 
 	struct ShaderSettings
 	{

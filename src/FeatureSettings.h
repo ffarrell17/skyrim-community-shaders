@@ -11,6 +11,7 @@ struct FeatureSettings
 	/// </summary>
 	/// <param name="featureEnabled">Reference to toggle the feature enabled state</param>
 	/// <param name="isConfigOverride">Whether the config is overriding the default config</param>
+	/// <param name="defaultSettings">The default settings config for this feature type. For use when range based overrides are null</param>
 	/// <returns>If the settings have been updated by the user</returns>
 	virtual bool DrawSettings(bool& featureEnabled, bool isConfigOverride = false, std::shared_ptr<FeatureSettings> defaultSettings = nullptr) = 0;
 
@@ -36,6 +37,30 @@ struct FeatureSettings
 	// Can be auto generated with FEATURE_SETTINGS_OVERRIDES macro
 	virtual void FromJson(const nlohmann::json& nlohmann_json_j) = 0;
 };
+
+namespace nlohmann
+{
+	template <typename T>
+	struct adl_serializer<std::optional<T>>
+	{
+		static void to_json(nlohmann::json& j, const std::optional<T>& opt)
+		{
+			if (opt.has_value()) {
+				j = opt.value();
+			}
+		}
+
+		static void from_json(const nlohmann::json& j, std::optional<T>& opt)
+		{
+			if (j.is_null()) {
+				opt = std::nullopt;
+			} else {
+				opt = j.get<T>();
+			}
+		}
+	};
+
+} 
 
 
 #define FEATURE_SETTINGS_OPTIONALS(StructType, ...)																\

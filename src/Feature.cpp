@@ -7,12 +7,6 @@
 #include "Features/ExtendedMaterials.h"
 #include "Features/WaterBlending.h"
 
-std::string Feature::GetShortName()
-{
-	auto shortName = RemoveSpaces(GetName());
-	std::erase(shortName, '-');
-	return shortName;
-}
 
 std::string Feature::GetVersion()
 {
@@ -41,6 +35,8 @@ std::string Feature::GetIniPath()
 
 void Feature::Init()
 {
+	ApplyDefaultConfig();
+
 	std::string iniPath = GetIniPath();
 
 	CSimpleIniA ini;
@@ -64,9 +60,12 @@ std::vector<std::string> Feature::GetAdditionalRequiredShaderDefines(RE::BSShade
 
 bool Feature::ValidateCache(CSimpleIniA& a_ini)
 {
-	logger::info("Validating {}", GetName());
+	auto name = GetName();
+	auto ini_name = GetShortName();
 
-	auto enabledInCache = a_ini.GetBoolValue(GetName().c_str(), "Enabled", false);
+	logger::info("Validating {}", name);
+
+	auto enabledInCache = a_ini.GetBoolValue(ini_name.c_str(), "Enabled", false);
 	if (enabledInCache && !_loaded) {
 		logger::info("Feature was uninstalled");
 		return false;
@@ -77,7 +76,7 @@ bool Feature::ValidateCache(CSimpleIniA& a_ini)
 	}
 
 	if (_loaded) {
-		auto versionInCache = a_ini.GetValue(GetName().c_str(), "Version");
+		auto versionInCache = a_ini.GetValue(ini_name.c_str(), "Version");
 		if (strcmp(versionInCache, _version.c_str()) != 0) {
 			logger::info("Change in version detected. Installed {} but {} in Disk Cache", _version, versionInCache);
 			return false;
@@ -92,20 +91,14 @@ bool Feature::ValidateCache(CSimpleIniA& a_ini)
 
 void Feature::WriteDiskCacheInfo(CSimpleIniA& a_ini)
 {
-	a_ini.SetBoolValue(GetName().c_str(), "Enabled", _loaded);
-	a_ini.SetValue(GetName().c_str(), "Version", _version.c_str());
+	auto ini_name = GetShortName();
+	a_ini.SetBoolValue(ini_name.c_str(), "Enabled", _loaded);
+	a_ini.SetValue(ini_name.c_str(), "Version", _version.c_str());
 }
 
-void Feature::LoadAndApplyDefaultConfig()
+void Feature::ApplyDefaultConfig()
 {
 	ApplyConfig(CreateConfig());
-}
-
-std::string Feature::RemoveSpaces(const std::string& str)
-{
-	std::string result = str;
-	result.erase(std::remove_if(result.begin(), result.end(), [](unsigned char c) { return std::isspace(c); }), result.end());
-	return result;
 }
 
 const std::vector<Feature*>& Feature::GetFeatureList()

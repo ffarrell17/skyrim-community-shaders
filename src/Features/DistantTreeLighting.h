@@ -16,10 +16,8 @@ public:
 		return &singleton;
 	}
 
-	virtual std::string GetName() override
-	{
-		return "Tree LOD Lighting";
-	}
+	virtual inline std::string GetName() { return "Tree LOD Lighting"; }
+	virtual inline std::string GetShortName() { return "TreeLODLighting"; }
 
 	struct ShaderSettings
 	{

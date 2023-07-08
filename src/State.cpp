@@ -10,14 +10,7 @@
 #include "Feature.h"
 #include "Features/Clustered.h"
 
-#include "Features/DistantTreeLighting.h"
-#include "Features/GrassCollision.h"
-#include "Features/GrassLighting.h"
-#include "Features/ScreenSpaceShadows.h"
-#include "Features/WaterBlending.h"
-#include "Features/ExtendedMaterials.h"
-
- void State::Draw()
+void State::Draw()
 {
 	Configuration::ConfigurationManager::GetSingleton()->Update();
 
@@ -120,7 +113,6 @@ void State::Load()
 
 	for (auto& feature : Feature::GetFeatureList()) {
 		feature->Init();
-		feature->LoadAndApplyDefaultConfig();
 	}
 
 	Configuration::ConfigurationManager::GetSingleton()->Load(settings);

@@ -16,10 +16,8 @@ public:
 		return &singleton;
 	}
 
-	virtual std::string GetName() override
-	{
-		return "Screen-Space Shadows";
-	}
+	virtual inline std::string GetName() { return "Screen-Space Shadows"; }
+	virtual inline std::string GetShortName() { return "ScreenSpaceShadows"; }
 
 	struct ShaderSettings
 	{

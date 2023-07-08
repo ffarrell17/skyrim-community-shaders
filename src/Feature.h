@@ -1,11 +1,11 @@
 #pragma once
 #include "FeatureSettings.h"
 
-struct Feature
+class Feature
 {
 public:
 	virtual std::string GetName() = 0;
-	std::string GetShortName();
+	virtual std::string GetShortName() = 0;
 
 	std::string GetVersion();
 
@@ -29,7 +29,7 @@ public:
 
 	virtual std::shared_ptr<FeatureSettings> CreateConfig() = 0;
 	virtual void ApplyConfig(std::shared_ptr<FeatureSettings> config) = 0;
-	void LoadAndApplyDefaultConfig();
+	void ApplyDefaultConfig();
 
 	// Cat: add all the features in here
 	static const std::vector<Feature*>& GetFeatureList();
