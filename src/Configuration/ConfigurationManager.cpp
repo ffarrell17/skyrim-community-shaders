@@ -16,7 +16,6 @@ void ConfigurationManager::Load(json& o_json)
 
 	LocationSettings.clear();
 	if (o_json["Locations"].is_object()) {
-		logger::info("f");
 		for (auto& locationO : o_json["Locations"]) {
 			LocationSettings.push_back(std::make_shared<Location>(locationO));
 		}

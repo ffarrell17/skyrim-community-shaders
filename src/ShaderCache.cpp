@@ -7,10 +7,6 @@
 #include <wrl/client.h>
 
 #include "State.h"
-#include "Features/GrassCollision.h"
-#include "Features/ScreenSpaceShadows.h"
-#include "Features/WaterBlending.h"
-#include "Features/ExtendedMaterials.h"
 
 namespace SIE
 {

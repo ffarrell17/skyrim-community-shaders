@@ -263,6 +263,8 @@ namespace Configuration
 
 	private:
 		bool _drawAllVals = true;
+		bool _test1 = true;
+		bool _test2 = true;
 	};
 	
 }
@@ -293,7 +295,6 @@ namespace nlohmann
 
 		static void from_json(const json& j, Configuration::TODValue<T>& value)
 		{
-			logger::trace("here 3");
 			if (j.is_object()) {
 				value.SunriseStart = j.at("SunriseStart").get<T>();
 				value.SunriseEnd = j.at("SunriseEnd").get<T>();
@@ -304,11 +305,8 @@ namespace nlohmann
 				value.InteriorDay = j.at("InteriorDay").get<T>();
 				value.InteriorNight = j.at("InteriorNight").get<T>();
 			} else {
-				logger::trace("here");
 				T val = j.get<T>();
-				logger::trace("here2");
 				value.SetAll(val);
-				logger::trace("here3");
 			}
 		}
 	};
