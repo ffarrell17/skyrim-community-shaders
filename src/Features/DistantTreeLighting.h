@@ -1,9 +1,9 @@
-#pragma once
+ #pragma once
 
 #include "Buffer.h"
 #include "Feature.h"
-#include "Configuration/TODValue.h"
-
+#include "Configuration/FeatureValue.h"
+/*
 using namespace Configuration;
 
 class DistantTreeLighting : public Feature
@@ -19,27 +19,13 @@ public:
 	virtual inline std::string GetName() { return "Tree LOD Lighting"; }
 	virtual inline std::string GetShortName() { return "TreeLODLighting"; }
 
-	struct ShaderSettings
+	struct Settings
 	{
-		std::uint32_t EnableComplexTreeLOD;
-		std::uint32_t EnableDirLightFix;
-		float SubsurfaceScatteringAmount;
-		float FogDimmerAmount;
+		fv_uint32 EnableComplexTreeLOD = 1;
+		fv_uint32 EnableDirLightFix = 1;
+		fv_float SubsurfaceScatteringAmount = 0.5f;
+		fv_float FogDimmerAmount = 1.0f;
 	};
-
-	struct ConfigSettings : FeatureSettings
-	{
-		uint32_t EnableComplexTreeLOD = 1;
-		uint32_t EnableDirLightFix = 1;
-		std::optional<TODValue<float>> SubsurfaceScatteringAmount= 0.5f;
-		std::optional<TODValue<float>> FogDimmerAmount = 1.0f;
-
-		ShaderSettings ToShaderSettings();
-		virtual bool DrawSettings(bool& featureEnabled, bool isConfigOverride, std::shared_ptr<FeatureSettings> defaultSettings) override;
-
-		FEATURE_SETTINGS_OPTIONALS(ConfigSettings, SubsurfaceScatteringAmount, FogDimmerAmount)
-		FEATURE_SETTINGS_ALL(ConfigSettings, EnableComplexTreeLOD, EnableDirLightFix, SubsurfaceScatteringAmount, FogDimmerAmount)
-	};	
 
 
 	struct alignas(16) PerPass
@@ -50,7 +36,7 @@ public:
 		DirectX::XMFLOAT4	DirLightDirection;
 		float				DirLightScale;
 		std::uint32_t		ComplexAtlasTexture;
-		ShaderSettings			Settings;
+		Settings Settings;
 		float pad0;
 		float pad1;
 	};
@@ -70,3 +56,4 @@ public:
 	virtual void ApplyConfig(std::shared_ptr<FeatureSettings> config) override;
 
 };
+*/

@@ -2,9 +2,9 @@
 
 #include "Buffer.h"
 #include "Feature.h"
-#include "Configuration/TODValue.h"
+#include "Configuration/FeatureValue.h"
 
-using namespace Configuration;
+/*using namespace Configuration;
 
 class GrassLighting : public Feature
 {
@@ -21,11 +21,11 @@ public:
 
 	struct ShaderSettings
 	{
-		float Glossiness;
-		float SpecularStrength;
-		float SubsurfaceScatteringAmount;
-		std::uint32_t EnableDirLightFix;
-		std::uint32_t EnablePointLights;
+		fv_float Glossiness;
+		fv_float SpecularStrength;
+		fv_float SubsurfaceScatteringAmount;
+		fv_uint32 EnableDirLightFix;
+		fv_uint32 EnablePointLights;
 	};
 
 	struct ConfigSettings : FeatureSettings
@@ -78,3 +78,4 @@ public:
 	virtual std::shared_ptr<FeatureSettings> CreateConfig() override;
 	virtual void ApplyConfig(std::shared_ptr<FeatureSettings> config) override;
 };
+*/

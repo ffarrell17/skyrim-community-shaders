@@ -35,8 +35,6 @@ std::string Feature::GetIniPath()
 
 void Feature::Init()
 {
-	ApplyDefaultConfig();
-
 	std::string iniPath = GetIniPath();
 
 	CSimpleIniA ini;
@@ -96,20 +94,15 @@ void Feature::WriteDiskCacheInfo(CSimpleIniA& a_ini)
 	a_ini.SetValue(ini_name.c_str(), "Version", _version.c_str());
 }
 
-void Feature::ApplyDefaultConfig()
-{
-	ApplyConfig(CreateConfig());
-}
-
 const std::vector<Feature*>& Feature::GetFeatureList()
 {
 	// Cat: essentially load order i guess
 	static std::vector<Feature*> features = {
-		GrassLighting::GetSingleton(),
-		DistantTreeLighting::GetSingleton(),
-		GrassCollision::GetSingleton(),
-		ScreenSpaceShadows::GetSingleton(),
-		ExtendedMaterials::GetSingleton(),
+		//GrassLighting::GetSingleton(),
+		//DistantTreeLighting::GetSingleton(),
+		//GrassCollision::GetSingleton(),
+		//ScreenSpaceShadows::GetSingleton(),
+		//ExtendedMaterials::GetSingleton(),
 		WaterBlending::GetSingleton()
 	};
 	return features;

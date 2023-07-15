@@ -95,6 +95,9 @@
 	}  
 
 
+#define GENERATE_MEMBER_REF(Member) &Member,
+
+
 template <typename T>
 T Interpolate(const T& start, const T& end, double progress)
 {

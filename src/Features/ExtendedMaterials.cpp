@@ -1,4 +1,4 @@
-#include "ExtendedMaterials.h"
+/*#include "ExtendedMaterials.h"
 #include "Configuration/ConfigurationManager.h"
 
 bool ExtendedMaterials::ConfigSettings::DrawSettings(bool& featureEnabled, bool isConfigOverride, std::shared_ptr<FeatureSettings> defaultSettings)
@@ -37,24 +37,24 @@ bool ExtendedMaterials::ConfigSettings::DrawSettings(bool& featureEnabled, bool 
 			updated = updated || ImGui::Checkbox("Enable High Quality", (bool*)&EnableHighQuality);
 		}
 
-		if (isConfigOverride) Helpers::UI::BeginOptionalSection<TODValue<uint32_t>>(MaxDistance, 2048.0f);
+		if (isConfigOverride) Helpers::UI::BeginOptionalSection<FeatureValue<uint32_t>>(MaxDistance, 2048.0f);
 		ImGui::TextWrapped("The furthest distance from the camera which uses parallax.");
 		updated = updated || MaxDistance->DrawSliderScalar("CRPM Distance", ImGuiDataType_U32, 0, 4096);
 		if (isConfigOverride) Helpers::UI::EndOptionalSection(MaxDistance);
 
-		if (isConfigOverride) Helpers::UI::BeginOptionalSection<TODValue<float>>(CRPMRange, 0.5f);
+		if (isConfigOverride) Helpers::UI::BeginOptionalSection<FeatureValue<float>>(CRPMRange, 0.5f);
 		ImGui::TextWrapped("The percentage of the max distance which uses CRPM.");
 		updated = updated || CRPMRange->DrawSliderScalar("CRPM Range", ImGuiDataType_Float, 0.0f, 1.0f);
 		if (isConfigOverride) Helpers::UI::EndOptionalSection(CRPMRange);
 
-		if (isConfigOverride) Helpers::UI::BeginOptionalSection<TODValue<float>>(BlendRange, 0.05f);
+		if (isConfigOverride) Helpers::UI::BeginOptionalSection<FeatureValue<float>>(BlendRange, 0.05f);
 		ImGui::TextWrapped(
 			"The range that parallax blends from POM to bump mapping, and bump mapping to nothing.\n"
 			"This value should be set as low as possible due to the performance impact of blending POM and relief mapping.");
 		updated = updated || BlendRange->DrawSliderScalar("Blend Range", ImGuiDataType_Float, 0.0f, CRPMRange.value_or(defaultEM->CRPMRange.value()));
 		if (isConfigOverride) Helpers::UI::EndOptionalSection(BlendRange);
 
-		if (isConfigOverride) Helpers::UI::BeginOptionalSection<TODValue<float>>(Height, 0.01f);
+		if (isConfigOverride) Helpers::UI::BeginOptionalSection<FeatureValue<float>>(Height, 0.01f);
 		ImGui::TextWrapped("The range between the highest and lowest point a surface can be offset by.");
 		updated = updated || Height->DrawSliderScalar("Height", ImGuiDataType_Float, 0, 0.2f);
 		if (isConfigOverride) Helpers::UI::EndOptionalSection(BlendRange);
@@ -72,11 +72,11 @@ bool ExtendedMaterials::ConfigSettings::DrawSettings(bool& featureEnabled, bool 
 			ImGui::Checkbox("Enable Shadows", (bool*)&EnableShadows);
 		}
 
-		if (isConfigOverride) Helpers::UI::BeginOptionalSection<TODValue<uint32_t>, TODValue<uint32_t>>(ShadowsStartFade, 512, ShadowsEndFade, 1024);
+		if (isConfigOverride) Helpers::UI::BeginOptionalSection<FeatureValue<uint32_t>, FeatureValue<uint32_t>>(ShadowsStartFade, 512, ShadowsEndFade, 1024);
 		ImGui::TextWrapped("Modifying the start and end fade can improve performance and hide obvious texture tiling.");
 		updated = updated || ShadowsStartFade->DrawSliderScalar("Shadows Start Fade", ImGuiDataType_U32, 0, ShadowsEndFade.value_or(512));
 		updated = updated || ShadowsEndFade->DrawSliderScalar("Shadows End Fade", ImGuiDataType_U32, ShadowsStartFade.value_or(1024), 4096);
-		if (isConfigOverride) Helpers::UI::EndOptionalSection<TODValue<uint32_t>, TODValue<uint32_t>>(ShadowsStartFade, ShadowsEndFade);
+		if (isConfigOverride) Helpers::UI::EndOptionalSection<FeatureValue<uint32_t>, FeatureValue<uint32_t>>(ShadowsStartFade, ShadowsEndFade);
 
 		ImGui::TreePop();
 	}
@@ -84,7 +84,7 @@ bool ExtendedMaterials::ConfigSettings::DrawSettings(bool& featureEnabled, bool 
 	return updated;
 }
 
-ExtendedMaterials::ShaderSettings ExtendedMaterials::ConfigSettings::ToShaderSettings()
+ExtendedMaterials::Settings ExtendedMaterials::ConfigSettings::ToShaderSettings()
 {
 	ShaderSettings settings;
 
@@ -191,4 +191,4 @@ std::shared_ptr<FeatureSettings> ExtendedMaterials::CreateConfig()
 void ExtendedMaterials::ApplyConfig(std::shared_ptr<FeatureSettings> config)
 {
 	configSettings = std::dynamic_pointer_cast<ExtendedMaterials::ConfigSettings>(config);
-}
+}*/

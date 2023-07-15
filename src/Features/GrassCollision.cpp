@@ -1,4 +1,4 @@
-#include "GrassCollision.h"
+/*#include "GrassCollision.h"
 
 #include "State.h"
 #include "Util.h"
@@ -23,7 +23,7 @@ bool GrassCollision::ConfigSettings::DrawSettings(bool& featureEnabled, bool isC
 			ImGui::Checkbox("Enable Grass Collision", &featureEnabled);
 		}
 		
-		if (isConfigOverride) Helpers::UI::BeginOptionalSection<TODValue<float>>(RadiusMultiplier, 2.0f);
+		if (isConfigOverride) Helpers::UI::BeginOptionalSection<FeatureValue<float>>(RadiusMultiplier, 2.0f);
 
 		ImGui::TextWrapped("Distance from collision centres to apply collision");
 		updated = updated || RadiusMultiplier->DrawSliderScalar("Radius Multiplier", ImGuiDataType_Float, 0.0f, 8.0f);
@@ -31,7 +31,7 @@ bool GrassCollision::ConfigSettings::DrawSettings(bool& featureEnabled, bool isC
 		if (isConfigOverride) Helpers::UI::EndOptionalSection(RadiusMultiplier);
 
 			
-		if (isConfigOverride) Helpers::UI::BeginOptionalSection<TODValue<float>>(RadiusMultiplier, 2.0f);
+		if (isConfigOverride) Helpers::UI::BeginOptionalSection<FeatureValue<float>>(RadiusMultiplier, 2.0f);
 			
 		ImGui::TextWrapped("Strength of each collision on grass position.");
 		updated = updated || RadiusMultiplier->DrawSliderScalar("Displacement Multiplier", ImGuiDataType_Float, 0.0f, 32.0f);
@@ -281,4 +281,4 @@ std::shared_ptr<FeatureSettings> GrassCollision::CreateConfig()
 void GrassCollision::ApplyConfig(std::shared_ptr<FeatureSettings> config)
 {
 	configSettings = std::dynamic_pointer_cast<GrassCollision::ConfigSettings>(config);
-}
+}*/

@@ -1,4 +1,4 @@
-#pragma once
+/* #pragma once
 
 #include "Buffer.h"
 #include "Feature.h"
@@ -21,9 +21,9 @@ public:
 
 	struct ShaderSettings
 	{
-		std::uint32_t EnableGrassCollision;
-		float RadiusMultiplier = 2;
-		float DisplacementMultiplier = 16;
+		fv_uint32 EnableGrassCollision;
+		fv_float RadiusMultiplier = 2;
+		fv_float DisplacementMultiplier = 16;
 	};
 
 	struct ConfigSettings : FeatureSettings
@@ -69,3 +69,4 @@ public:
 	virtual std::shared_ptr<FeatureSettings> CreateConfig() override;
 	virtual void ApplyConfig(std::shared_ptr<FeatureSettings> config) override;
 };
+*/

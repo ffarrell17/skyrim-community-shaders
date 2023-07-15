@@ -1,4 +1,4 @@
-#include "DistantTreeLighting.h"
+/*#include "DistantTreeLighting.h"
 #include "..\Configuration\ConfigurationManager.h"
 
 #include "State.h"
@@ -32,7 +32,7 @@ bool DistantTreeLighting::ConfigSettings::DrawSettings(bool& featureEnabled, boo
 
 	if (ImGui::TreeNodeEx("Effects", ImGuiTreeNodeFlags_DefaultOpen)) {
 			
-		if (isConfigOverride) Helpers::UI::BeginOptionalSection<TODValue<float>>(SubsurfaceScatteringAmount, 0.5f);
+		if (isConfigOverride) Helpers::UI::BeginOptionalSection<FeatureValue<float>>(SubsurfaceScatteringAmount, 0.5f);
 
 		ImGui::TextWrapped(
 			"Soft lighting controls how evenly lit an object is.\n"
@@ -47,7 +47,7 @@ bool DistantTreeLighting::ConfigSettings::DrawSettings(bool& featureEnabled, boo
 
 	if (ImGui::TreeNodeEx("Vanilla", ImGuiTreeNodeFlags_DefaultOpen)) {
 
-		if (isConfigOverride) Helpers::UI::BeginOptionalSection<TODValue<float>>(FogDimmerAmount, 1.0f);
+		if (isConfigOverride) Helpers::UI::BeginOptionalSection<FeatureValue<float>>(FogDimmerAmount, 1.0f);
 
 		ImGui::TextWrapped("Darkens lighting relative fog strength.");
 
@@ -183,4 +183,4 @@ std::shared_ptr<FeatureSettings> DistantTreeLighting::CreateConfig()
 void DistantTreeLighting::ApplyConfig(std::shared_ptr<FeatureSettings> config)
 {
 	configSettings = std::dynamic_pointer_cast<DistantTreeLighting::ConfigSettings>(config);
-}
+}*/

@@ -27,9 +27,8 @@ public:
 	virtual bool ValidateCache(CSimpleIniA& a_ini);
 	virtual void WriteDiskCacheInfo(CSimpleIniA& a_ini);
 
-	virtual std::shared_ptr<FeatureSettings> CreateConfig() = 0;
-	virtual void ApplyConfig(std::shared_ptr<FeatureSettings> config) = 0;
-	void ApplyDefaultConfig();
+	virtual std::shared_ptr<FeatureSettings> CreateNewSettings() = 0;
+	virtual void SetSettings(FeatureSettings& newSettings) = 0;
 
 	// Cat: add all the features in here
 	static const std::vector<Feature*>& GetFeatureList();
@@ -43,4 +42,25 @@ protected:
 private:
 
 	std::string RemoveSpaces(const std::string& str);
+};
+
+template <typename Derived>
+concept DerivedFromBaseStruct = std::is_base_of<FeatureSettings, Derived>::value;
+
+template <DerivedFromBaseStruct Derived>
+class FeatureWithSettings : public Feature
+{
+protected:
+	Derived settings;
+
+public:
+	virtual std::shared_ptr<FeatureSettings> CreateNewSettings() override
+	{
+		return std::make_shared<Derived>();
+	}
+	
+	void SetSettings(FeatureSettings& newSettings)
+	{
+		settings = dynamic_cast<Derived&>(newSettings);
+	}
 };

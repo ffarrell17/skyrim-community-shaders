@@ -1,29 +1,20 @@
 #include "WaterBlending.h"
 
-bool WaterBlending::ConfigSettings::DrawSettings(bool& featureEnabled, bool isConfigOverride, std::shared_ptr<FeatureSettings> defaultSettings)
+#pragma warning(suppress: 4100)
+void Settings::Draw()
  {
-	 bool updated = false;
-
-	if (ImGui::TreeNodeEx("General", ImGuiTreeNodeFlags_DefaultOpen)) {
+	 if (ImGui::TreeNodeEx("General", ImGuiTreeNodeFlags_DefaultOpen)) {
 		
-		if (!isConfigOverride)
-			updated = updated || ImGui::Checkbox("Enable Water Blending", &featureEnabled);
+		EnableWaterBlending.DrawCheckbox("Enable Water Blending");
 
-		if (isConfigOverride) Helpers::UI::BeginOptionalSection<TODValue<float>>(WaterBlendRange, 1.0f);
-		updated = updated || WaterBlendRange->DrawSliderScalar("Water Blend Range", ImGuiDataType_Float, 0.0f, 3.0f);
-		if (isConfigOverride) Helpers::UI::EndOptionalSection(WaterBlendRange);
+		WaterBlendRange.DrawSlider("Water Blend Range", 0.0f, 3.0f);
 
-		if (!isConfigOverride)
-			updated = updated || ImGui::Checkbox("Enable Water Blending SSR", &EnableWaterBlendingSSR);
+		EnableWaterBlendingSSR.DrawCheckbox("Enable Water Blending SSR");
 
-		if (isConfigOverride) Helpers::UI::BeginOptionalSection<TODValue<float>>(SSRBlendRange, 1.0f);
-		updated = updated || SSRBlendRange->DrawSliderScalar("SSR Blend Range", ImGuiDataType_Float, 0.0f, 3.0f);
-		if (isConfigOverride) Helpers::UI::EndOptionalSection(SSRBlendRange);
+		SSRBlendRange.DrawSlider("SSR Blend Range", 0.0f, 3.0f);
 
 		ImGui::TreePop();
 	}
-
-	return updated;
 }
 
 void WaterBlending::Draw(const RE::BSShader* shader, const uint32_t)
@@ -32,8 +23,7 @@ void WaterBlending::Draw(const RE::BSShader* shader, const uint32_t)
 		auto context = RE::BSGraphics::Renderer::GetSingleton()->GetRuntimeData().context;
 
 		PerPass data{};
-		data.settings = configSettings->ToShaderSettings();
-		data.settings.EnableWaterBlending = _enabled;
+		data.settings = settings;
 
 		auto shadowState = RE::BSGraphics::RendererShadowState::GetSingleton();
 
@@ -68,15 +58,6 @@ void WaterBlending::Draw(const RE::BSShader* shader, const uint32_t)
 	}
 }
 
-WaterBlending::ShaderSettings WaterBlending::ConfigSettings::ToShaderSettings()
-{
-	ShaderSettings settings;
-	settings.WaterBlendRange = WaterBlendRange->Get();
-	settings.EnableWaterBlendingSSR = EnableWaterBlendingSSR;
-	settings.SSRBlendRange = SSRBlendRange->Get();
-	return settings;
-}
-
 void WaterBlending::SetupResources()
 {
 	D3D11_BUFFER_DESC sbDesc{};
@@ -107,14 +88,4 @@ std::vector<std::string> WaterBlending::GetAdditionalRequiredShaderDefines(RE::B
 	}
 
 	return defines;
-}
-
-std::shared_ptr<FeatureSettings> WaterBlending::CreateConfig()
-{
-	return std::make_shared<WaterBlending::ConfigSettings>();
-}
-
-void WaterBlending::ApplyConfig(std::shared_ptr<FeatureSettings> config)
-{
-	configSettings = std::dynamic_pointer_cast<WaterBlending::ConfigSettings>(config);
 }

@@ -1,15 +1,26 @@
 #include "Weather.h"
-#include "imgui_stdlib.h"
 
 using namespace Configuration;
 
-Weather::Weather()
+Weather::Weather(bool defaultWeather) :
+	FeatureSettings(defaultWeather ? FeatureSettingsType::WeatherOverrideDefault : FeatureSettingsType::WeatherOverride)
 {
-	Name = "New Weather";
-	Ids.push_back(0);
+	_isDefaultWeather = defaultWeather;
+	if (_isDefaultWeather) {
+		Name = "Default";
+	} else {
+		Name = "New Weather";
+		Ids.push_back(0);
+	}
 }
 
-Weather::Weather(json& o_json)
+Weather::Weather(json& o_json, bool defaultWeather) :
+	Weather(defaultWeather)
+{
+	Load(o_json);
+}
+
+void Configuration::Weather::Load(json& o_json)
 {
 	Name = o_json["Name"];
 
@@ -37,14 +48,14 @@ Weather::Weather(json& o_json)
 		Ids.push_back(id);
 	}
 
-	Settings.Load(o_json["Settings"], true);
+	FeatureSettings.Load(o_json["Settings"]);
 }
 
 void Weather::Save(json& o_json)
 {
 	o_json["Name"] = Name;
 	o_json["Ids"] = Ids;
-	Settings.Save(o_json["Settings"], true);
+	FeatureSettings.Save(o_json["Settings"]);
 }
 
 bool TryGetHex(const std::string& input, int& val)
@@ -71,15 +82,27 @@ uint32_t HexStringToUint32(const std::string& hexString)
 
 void Weather::Draw()
 {
-	_updated = _updatedIds = false;
+	 _updated = _updatedIds = false;
 
-	_updated = ImGui::InputText("Name", &Name);
+	_updated = ImGui::InputText("Name", &Name, _isDefaultWeather ? ImGuiInputTextFlags_ReadOnly : 0);	
 
+	if (!_isDefaultWeather) {
+		DrawIdList();
+	}
+
+	ImGui::Spacing();
+	ImGui::Spacing();
+
+	FeatureSettings.Draw();
+}
+
+void Weather::DrawIdList()
+{
 	for (int i = 0; i < Ids.size(); ++i) {
 		ImGui::PushID(i);
 
 		auto label = i == 0 ? "Ids" : "";
-		
+
 		auto* matchingWeather = RE::TESForm::LookupByID<RE::TESWeather>(Ids[i]);
 
 		// Hex string - Uppercase and 8 digits
@@ -88,7 +111,7 @@ void Weather::Draw()
 		char buffer[9];
 		size_t bufferSize = sizeof(buffer);
 		strncpy_s(buffer, bufferSize, hexString.c_str(), bufferSize - 1);
-		buffer[bufferSize - 1] = '\0'; 
+		buffer[bufferSize - 1] = '\0';
 
 		// TODO: Change input colour to indicate weather found
 		if (ImGui::InputText(label, buffer, sizeof(buffer), ImGuiInputTextFlags_CharsHexadecimal | ImGuiInputTextFlags_CharsUppercase)) {
@@ -101,25 +124,25 @@ void Weather::Draw()
 		}
 
 		ImGui::SameLine();
-		if (!matchingWeather) ImGui::BeginDisabled();
-		if (ImGui::Button("Apply") && matchingWeather)
-		{
+		if (!matchingWeather)
+			ImGui::BeginDisabled();
+		if (ImGui::Button("Apply") && matchingWeather) {
 			const auto& sky = RE::Sky::GetSingleton();
 			if (sky) {
 				sky->SetWeather(matchingWeather, true, false);
 			}
 		}
-		if (!matchingWeather) ImGui::EndDisabled();
-
+		if (!matchingWeather)
+			ImGui::EndDisabled();
 
 		// Button to remove the ID only if there's more than one ID
 		if (Ids.size() > 1) {
 			ImGui::SameLine();
 			if (ImGui::Button(("Remove##" + std::to_string(i)).c_str())) {
 				Ids.erase(Ids.begin() + i);
-				ImGui::PopID(); 
+				ImGui::PopID();
 				_updated = _updatedIds = true;
-				break; 
+				break;
 			}
 		}
 
@@ -128,19 +151,14 @@ void Weather::Draw()
 
 	
 	if (ImGui::Button("Add Id")) {
-		Ids.push_back(0); 
+		Ids.push_back(0);
 		_updated = _updatedIds = true;
 	}
-
-	ImGui::Spacing();
-	ImGui::Spacing();
-
-	Settings.Draw("weatherFeatures", true);
 }
 
 bool Configuration::Weather::HasUpdated()
 {
-	return _updated || Settings.HasUpdated();
+	return _updated || FeatureSettings.HasUpdated();
 }
 
 bool Configuration::Weather::HasUpdatedIds()
@@ -151,5 +169,5 @@ bool Configuration::Weather::HasUpdatedIds()
 void Configuration::Weather::ResetUpdatedState()
 {
 	_updated = _updatedIds = false;
-	Settings.ResetUpdatedState();
+	FeatureSettings.ResetUpdatedState();
 }

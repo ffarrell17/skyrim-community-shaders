@@ -1,4 +1,4 @@
-#include "GrassLighting.h"
+/*#include "GrassLighting.h"
 
 #include "State.h"
 #include "Util.h"
@@ -25,11 +25,11 @@ bool GrassLighting::ConfigSettings::DrawSettings(bool& featureEnabled, bool isCo
 			"Specular highlights for complex grass.\n"
 			"Functions the same as on other objects.");
 
-		if (isConfigOverride) Helpers::UI::BeginOptionalSection<TODValue<float>>(Glossiness, 20.0f);
+		if (isConfigOverride) Helpers::UI::BeginOptionalSection<FeatureValue<float>>(Glossiness, 20.0f);
 		updated = updated || Glossiness->DrawSliderScalar("Glossiness", ImGuiDataType_Float, 1.0f, 100.0f);
 		if (isConfigOverride) Helpers::UI::EndOptionalSection(Glossiness);
 
-		if (isConfigOverride) Helpers::UI::BeginOptionalSection<TODValue<float>>(SpecularStrength, 0.5f);
+		if (isConfigOverride) Helpers::UI::BeginOptionalSection<FeatureValue<float>>(SpecularStrength, 0.5f);
 		updated = updated || SpecularStrength->DrawSliderScalar("Specular Strength", ImGuiDataType_Float, 0.0f, 1.0f);
 		if (isConfigOverride) Helpers::UI::EndOptionalSection(SpecularStrength);
 			
@@ -42,7 +42,7 @@ bool GrassLighting::ConfigSettings::DrawSettings(bool& featureEnabled, bool isCo
 			"Back lighting illuminates the back face of an object.\n"
 			"Combined to model the transport of light through the surface.");
 			
-		if (isConfigOverride) Helpers::UI::BeginOptionalSection<TODValue<float>>(SubsurfaceScatteringAmount, 0.5f);
+		if (isConfigOverride) Helpers::UI::BeginOptionalSection<FeatureValue<float>>(SubsurfaceScatteringAmount, 0.5f);
 		ImGui::PushItemWidth(ImGui::GetWindowWidth() * 0.5f);
 		updated = updated || SubsurfaceScatteringAmount->DrawSliderScalar("Subsurface Scattering Amount", ImGuiDataType_Float, 0.0f, 1.0f);
 		if (isConfigOverride) Helpers::UI::EndOptionalSection(SubsurfaceScatteringAmount);
@@ -152,4 +152,4 @@ std::shared_ptr<FeatureSettings> GrassLighting::CreateConfig()
 void GrassLighting::ApplyConfig(std::shared_ptr<FeatureSettings> config)
 {
 	configSettings = std::dynamic_pointer_cast<GrassLighting::ConfigSettings>(config);
-}
+}*/

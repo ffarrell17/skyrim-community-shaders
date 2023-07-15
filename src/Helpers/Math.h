@@ -1,6 +1,6 @@
 #pragma once
 #include <optional>
-#include "..\Configuration\TODValue.h"
+#include "Configuration\FeatureValue.h"
 
 namespace Helpers
 {

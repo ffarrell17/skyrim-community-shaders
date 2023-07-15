@@ -1,9 +1,8 @@
 #pragma once
 
 #include <PCH.h>
-#include "ShaderSettings.h"
-#include "Weather.h"
-#include "Location.h"
+#include "FeatureSettingsCollection.h"
+#include "Weather/WeathersCollection.h"
 #include "TODinfo.h"
 #include "Helpers/Location.h"
 #include "Helpers/Weather.h"
@@ -16,15 +15,6 @@ namespace Configuration
 	class ConfigurationManager
 	{
 	public:
-		ShaderSettings CurrentConfig;  // Generated config to be used by features
-
-		ShaderSettings DefaultSettings;                           // General config settings
-		std::vector<std::shared_ptr<Weather>> WeatherSettings;    // All weather configs
-		std::vector<std::shared_ptr<Location>> LocationSettings;  // All location configs including embedded weather configs
-
-		std::shared_ptr<Location> MatchingCurrentLocationSettings;  // Matching Location
-		std::shared_ptr<Weather> MatchingCurrentWeatherSettings;    // Matching current Weather
-		std::shared_ptr<Weather> MatchingOutgoingWeatherSettings;   // Matching outgoing weather
 
 		static ConfigurationManager* GetSingleton()
 		{
@@ -32,21 +22,30 @@ namespace Configuration
 			return &cm;
 		}
 
+		FeatureSettingsCollection CurrentSettings;	// Generated config to be used by features
+		FeatureSettingsCollection GeneralSettings;	// Basic General config settings
+		
+		WeathersCollection WeatherSettings;			// Collection of all weather settings
+		
+		std::shared_ptr<Weather> CurrentWeatherSettings;   // Matching current Weather
+		std::shared_ptr<Weather> OutgoingWeatherSettings;  // Matching outgoing weather
+
+		ConfigurationManager();
+
 		void Load(json& o_json);
 		void Save(json& o_json);
-		void Update();
+		void Update(bool force = false);
 
+		bool UseWeatherOverrides = false;
 	private:
 		RE::FormID _currentWeather = 0;
 		RE::FormID _outgoingWeather = 0;
-		RE::FormID _currentLocation = 0;
 		float _weatherTransition = 1.0f;
 
 		void ApplyCurrentConfig();
-		void FindMatchingLocationAndWeathers(RE::FormID newLocation, RE::FormID currentWeather, RE::FormID outgoingWeather);
 
-		void ApplyWeatherTransition(ShaderSettings& targetSettings, const ShaderSettings& outgoingSettings, const ShaderSettings& currentSettings, const float transition);
+		void ApplyWeatherTransition(FeatureSettingsCollection& targetSettings, const FeatureSettingsCollection& outgoingSettings, const FeatureSettingsCollection& currentSettings, const float transition);
 
-		void OverrideConfig(ShaderSettings& targetSettings, ShaderSettings& newSettings);
+		void OverrideConfig(FeatureSettingsCollection& targetSettings, FeatureSettingsCollection& newSettings, bool isConfigOverride = false);
 	};
 }

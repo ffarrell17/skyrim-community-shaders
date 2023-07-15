@@ -1,4 +1,4 @@
-#include "ScreenSpaceShadows.h"
+/*#include "ScreenSpaceShadows.h"
 
 #include "State.h"
 #include "Util.h"
@@ -25,11 +25,11 @@ bool ScreenSpaceShadows::ConfigSettings::DrawSettings(bool& featureEnabled, bool
 
 	if (ImGui::TreeNodeEx("Blur Filter", ImGuiTreeNodeFlags_DefaultOpen)) {
 
-		if (isConfigOverride) Helpers::UI::BeginOptionalSection<TODValue<float>>(BlurRadius, 0.5f);
+		if (isConfigOverride) Helpers::UI::BeginOptionalSection<FeatureValue<float>>(BlurRadius, 0.5f);
 		updated = updated || BlurRadius->DrawSliderScalar("Blur Radius", ImGuiDataType_Float, 0, 1);
 		if (isConfigOverride) Helpers::UI::EndOptionalSection(BlurRadius);
 
-		if (isConfigOverride) Helpers::UI::BeginOptionalSection<TODValue<float>>(BlurDropoff, 0.005f);
+		if (isConfigOverride) Helpers::UI::BeginOptionalSection<FeatureValue<float>>(BlurDropoff, 0.005f);
 		updated = updated || BlurDropoff->DrawSliderScalar("Blur Depth Dropoff", ImGuiDataType_Float, 0.001f, 0.1f);
 		if (isConfigOverride) Helpers::UI::EndOptionalSection(BlurDropoff);
 
@@ -38,15 +38,15 @@ bool ScreenSpaceShadows::ConfigSettings::DrawSettings(bool& featureEnabled, bool
 
 	if (ImGui::TreeNodeEx("Near Shadows", ImGuiTreeNodeFlags_DefaultOpen)) {
 			
-		if (isConfigOverride) Helpers::UI::BeginOptionalSection<TODValue<float>>(NearDistance, 16.0f);
+		if (isConfigOverride) Helpers::UI::BeginOptionalSection<FeatureValue<float>>(NearDistance, 16.0f);
 		updated = updated || NearDistance->DrawSliderScalar("Near Distance", ImGuiDataType_Float, 0, 128);
 		if (isConfigOverride) Helpers::UI::EndOptionalSection(NearDistance);
 
-		if (isConfigOverride) Helpers::UI::BeginOptionalSection<TODValue<float>>(NearThickness, 2.0f);
+		if (isConfigOverride) Helpers::UI::BeginOptionalSection<FeatureValue<float>>(NearThickness, 2.0f);
 		updated = updated || NearThickness->DrawSliderScalar("Near Thickness", ImGuiDataType_Float, 0, 128);
 		if (isConfigOverride) Helpers::UI::EndOptionalSection(NearThickness);
 
-		if (isConfigOverride) Helpers::UI::BeginOptionalSection<TODValue<float>>(NearHardness, 32.0f);
+		if (isConfigOverride) Helpers::UI::BeginOptionalSection<FeatureValue<float>>(NearHardness, 32.0f);
 		updated = updated || NearHardness->DrawSliderScalar("Near Hardness", ImGuiDataType_Float, 0, 64);
 		if (isConfigOverride) Helpers::UI::EndOptionalSection(NearHardness);
 
@@ -55,15 +55,15 @@ bool ScreenSpaceShadows::ConfigSettings::DrawSettings(bool& featureEnabled, bool
 
 	if (ImGui::TreeNodeEx("Far Shadows", ImGuiTreeNodeFlags_DefaultOpen)) {
 
-		if (isConfigOverride) Helpers::UI::BeginOptionalSection<TODValue<float>>(FarDistanceScale, 16.0f);
+		if (isConfigOverride) Helpers::UI::BeginOptionalSection<FeatureValue<float>>(FarDistanceScale, 16.0f);
 		 updated = updated || FarDistanceScale->DrawSliderScalar("Far Distance Scale", ImGuiDataType_Float, 0, 1);
 		if (isConfigOverride) Helpers::UI::EndOptionalSection(FarDistanceScale);
 
-		if (isConfigOverride) Helpers::UI::BeginOptionalSection<TODValue<float>>(FarThicknessScale, 2.0f);
+		if (isConfigOverride) Helpers::UI::BeginOptionalSection<FeatureValue<float>>(FarThicknessScale, 2.0f);
 		 updated = updated || FarThicknessScale->DrawSliderScalar("Far Thickness Scale", ImGuiDataType_Float, 0, 1);
 		if (isConfigOverride) Helpers::UI::EndOptionalSection(FarThicknessScale);
 
-		if (isConfigOverride) Helpers::UI::BeginOptionalSection<TODValue<float>>(FarHardness, 32.0f);
+		if (isConfigOverride) Helpers::UI::BeginOptionalSection<FeatureValue<float>>(FarHardness, 32.0f);
 		 updated = updated || FarHardness->DrawSliderScalar("Far Hardness", ImGuiDataType_Float, 0, 64);
 		if (isConfigOverride) Helpers::UI::EndOptionalSection(FarHardness);
 
@@ -480,3 +480,4 @@ void ScreenSpaceShadows::ApplyConfig(std::shared_ptr<FeatureSettings> config)
 {
 	configSettings = std::dynamic_pointer_cast<ScreenSpaceShadows::ConfigSettings>(config);
 }
+*/

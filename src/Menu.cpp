@@ -461,12 +461,12 @@ void Menu::DrawSettings()
 
 
 		if (ImGui::CollapsingHeader("Features", ImGuiTreeNodeFlags_DefaultOpen)) {
-			Configuration::ConfigurationManager::GetSingleton()->DefaultSettings.Draw();
+			Configuration::ConfigurationManager::GetSingleton()->GeneralSettings.Draw();
 		}
 
 		if (showCurrentConfig) {
 			if (ImGui::CollapsingHeader("Generated", ImGuiTreeNodeFlags_DefaultOpen)) {
-				Configuration::ConfigurationManager::GetSingleton()->CurrentConfig.Draw("Generated");
+				Configuration::ConfigurationManager::GetSingleton()->CurrentSettings.Draw();
 			}
 		}
 	}
@@ -548,15 +548,19 @@ void Menu::DrawWeatherPanel()
 		
 		const auto& configManager = Configuration::ConfigurationManager::GetSingleton();
 
+		if (ImGui::Checkbox("Use Weather Settings", &configManager->UseWeatherOverrides)) {
+			configManager->Update(true);
+		}
+
 		std::string currentWeatherSetting = "-";
-		if (configManager->MatchingCurrentWeatherSettings) {
-			currentWeatherSetting = configManager->MatchingCurrentWeatherSettings->Name;
+		if (configManager->CurrentWeatherSettings) {
+			currentWeatherSetting = configManager->CurrentWeatherSettings->Name;
 		}
 		ImGui::InputText("Current Weather Settings", const_cast<char*>(currentWeatherSetting.c_str()), currentWeatherSetting.size() + 1, ImGuiInputTextFlags_ReadOnly);
 		
 		std::string outgoingWeatherSetting = "-";
-		if (configManager->MatchingOutgoingWeatherSettings) {
-			outgoingWeatherSetting = configManager->MatchingOutgoingWeatherSettings->Name;
+		if (configManager->OutgoingWeatherSettings) {
+			outgoingWeatherSetting = configManager->OutgoingWeatherSettings->Name;
 		}
 		ImGui::InputText("Outgoing Weather Settings", const_cast<char*>(outgoingWeatherSetting.c_str()), outgoingWeatherSetting.size() + 1, ImGuiInputTextFlags_ReadOnly);
 
@@ -565,44 +569,8 @@ void Menu::DrawWeatherPanel()
 		ImGui::Spacing();
 		ImGui::Spacing();
 		
-		if (ImGui::Button("Add Weather")) {
-			configManager->WeatherSettings.push_back(std::make_shared<Configuration::Weather>());
-			selectedWeatherIndex = (int)configManager->WeatherSettings.size() - 1;
-			logger::trace("Added new weather config");
-		}
 
-		
-		if (selectedWeatherIndex < 0) ImGui::BeginDisabled();
-		if (ImGui::Button("Remove Weather")) {
-			// TODO: add warning
-			configManager->WeatherSettings.erase(configManager->WeatherSettings.begin() + selectedWeatherIndex);
-			selectedWeatherIndex = -1;
-		}
-		if (selectedWeatherIndex < 0) ImGui::EndDisabled();
-		
-
-		// Display the list box of weather items
-		std::vector<const char*> weatherNames;
-		for (const auto& weather : configManager->WeatherSettings) {
-			weatherNames.push_back(weather->Name.c_str());
-		}
-
-		int preSelectedIndex = selectedWeatherIndex;
-		if (ImGui::ListBox("Weather List", &selectedWeatherIndex, weatherNames.data(), static_cast<int>(weatherNames.size()))) {
-			if (preSelectedIndex == selectedWeatherIndex)
-				preSelectedIndex = -1; //deselect
-		}
-
-		ImGui::Spacing();
-		
-		ImGui::Indent();
-		// Display the selected weather item's settings
-		if (selectedWeatherIndex >= 0 && selectedWeatherIndex < static_cast<int>(configManager->WeatherSettings.size())) {
-			const auto& selectedWeather = configManager->WeatherSettings[selectedWeatherIndex];
-
-			selectedWeather->Draw();
-		}
-		ImGui::Unindent();
+		configManager->WeatherSettings.Draw();
 	}
 
 	ImGui::End();

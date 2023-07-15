@@ -2,11 +2,11 @@
 
 #include "Buffer.h"
 #include "Feature.h"
-#include "Configuration/TODValue.h"
+#include "Configuration/FeatureValue.h"
 
 using namespace Configuration;
 
-class ScreenSpaceShadows : public Feature
+/* class ScreenSpaceShadows : public Feature
 {
 public:
 
@@ -21,56 +21,16 @@ public:
 
 	struct ShaderSettings
 	{
-		uint32_t MaxSamples = 24;
-		float FarDistanceScale = 0.025f;
-		float FarThicknessScale = 0.025f;
-		float FarHardness = 8.0f;
-		float NearDistance = 16.0f;
-		float NearThickness = 2.0f;
-		float NearHardness = 32.0f;
-		float BlurRadius = 0.5f;
-		float BlurDropoff = 0.005f;
+		fv_uint32 MaxSamples = 24;
+		fv_float FarDistanceScale = 0.025f;
+		fv_float FarThicknessScale = 0.025f;
+		fv_float FarHardness = 8.0f;
+		fv_float NearDistance = 16.0f;
+		fv_float NearThickness = 2.0f;
+		fv_float NearHardness = 32.0f;
+		fv_float BlurRadius = 0.5f;
+		fv_float BlurDropoff = 0.005f;
 	};
-
-	struct ConfigSettings : FeatureSettings
-	{
-		std::optional<uint32_t> MaxSamples = 24;
-		std::optional<TODValue<float>> FarDistanceScale = 0.025f;
-		std::optional<TODValue<float>> FarThicknessScale = 0.025f;
-		std::optional<TODValue<float>> FarHardness = 8.0f;
-		std::optional<TODValue<float>> NearDistance = 16.0f;
-		std::optional<TODValue<float>> NearThickness = 2.0f;
-		std::optional<TODValue<float>> NearHardness = 32.0f;
-		std::optional<TODValue<float>> BlurRadius = 0.5f;
-		std::optional<TODValue<float>> BlurDropoff = 0.005f;
-
-		FEATURE_SETTINGS_OPTIONALS(
-			ConfigSettings,
-			MaxSamples,
-			FarDistanceScale,
-			FarThicknessScale,
-			FarHardness,
-			NearDistance,
-			NearThickness,
-			NearHardness,
-			BlurRadius,
-			BlurDropoff)
-
-		FEATURE_SETTINGS_ALL(
-			ConfigSettings,
-			MaxSamples,
-			FarDistanceScale,
-			FarThicknessScale,
-			FarHardness,
-			NearDistance,
-			NearThickness,
-			NearHardness,
-			BlurRadius,
-			BlurDropoff)
-
-		ShaderSettings ToShaderSettings();
-		virtual bool DrawSettings(bool& featureEnabled, bool isConfigOverride, std::shared_ptr<FeatureSettings> defaultSettings) override;
-	};	
 
 	struct alignas(16) PerPass
 	{
@@ -127,3 +87,4 @@ public:
 	virtual std::shared_ptr<FeatureSettings> CreateConfig() override;
 	virtual void ApplyConfig(std::shared_ptr<FeatureSettings> config) override;
 };
+*/
