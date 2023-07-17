@@ -2,6 +2,8 @@
 #include "TODInfo.h"
 #include "Helpers/UI.h"
 #include "Helpers/Math.h"
+#include "Helpers/Time.h"
+#include <implot.h>
 
 namespace Configuration
 {
@@ -13,24 +15,22 @@ namespace Configuration
 		WeatherOverrideDefault,  // Default override when no override is present
 		WeatherOverride          // Override settings
 	};
-	
-	// Types to differentiate logic when handling settings collections
-	// and individual settings display logic
-	enum class TOD
-	{
-		SunriseStart,
-		SunriseEnd,
-		Day,
-		SunsetStart,
-		SunsetEnd,
-		Night,
-		InteriorDay,
-		InteriorNight,
-	};
 
 	struct FeatureValueGeneric
 	{
 	public:
+		struct TODData
+		{
+			double time;
+			double value;
+		};
+
+		TODData todData[4] = {
+			{ 0.0f, 0.2f },   // Day
+			{ 0.25f, 0.3f },  // Sunrise
+			{ 0.75f, 0.7f },  // Sunset
+			{ 1.0f, 0.8f }    // Night
+		};
 
 		std::string _id = GenerateGuidAsString();
 		FeatureSettingsType _type = FeatureSettingsType::General;
@@ -39,6 +39,7 @@ namespace Configuration
 		std::shared_ptr<bool> _hasValue = std::make_shared<bool>(true);
 		bool _updated = false;
 
+		virtual void TODUpdate() = 0;
 		virtual void SetAsLerp(FeatureValueGeneric* start, FeatureValueGeneric* end, float progress) = 0;
 		virtual void Copy(FeatureValueGeneric* fv) = 0;
 		virtual std::string ToString() = 0;
@@ -59,7 +60,7 @@ namespace Configuration
 			return _isTOD;
 		}
 
-		void SetTODValue(bool todVal)
+		void SetIsTODValue(bool todVal)
 		{
 			_isTOD = todVal;
 		}
@@ -118,25 +119,28 @@ namespace Configuration
 	typedef FeatureValueGeneric fv_any;
 
 	template <typename T>
+	struct TODVals
+	{
+		T SunriseStart;
+		T SunriseEnd;
+		T Day;
+		T SunsetStart;
+		T SunsetEnd;
+		T Night;
+
+		T InteriorDay;
+		T InteriorNight;
+	};
+
+	template <typename T>
 	struct FeatureValue : FeatureValueGeneric
 	{
 	public:
-
 		T Value;
 
 	private:
-
 		T* OverrideVal;
-
-		T _sunriseStart;
-		T _sunriseEnd;
-		T _day;
-		T _sunsetStart;
-		T _sunsetEnd;
-		T _night;
-
-		T _interiorDay;
-		T _interiorNight;
+		TODVals<T> _todVals;
 
 		ImGuiDataType_ _imGuiDataType;
 
@@ -167,6 +171,7 @@ namespace Configuration
 			FeatureValue(type)
 		{
 			Value = defaultVal;
+			SetAllTODVals(Value);
 			*_hasValue = true;
 		}
 
@@ -181,8 +186,15 @@ namespace Configuration
 			return std::to_string(Value);
 		}
 
+		TODVals<T> GetTODVals()
+		{
+			return _todVals;
+		}
+
 		virtual void SetAsLerp(FeatureValueGeneric* start, FeatureValueGeneric* end, float progress) override
 		{
+			start->TODUpdate();
+			end->TODUpdate();
 			FeatureValue<T>* startFV = dynamic_cast<FeatureValue<T>*>(start);
 			FeatureValue<T>* endFV = dynamic_cast<FeatureValue<T>*>(end);
 
@@ -191,11 +203,28 @@ namespace Configuration
 
 		virtual void Copy(FeatureValueGeneric* fv) override
 		{
+			fv->TODUpdate();
 			FeatureValue<T>* newFV = dynamic_cast<FeatureValue<T>*>(fv);
 
 			Value = newFV->Value;
 
 			_isTOD = newFV->IsTODValue();
+			if (!_isTOD) {
+				SetAllTODVals(Value);
+			} else {
+				auto fvTodVals = newFV->GetTODVals();
+
+				_todVals.SunriseStart = fvTodVals.SunriseStart;
+				_todVals.SunriseEnd = fvTodVals.SunriseEnd;
+				_todVals.Day = fvTodVals.Day;
+				_todVals.SunsetStart = fvTodVals.SunsetStart;
+				_todVals.SunsetEnd = fvTodVals.SunsetEnd;
+				_todVals.Night = fvTodVals.Night;
+				_todVals.InteriorDay = fvTodVals.InteriorDay;
+				_todVals.InteriorNight = fvTodVals.InteriorNight;
+			}
+
+
 			*_hasValue = newFV->HasValue();
 			_updated = newFV->HasUpdated();
 
@@ -221,28 +250,60 @@ namespace Configuration
 			//T _interiorNight;
 		}
 
-		T GetTODValue(TOD tod) {
-			switch (tod) {
-			case Configuration::TOD::Night:
-				return _night;
-			case Configuration::TOD::SunriseStart:
-				return _sunriseStart;
-			case Configuration::TOD::SunriseEnd:
-				return _sunriseEnd;
-			case Configuration::TOD::Day:
-				return _day;
-			case Configuration::TOD::SunsetStart:
-				return _sunriseStart;
-			case Configuration::TOD::SunsetEnd:
-				return _sunriseEnd;
-			case Configuration::TOD::Night:
-				return _night;
-			case Configuration::TOD::InteriorDay:
-				return _night;
-			case Configuration::TOD::InteriorNight:
-				return _night;
-			default:
-				return _day;
+		void SetAllTODVals(T val)
+		{
+			_todVals.SunriseStart = _todVals.SunriseEnd = _todVals.Day = _todVals.SunsetStart = _todVals.SunsetEnd = _todVals.Night = _todVals.InteriorDay = _todVals.InteriorNight = val;
+		}
+
+		virtual void TODUpdate() override
+		{
+			if (!_isTOD)
+				return;
+
+			TODInfo* todInfo = TODInfo::GetSingleton();
+
+			if (!todInfo->Valid)
+				Value = _todVals.Day;
+
+			try {
+				if (todInfo->Exterior) {
+					switch (todInfo->TimePeriodType) {
+					case Configuration::TODInfo::TimePeriod::NightToSunriseStart:
+						Value = Helpers::Math::Lerp(_todVals.Night, _todVals.SunriseStart, todInfo->TimePeriodPercentage);
+						break;
+					case Configuration::TODInfo::TimePeriod::SunriseStartToSunriseEnd:
+						Value = Helpers::Math::Lerp(_todVals.SunriseStart, _todVals.SunriseEnd, todInfo->TimePeriodPercentage);
+						break;
+					case Configuration::TODInfo::TimePeriod::SunriseEndToDay:
+						Value = Helpers::Math::Lerp(_todVals.SunriseEnd, _todVals.Day, todInfo->TimePeriodPercentage);
+						break;
+					case Configuration::TODInfo::TimePeriod::DayToSunsetStart:
+						Value = Helpers::Math::Lerp(_todVals.Day, _todVals.SunsetStart, todInfo->TimePeriodPercentage);
+						break;
+					case Configuration::TODInfo::TimePeriod::SunsetStartToSunsetEnd:
+						Value = Helpers::Math::Lerp(_todVals.SunsetStart, _todVals.SunsetEnd, todInfo->TimePeriodPercentage);
+						break;
+					case Configuration::TODInfo::TimePeriod::SunsetEndToNight:
+						Value = Helpers::Math::Lerp(_todVals.SunsetEnd, _todVals.Night, todInfo->TimePeriodPercentage);
+						break;
+					default:
+						Value = _todVals.Day;
+						break;
+					}
+				} else {
+					switch (todInfo->TimePeriodType) {
+					case Configuration::TODInfo::TimePeriod::SunsetEndToNight:
+					case Configuration::TODInfo::TimePeriod::NightToSunriseStart:
+						Value = _todVals.InteriorNight;
+						break;
+					default:
+						Value = _todVals.InteriorDay;
+						break;
+					}
+				}
+			} catch (std::exception& e) {
+				logger::error("Error getting TOD value for of type [{}]. Error: {}", typeid(T).name(), e.what());
+				Value = _todVals.Day;
 			}
 		}
 
@@ -441,7 +502,7 @@ namespace Configuration
 			if (_type == FeatureSettingsType::WeatherOverrideDefault || _type == FeatureSettingsType::WeatherOverride) {
 				
 				if (_type == FeatureSettingsType::WeatherOverrideDefault) {
-					ImGui::PushID(_id.c_str());
+					PushUniqueId("Override");
 					if (ImGui::Checkbox("O", &*_hasValue))
 						_updated = true;
 					ImGui::PopID();
@@ -466,7 +527,7 @@ namespace Configuration
 
 			if (_type == FeatureSettingsType::WeatherOverrideDefault || _type == FeatureSettingsType::WeatherOverride) {
 				if (_type == FeatureSettingsType::WeatherOverrideDefault) {
-					ImGui::PushID(_id.c_str());
+					PushUniqueId("Override");
 					if (ImGui::Checkbox("O", &*_hasValue))
 						_updated = true;
 					ImGui::PopID();
@@ -479,13 +540,17 @@ namespace Configuration
 				}
 
 				if (_isTOD) {
-					// change next button style
+					PushUniqueId("TOD4");
+					ImGui::PushStyleColor(ImGuiCol_Button, ImVec4(0.2f, 0.4f, 0.6f, 1.0f));  // Set your desired background color
+					ImGui::PopID();
 				}
 
+				PushUniqueId("TOD");
 				if (ImGui::Button("TOD")) {
 					showTOD = true;
 				}
-
+				ImGui::PopID();
+				
 				if (showTOD)
 					DrawTODWindow(label, min, max);
 
@@ -498,6 +563,12 @@ namespace Configuration
 			}
 		}
 
+		void PushUniqueId(std::string idPrefix)
+		{
+			std::string id = _id + '_' + idPrefix;
+			ImGui::PushID(id.c_str());
+		}
+
 		void PostDraw()
 		{
 			if (drawIsDisabled) {
@@ -505,32 +576,306 @@ namespace Configuration
 			}
 		}
 
+		T TODMin()
+		{
+			return std::min<T>(std::min<T>(std::min<T>(std::min<T>(std::min<T>(_todVals.Night, _todVals.SunriseStart), _todVals.SunriseEnd), _todVals.Day), _todVals.SunsetStart), _todVals.SunsetEnd);
+		}
+
+		T TODMax()
+		{
+			return std::max<T>(std::max<T>(std::max<T>(std::max<T>(std::max<T>(_todVals.Night, _todVals.SunriseStart), _todVals.SunriseEnd), _todVals.Day), _todVals.SunsetStart), _todVals.SunsetEnd);
+		}
+
+		struct TODValMap
+		{
+			T* val;
+			double time;
+			std::string label;
+			T min;
+			T max;
+		};
+
 		void DrawTODWindow(std::string label, FeatureValue<T>& min, FeatureValue<T>& max)
 		{
+			min = min;
+			max = max;
 			ImGui::DockSpaceOverViewport(NULL, ImGuiDockNodeFlags_PassthruCentralNode);
 
+			PushUniqueId("TOD3");
 			ImGui::SetNextWindowSize({ 200, 200 }, ImGuiCond_FirstUseEver);
 			ImGui::SetNextWindowPos({ 1000, 400 }, ImGuiCond_FirstUseEver);
-			ImGui::Begin(("Time Of Day Editor: " + label).c_str());
+			ImGui::Begin(("Time Of Day Editor: " + label).c_str(), &showTOD);
+			ImGui::PopID();
 
-			if (ImGui::Checkbox("Use Time Of Day Settings", &_isTOD)) {
+			PushUniqueId("TOD2");
+			if (ImGui::Checkbox("Use Time Of Day", &_isTOD)) {
 				_updated = true;
 			}
+			ImGui::PopID();
 
-			_updated = _updated || ImGui::SliderScalar("Sunrise Start", _imGuiDataType, &_sunriseStart, &min._sunriseStart, &max._sunriseStart);
-			_updated = _updated || ImGui::SliderScalar("Sunrise End", _imGuiDataType, &_sunriseEnd, &min._sunriseEnd, &max._sunriseEnd);
-			_updated = _updated || ImGui::SliderScalar("Day", _imGuiDataType, &_day, &min._day, &max._day);
-			_updated = _updated || ImGui::SliderScalar("Sunset Start", _imGuiDataType, &_sunsetStart, &min._sunsetStart, &max._sunsetStart);
-			_updated = _updated || ImGui::SliderScalar("Sunset End", _imGuiDataType, &_sunsetEnd, &min._sunsetEnd, &max._sunsetEnd);
-			_updated = _updated || ImGui::SliderScalar("Night", _imGuiDataType, &_night, &min._night, &max._night);
-			ImGui::Spacing();
-			_updated = _updated || ImGui::SliderScalar("Interior Day", _imGuiDataType, &_interiorDay, &min._interiorDay, &max._interiorDay);
-			_updated = _updated || ImGui::SliderScalar("Interior Night", _imGuiDataType, &_interiorNight, &min._interiorNight, &max._interiorNight);
+			static bool showSliders = false;
+			static bool showInterior = false;
 
-			if (ImGui::Button("Close"))
-				showTOD = true;
+			//ImGui::SameLine();
+			//ImGui::Dummy(ImVec2(100.0f, 0.0f));
+			//ImGui::SameLine();
+			ImGui::Text("Graph");
+			ImGui::SameLine();
+			Helpers::UI::ToggleButton("", &showSliders);
+			ImGui::SameLine();
+			ImGui::Text("Sliders");
+
+			ImGui::SameLine();
+			ImGui::Dummy(ImVec2(100.0f, 0.0f));
+			ImGui::SameLine();
+
+			ImGui::Text("Exterior");
+			ImGui::SameLine();
+			Helpers::UI::ToggleButton("", &showInterior);
+			ImGui::SameLine();
+			ImGui::Text("Interior");
+
+			std::string str = std::to_string(Value);
+			//ImGui::InputText("Current Value", &str, ImGuiInputTextFlags_ReadOnly);
+
+			if (!_isTOD)
+				ImGui::BeginDisabled();
+
+			TODInfo* todInfo = TODInfo::GetSingleton();
+
+			static const int secsInHr = 60 * 60;
+			static const int secsInDay = 24 * secsInHr;
+
+			double nightTimeL = secsInDay;
+			double sunriseStartTime = secsInDay + Helpers::Time::TimeToSeconds(todInfo->SunriseBeginTime);
+			double sunriseEndTime = secsInDay + Helpers::Time::TimeToSeconds(todInfo->SunriseEndTime);
+			double dayTime = secsInDay + 12 * secsInHr;
+			double sunsetStartTime = secsInDay + Helpers::Time::TimeToSeconds(todInfo->SunsetBeginTime);
+			double sunsetEndTime = secsInDay + Helpers::Time::TimeToSeconds(todInfo->SunsetEndTime);
+			double nightTimeR = secsInDay * 2;
+
+			const auto minTodVals = min.GetTODVals();
+			const auto maxTodVals = max.GetTODVals();
+
+			std::vector<TODValMap> todVals;
+
+			if (!showInterior) {
+				todVals = {
+					{ &_todVals.Night, nightTimeL, "Night", minTodVals.Night, maxTodVals.Night },
+					{ &_todVals.SunriseStart, sunriseStartTime, "Sunrise Start", minTodVals.SunriseStart, maxTodVals.SunriseStart },
+					{ &_todVals.SunriseEnd, sunriseEndTime, "Sunrise End", minTodVals.SunriseEnd, maxTodVals.SunriseEnd },
+					{ &_todVals.Day, dayTime, "Day", minTodVals.Day, maxTodVals.Day },
+					{ &_todVals.SunsetStart, sunsetStartTime, "Sunset Start", minTodVals.SunsetStart, maxTodVals.SunsetStart },
+					{ &_todVals.SunsetEnd, sunsetEndTime, "Sunset End", minTodVals.SunsetEnd, maxTodVals.SunsetEnd },
+					{ &_todVals.Night, nightTimeR, "Night", minTodVals.Night, maxTodVals.Night }
+				};
+			} else {
+				todVals = {
+					{ &_todVals.InteriorNight, nightTimeL, "Night", minTodVals.InteriorNight, maxTodVals.InteriorNight },
+					{ &_todVals.InteriorDay, dayTime, "Day", minTodVals.InteriorDay, maxTodVals.InteriorDay },
+					{ &_todVals.InteriorNight, nightTimeR, "Night", minTodVals.InteriorNight, maxTodVals.InteriorNight }
+				};
+			}
+
+			if (!showSliders) {
+				// Use ImPlot to create the TOD graph
+				// Examples: https://traineq.org/implot_demo/src/implot_demo.html
+				if (ImPlot::BeginPlot("  ", ImVec2(-FLT_MIN, -FLT_MIN) /*, ImPlotFlags_Crosshairs*/)) {
+					
+
+					T minT = min.TODMin();
+					T maxT = max.TODMax();
+					T dif = maxT - minT;
+
+					double minYaxis = minT - (dif * 0.1);
+					double maxYaxis = maxT + (dif * 0.1);
+
+					// Setup Axes
+
+					ImPlot::SetupAxes("Time (hr)", label.c_str(), ImPlotAxisFlags_NoMenus | ImPlotAxisFlags_NoSideSwitch | ImPlotAxisFlags_NoHighlight);
+					ImPlot::SetupAxesLimits(secsInDay - 30 * 60, secsInDay * 2 + 30 * 60, minYaxis, maxYaxis);
+					ImPlot::SetupAxisScale(ImAxis_X1, ImPlotScale_Time);
+
+					static double xAxisVal[] = { secsInDay, secsInDay + 2 * secsInHr, secsInDay + 4 * secsInHr, secsInDay + 6 * secsInHr, secsInDay + 8 * secsInHr, secsInDay + 10 * secsInHr, secsInDay + 12 * secsInHr, secsInDay + 14 * secsInHr, secsInDay + 16 * secsInHr, secsInDay + 18 * secsInHr, secsInDay + 20 * secsInHr, secsInDay + 22 * secsInHr, secsInDay + 24 * secsInHr };
+					static const char* xAxisLabel[] = { "0", "2", "4", "6", "8", "10", "12", "14", "16", "18", "20", "22", "24" };
+					ImPlot::SetupAxisTicks(ImAxis_X1, xAxisVal, 13, xAxisLabel, false);
+
+					ImPlot::SetupAxis(ImAxis_X2, 0, ImPlotAxisFlags_AuxDefault | ImPlotAxisFlags_NoDecorations);
+					ImPlot::SetAxis(ImAxis_X2);
+					ImPlot::SetupAxisLimits(ImAxis_X2, secsInDay - 30 * 60, secsInDay * 2 + 30 * 60);
+
+					// Tags for times of interest
+					for (int i = 0; i < todVals.size(); i++) {
+						ImPlot::TagX(todVals[i].time, ImVec4(1, 1, 1, 1), todVals[i].label.c_str());
+					}
+
+					// Lines for times of interest
+					ImPlot::SetAxes(ImAxis_X1, ImAxis_Y1);
+					for (int i = 0; i < todVals.size(); i++) {
+						PlotVerticalLine(todVals[i].time, minYaxis, maxYaxis, ImVec4(0.5f, 0.5f, 0.5f, 1.0f));
+					}
+
+					// Show current tag value on y-axis
+					AddCurrentValueTag(todVals, dif);
+					
+					// Plot line of all values
+					// Making line disappear off screen both side
+					int size = static_cast<int>(todVals.size()) + 2;
+					double xs1[9], ys1[9];
+
+					xs1[0] = todVals[todVals.size() - 2].time - secsInDay;  //sunsetEndTime - secsInDay;
+					ys1[0] = *todVals[todVals.size() - 2].val;   //_todVals.SunsetEnd;
+					for (int i = 0; i < todVals.size(); i++) {
+						xs1[i+1] = todVals[i].time;
+						ys1[i+1] = *todVals[i].val;
+					}
+					xs1[size - 1] = todVals[1].time + secsInDay;
+					ys1[size - 1] = *todVals[1].val;
+					ImPlot::SetNextLineStyle(ImVec4(1.0f, 1.0f, 1.0f, 1.0f), 2);
+					ImPlot::PlotLine("Value", xs1, ys1, size);
+
+					// Add drag points for each tod val
+					ImVec4 dragPointColour = ImVec4(1, 1, 0, 1);
+					float dragPointSize = 4.0f;
+					for (int i = 0; i < todVals.size(); i++) {
+						PlotDragPoint(i, todVals[i].time, *todVals[i].val, todVals[i].min, todVals[i].max, dragPointColour, dragPointSize);
+					}
+
+					// Add current time line
+					double currentTime = Helpers::Time::TimeToSeconds(todInfo->Time);
+					static double currentX[2], currentY[2];
+					currentX[0] = currentTime + secsInDay;
+					currentY[0] = minYaxis;
+					currentX[1] = currentTime + secsInDay;
+					currentY[1] = maxYaxis;
+
+					ImPlot::SetNextLineStyle(ImVec4(0.2f, 0.4f, 0.6f, 1.0f), 2);
+					std::string cu = "Time";
+					ImPlot::PlotLine(cu.c_str(), currentX, currentY, 2);
+
+					// Add current value annotation
+					bool above = true;
+					bool right = 23 * 60 * 60 > currentTime;
+					if (!showInterior) {
+						switch (todInfo->TimePeriodType) {
+						case TODInfo::NightToSunriseStart:
+							above = _todVals.Night > _todVals.SunriseStart;
+							break;
+						case TODInfo::SunriseStartToSunriseEnd:
+							above = _todVals.SunriseStart > _todVals.SunriseEnd;
+							break;
+						case TODInfo::SunriseEndToDay:
+							above = _todVals.SunriseEnd > _todVals.Day;
+							break;
+						case TODInfo::DayToSunsetStart:
+							above = _todVals.Day > _todVals.SunsetStart;
+							break;
+						case TODInfo::SunsetStartToSunsetEnd:
+							above = _todVals.SunsetStart > _todVals.SunsetEnd;
+							break;
+						case TODInfo::SunsetEndToNight:
+							above = _todVals.SunsetEnd > _todVals.Night;
+							break;
+						}
+					} else {
+						switch (todInfo->TimePeriodType) {
+						case TODInfo::NightToSunriseStart:
+						case TODInfo::SunriseStartToSunriseEnd:
+						case TODInfo::SunriseEndToDay:
+							above = _todVals.InteriorNight > _todVals.InteriorDay;
+							break;
+						case TODInfo::DayToSunsetStart:
+						case TODInfo::SunsetStartToSunsetEnd:
+						case TODInfo::SunsetEndToNight:
+							above = _todVals.InteriorNight < _todVals.InteriorDay;
+							break;
+						}
+					}
+
+					if (!right)
+						above = !above;
+
+					ImPlot::Annotation(currentTime + secsInDay, static_cast<double>(Value), ImVec4(0.2f, 0.4f, 0.6f, 1.0f), ImVec2(right ? 5.0f : -5.0f, above ? -10.0f : 10.0f), false, str.c_str());
+
+					ImPlot::EndPlot();
+				}
+			} else {
+				
+				// Displaying Sliders
+
+				//for (auto& todVal : todVals) {
+				for (int i = 0; i < todVals.size() - 1; i++) {
+					PushUniqueId(todVals[i].label);
+					_updated = _updated || ImGui::SliderScalar(todVals[i].label.c_str(), _imGuiDataType, &*todVals[i].val, &todVals[i].min, &todVals[i].max);
+					ImGui::PopID();
+				}
+
+			}
+
+			if (!_isTOD)
+				ImGui::EndDisabled();
 
 			ImGui::End();
+		}
+
+		void AddCurrentValueTag(std::vector<TODValMap>& todVals, T minMaxDiff)
+		{
+			auto plotPoint = ImPlot::GetPlotMousePos();
+
+			double disp = plotPoint.y;
+
+			for (const auto& todVal : todVals) {
+				if ((std::abs(todVal.time - plotPoint.x) < 60 * 10) && (std::abs(static_cast<double>(*todVal.val) - plotPoint.y) < (minMaxDiff * 0.015))) {
+					disp = *todVal.val;
+					break;
+				}
+			}
+
+			ImPlot::TagY(disp, ImVec4(0.2f, 0.4f, 0.6f, 1.0f), std::to_string(disp).c_str());
+		}
+
+		void PlotVerticalLine(double xVal, double minY, double maxY, ImVec4 colour)
+		{
+			double x[2], y[2];
+			x[0] = xVal;
+			y[0] = minY;
+			x[1] = xVal;
+			y[1] = maxY;
+
+			ImPlot::SetNextLineStyle(colour, 2);
+			ImPlot::PlotLine("", x, y, 2);
+		}
+
+		void PlotDragPoint(int id, double& x, T& y, T& min, T& max, ImVec4 colour, float size)
+		{
+			double xCopy = x;
+			double yCopy = static_cast<double>(y);
+			if (ImPlot::DragPoint(id, &xCopy, &yCopy, colour, size, 0)) {
+				y = static_cast<T>(yCopy);
+				if (y < min)
+					y = min;
+				else if (y > max)
+					y = max;
+			}
+			xCopy = x;
+			//ImPlot::Annotation(x, yCopy, ImVec4(0.2f, 0.4f, 0.6f, 1.0f), ImVec2( 5.0f, 10.0f), false, std::to_string(y).c_str());
+
+
+			PlotMinMaxLine(x - 30 * 60, x + 30 * 60, static_cast<double>(min));
+			PlotMinMaxLine(x - 30 * 60, x + 30 * 60, static_cast<double>(max));
+		}
+
+		void PlotMinMaxLine(double xstart, double xend, double yval)
+		{
+			ImVec4 colour = ImVec4(0.5f, 0.5f, 0.5f, 1.0f);
+			ImPlot::SetNextLineStyle(colour, 1);
+
+			double x[2], y[2];
+			x[0] = xstart;
+			y[0] = yval;
+			x[1] = xend;
+			y[1] = yval;
+			ImPlot::PlotLine("", x, y, 2);
 		}
 
 		virtual void SetAsOverrideVal(FeatureValueGeneric* fv) override

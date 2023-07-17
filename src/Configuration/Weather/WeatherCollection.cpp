@@ -87,9 +87,11 @@ void Configuration::WeathersCollection::AddNewWeather()
 	for (int i = 0; i < WeatherDefaultSettings->FeatureSettings.size(); i++) {
 		if (WeatherDefaultSettings->FeatureSettings[i].Settings != nullptr) {
 
-			auto newFS = WeatherDefaultSettings->FeatureSettings[i].Feature->CreateNewSettings();
-			newFS->Copy(*WeatherDefaultSettings->FeatureSettings[i].Settings);
-			newWeather->FeatureSettings.ControlNewFeature(WeatherDefaultSettings->FeatureSettings[i].Feature, newFS);
+			auto& defaultSettingsMap = WeatherDefaultSettings->FeatureSettings[i];
+
+			auto newFS = defaultSettingsMap.Feature->CreateNewSettings();
+			newWeather->FeatureSettings.ControlNewFeature(defaultSettingsMap.Feature, newFS);
+			newFS->Copy(*defaultSettingsMap.Settings);
 		}
 	}
 
@@ -130,8 +132,6 @@ bool Configuration::WeathersCollection::HasAnyUpdatedWeatherIds()
 	}
 	return WeatherDefaultSettings->HasUpdatedIds();
 }
-
-
 
 void Configuration::WeathersCollection::DrawWeather(std::shared_ptr<Weather> weather)
 {
@@ -185,19 +185,4 @@ void Configuration::WeathersCollection::ControlNewFeatureSettings(int featureInd
 		weather->FeatureSettings.ControlNewFeature(featureSettingsToControl.Feature, newFS);
 		newFS->Copy(*newDefaultFS);
 	}
-
-	/*
-	auto* configManager = Configuration::ConfigurationManager::GetSingleton();
-
-	auto featureSettingsToControl = WeatherDefaultSettings->Settings.Settings[featureIndex];
-
-	auto newFS = configManager->DefaultSettings.Settings[featureIndex].Settings->Clone();
-	WeatherDefaultSettings->Settings.Settings[featureIndex].Settings = newFS;
-
-	// Add to all custom weathers also
-	for (auto weather : CustomWeatherSettings) {
-		weather->Settings.Settings[featureIndex].Settings = newFS->Clone();
-	}
-
-	*/
 }

@@ -48,6 +48,11 @@ int Time::TimeToMinutes(const tm& time)
 	return (time.tm_hour * 60) + time.tm_min;
 }
 
+int Helpers::Time::TimeToSeconds(const tm& time)
+{
+	return (time.tm_hour * 60 * 60) + (time.tm_min * 60) + time.tm_sec;
+}
+
 void Helpers::Time::TimeToString(const tm& time, char* buffer, std::size_t bufferSize)
 {
 	strftime(buffer, bufferSize, "%H:%M", &time);

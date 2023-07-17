@@ -24,27 +24,27 @@ void TODInfo::Update()
 	SunsetEndTime = climate->timing.sunset.GetEndTime();
 
 	if (Helpers::Time::TimeCmp(Time, SunriseBeginTime) <= 0) {
-		TimePeriodType = TimePeriod::NightToDawn;
+		TimePeriodType = TimePeriod::NightToSunriseStart;
 		TimePeriodPercentage = GetWindowRatio(_midnightAM, SunriseBeginTime, Time);
 
 	} else if (Helpers::Time::TimeCmp(Time, SunriseBeginTime) == 1 && Helpers::Time::TimeCmp(Time, SunriseEndTime) <= 0) {
-		TimePeriodType = TimePeriod::DawnToSunrise;
+		TimePeriodType = TimePeriod::SunriseStartToSunriseEnd;
 		TimePeriodPercentage = GetWindowRatio(SunriseBeginTime, SunriseEndTime, Time);
 
 	} else if (Helpers::Time::TimeCmp(Time, SunriseEndTime) == 1 && Helpers::Time::TimeCmp(Time, _midday) <= 0) {
-		TimePeriodType = TimePeriod::SunriseToDay;
+		TimePeriodType = TimePeriod::SunriseEndToDay;
 		TimePeriodPercentage = GetWindowRatio(SunriseEndTime, _midday, Time);
 
 	} else if (Helpers::Time::TimeCmp(Time, _midday) == 1 && Helpers::Time::TimeCmp(Time, SunsetBeginTime) <= 0) {
-		TimePeriodType = TimePeriod::DayToSunset;
+		TimePeriodType = TimePeriod::DayToSunsetStart;
 		TimePeriodPercentage = GetWindowRatio(_midday, SunsetBeginTime, Time);
 
 	} else if (Helpers::Time::TimeCmp(Time, SunsetBeginTime) == 1 && Helpers::Time::TimeCmp(Time, SunsetEndTime) <= 0) {
-		TimePeriodType = TimePeriod::SunsetToDusk;
+		TimePeriodType = TimePeriod::SunsetStartToSunsetEnd;
 		TimePeriodPercentage = GetWindowRatio(SunsetBeginTime, SunsetEndTime, Time);
 
 	} else {
-		TimePeriodType = TimePeriod::DuskToNight;
+		TimePeriodType = TimePeriod::SunsetEndToNight;
 		TimePeriodPercentage = GetWindowRatio(SunsetEndTime, _midnightPM, Time);
 	}
 }
@@ -53,17 +53,17 @@ std::string Configuration::TODInfo::GetTimePeriodStr()
 {
 	if (Valid) {
 		switch (TimePeriodType) {
-		case DawnToSunrise:
+		case SunriseStartToSunriseEnd:
 			return "Dawn To Sunrise";
-		case DayToSunset:
+		case DayToSunsetStart:
 			return "Day To Sunset";
-		case DuskToNight:
+		case SunsetEndToNight:
 			return "Dusk To Night";
-		case NightToDawn:
+		case NightToSunriseStart:
 			return "Night To Dawn";
-		case SunriseToDay:
+		case SunriseEndToDay:
 			return "Sunrise To Day";
-		case SunsetToDusk:
+		case SunsetStartToSunsetEnd:
 			return "Sunset To Dusk";
 		}
 	}

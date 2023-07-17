@@ -21,9 +21,7 @@ void ConfigurationManager::Load(json& o_json)
 	Update(true);
 
 	for (int i = 0; i < CurrentSettings.size(); i++) {
-		logger::info("HERE B");
 		for (int j = 0; j < GeneralSettings[i].Settings->GetAllSettings().size(); j++) {
-			logger::info("HERE C");
 			GeneralSettings[i].Settings->GetAllSettings()[j]->SetAsOverrideVal(CurrentSettings[i].Settings->GetAllSettings()[j]);
 		}
 	}
@@ -40,7 +38,7 @@ void ConfigurationManager::Save(json& o_json)
 
 void ConfigurationManager::Update(bool force)
 {
-	Configuration::TODInfo::GetSingleton().Update();
+	Configuration::TODInfo::GetSingleton()->Update();
 	force = force;
 	RE::FormID currentWeather = 0;
 	RE::FormID outgoingWeather = 0;
@@ -169,14 +167,6 @@ void ConfigurationManager::Update(bool force)
 #pragma warning(suppress: 4100)
 void ConfigurationManager::OverrideConfig(FeatureSettingsCollection& targetSettings, FeatureSettingsCollection& newSettings, bool isConfigOverride)
 {
-	/* if (isConfigOverride) {
-		for (auto settings : GeneralSettings) {
-			for (auto setting : settings.Settings->GetAllSettings()) {
-				setting->SetOverwritten(false);
-			}
-		}
-	}*/
-
 	for (int i = 0; i < targetSettings.size(); i++) {
 
 		if (newSettings[i].Settings == nullptr)
@@ -190,11 +180,8 @@ void ConfigurationManager::OverrideConfig(FeatureSettingsCollection& targetSetti
 
 		for (int j = 0; j < targetSettingList.size(); j++) {
 			if (newSettingList[j]->HasValue()) {
-				targetSettingList[j]->Copy(newSettingList[j]);
 
-				//if (isConfigOverride) { //Marking general vals as overritten
-				//	GeneralSettings[i].Settings->GetAllSettings()[j]->SetAsOverrideVal(newSettingList[j]);
-				//}
+				targetSettingList[j]->Copy(newSettingList[j]);
 			}
 		}
 	}

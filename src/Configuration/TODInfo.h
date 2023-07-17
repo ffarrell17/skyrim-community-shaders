@@ -10,20 +10,20 @@ namespace Configuration
 	class TODInfo
 	{
 	public:
-		static TODInfo& GetSingleton()
+		static TODInfo* GetSingleton()
 		{
 			static TODInfo instance;
-			return instance;
+			return &instance;
 		}
 
 		enum TimePeriod
 		{
-			NightToDawn,
-			DawnToSunrise,
-			SunriseToDay,
-			DayToSunset,
-			SunsetToDusk,
-			DuskToNight
+			NightToSunriseStart,
+			SunriseStartToSunriseEnd,
+			SunriseEndToDay,
+			DayToSunsetStart,
+			SunsetStartToSunsetEnd,
+			SunsetEndToNight
 		};
 
 		// TODValue Info

@@ -500,7 +500,7 @@ void Menu::DrawWeatherPanel()
 
 	if (ImGui::CollapsingHeader("Stats", ImGuiTreeNodeFlags_DefaultOpen)) {
 
-		auto& todInfo = Configuration::TODInfo::GetSingleton();
+		Configuration::TODInfo* todInfo = Configuration::TODInfo::GetSingleton();
 
 		char time[6] = "-";
 		char sunriseStart[6] = "-";
@@ -508,14 +508,14 @@ void Menu::DrawWeatherPanel()
 		char sunsetStart[6] = "-";
 		char sunsetEnd[6] = "-";
 
-		Helpers::Time::TimeToString(todInfo.Time, time, 6);
-		Helpers::Time::TimeToString(todInfo.SunriseBeginTime, sunriseStart, 6);
-		Helpers::Time::TimeToString(todInfo.SunriseEndTime, sunriseEnd, 6);
-		Helpers::Time::TimeToString(todInfo.SunsetBeginTime, sunsetStart, 6);
-		Helpers::Time::TimeToString(todInfo.SunsetEndTime, sunsetEnd, 6);
-		std::string todTransition = todInfo.GetTimePeriodStr();
+		Helpers::Time::TimeToString(todInfo->Time, time, 6);
+		Helpers::Time::TimeToString(todInfo->SunriseBeginTime, sunriseStart, 6);
+		Helpers::Time::TimeToString(todInfo->SunriseEndTime, sunriseEnd, 6);
+		Helpers::Time::TimeToString(todInfo->SunsetBeginTime, sunsetStart, 6);
+		Helpers::Time::TimeToString(todInfo->SunsetEndTime, sunsetEnd, 6);
+		std::string todTransition = todInfo->GetTimePeriodStr();
 
-		float width = 45.0f;
+		float width = 60.0f;
 		
 		ImGui::SetNextItemWidth(width);
 		ImGui::InputText("Time", time, 6, ImGuiInputTextFlags_ReadOnly);
@@ -579,6 +579,7 @@ void Menu::DrawWeatherPanel()
 		ImGui::Spacing();
 		ImGui::Spacing();
 		
+		ImPlot::CreateContext();  // Initialize ImPlot
 
 		configManager->WeatherSettings.Draw();
 	}
@@ -632,6 +633,8 @@ void Menu::DrawOverlay()
 
 	ImGui::Render();
 	ImGui_ImplDX11_RenderDrawData(ImGui::GetDrawData());
+	if (showWeatherMenu)
+		ImPlot::DestroyContext();
 }
 
 const char* Menu::KeyIdToString(uint32_t key)

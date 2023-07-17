@@ -50,6 +50,12 @@ struct FeatureSettings
 		}
 	}
 
+	void TODUpdateAll() {
+		for (Configuration::fv_any* val : GetAllSettings()) {
+			val->TODUpdate();
+		}
+	}
+
 #pragma warning(suppress: 4100)
 	virtual void ToJson(nlohmann::json& nlohmann_json_j)
 	{}
