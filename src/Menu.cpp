@@ -2,6 +2,7 @@
 
 #include <dinput.h>
 #include <magic_enum.hpp>
+#include <IconsMaterialDesign.h>
 
 #include "ShaderCache.h"
 #include "State.h"
@@ -261,6 +262,16 @@ void Menu::Init(IDXGISwapChain* swapchain, ID3D11Device* device, ID3D11DeviceCon
 
 	imgui_io.Fonts->AddFontFromFileTTF("Data\\Interface\\CommunityShaders\\Fonts\\Atkinson-Hyperlegible-Regular-102.ttf", 24);
 
+	float iconFontSize = 24.0f;
+	static const ImWchar icons_ranges[] = { ICON_MIN_MD, ICON_MAX_16_MD, 0 };
+	ImFontConfig icons_config;
+	icons_config.MergeMode = true;
+	icons_config.PixelSnapH = true;
+	icons_config.GlyphMinAdvanceX = iconFontSize;
+	icons_config.GlyphOffset = ImVec2(0, 5);
+	ImGui::GetIO().Fonts->AddFontFromFileTTF("Data\\Interface\\CommunityShaders\\Fonts\\" FONT_ICON_FILE_NAME_MD, iconFontSize, &icons_config, icons_ranges);
+	ImGui::GetIO().Fonts->Build();
+
 	DXGI_SWAP_CHAIN_DESC desc;
 	swapchain->GetDesc(&desc);
 
@@ -299,20 +310,20 @@ void Menu::DrawSettings()
 				State::GetSingleton()->Load();
 			}
 
-	ImGui::TableNextColumn();
-	if (ImGui::Button("Clear Shader Cache", { -1, 0 })) {
-		shaderCache.Clear();
-		State::GetSingleton()->ClearComputeShaders();
-	}
-	if (ImGui::IsItemHovered()) {
-		ImGui::BeginTooltip();
-		ImGui::PushTextWrapPos(ImGui::GetFontSize() * 35.0f);
-		ImGui::Text("The Shader Cache is the collection of compiled shaders which replace the vanilla shaders at runtime.");
-		ImGui::Text("Clearing the shader cache will mean that shaders are recompiled only when the game re-encounters them.");
-		ImGui::Text("This is only needed for hot-loading shaders for development purposes.");
-		ImGui::PopTextWrapPos();
-		ImGui::EndTooltip();
-	}
+			ImGui::TableNextColumn();
+			if (ImGui::Button("Clear Shader Cache", { -1, 0 })) {
+				shaderCache.Clear();
+				State::GetSingleton()->ClearComputeShaders();
+			}
+			if (ImGui::IsItemHovered()) {
+				ImGui::BeginTooltip();
+				ImGui::PushTextWrapPos(ImGui::GetFontSize() * 35.0f);
+				ImGui::Text("The Shader Cache is the collection of compiled shaders which replace the vanilla shaders at runtime.");
+				ImGui::Text("Clearing the shader cache will mean that shaders are recompiled only when the game re-encounters them.");
+				ImGui::Text("This is only needed for hot-loading shaders for development purposes.");
+				ImGui::PopTextWrapPos();
+				ImGui::EndTooltip();
+			}
 
 			ImGui::TableNextColumn();
 			if (ImGui::Button("Clear Disk Cache", { -1, 0 })) {
@@ -492,7 +503,7 @@ void Menu::DrawWeatherPanel()
 	ImGuiStyle oldStyle = ImGui::GetStyle();
 	SetupImGuiStyle();
 
-	ImGui::DockSpaceOverViewport(NULL, ImGuiDockNodeFlags_PassthruCentralNode);
+	WeatherPanelDockId = ImGui::DockSpaceOverViewport(NULL, ImGuiDockNodeFlags_PassthruCentralNode);
 
 	ImGui::SetNextWindowSize({ 1000, 1000 }, ImGuiCond_FirstUseEver);
 	ImGui::SetNextWindowPos({ 1000, 0 }, ImGuiCond_FirstUseEver);

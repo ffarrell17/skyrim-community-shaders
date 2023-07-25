@@ -2,6 +2,7 @@
 #include "ConfigurationManager.h"
 #include "State.h"
 #include "PCH.h"
+#include <IconsMaterialDesign.h>
 
 using namespace Configuration;
 
@@ -19,91 +20,79 @@ void Configuration::FeatureSettingsCollection::ResetSettings()
 	}
 }
 
-void FeatureSettingsCollection::Load(json& o_json)
+void FeatureSettingsCollection::Load(std::map<Feature*, json>& featureConfigMap)  //(json& o_json)
 {
 	ResetSettings();
 
 	for (int i = 0; i < size(); i++) {
-		
 		auto& settingsMap = at(i);
-		json fJson = o_json[settingsMap.GetFeatureName()];
 
-		if (fJson.is_object()) {
+		if (!featureConfigMap[settingsMap.Feature].is_null() && featureConfigMap[settingsMap.Feature].is_object()) {
+			json& fJson = featureConfigMap[settingsMap.Feature];
 
-			logger::trace("Parsing config for feature [{}]. Json [{}]", settingsMap.GetFeatureName(), fJson.dump());
 			try {
-
-				if (!fJson["Path"].is_null()) {
-					// Feature has its own config
-
-					std::string configPath = fJson["Path"];
-
-					std::ifstream stream(configPath);
-					if (!stream.is_open()) {
-						logger::error("Error opening config file ({})\n", configPath);
-						continue;
-					}
-
-					try {
-						stream >> fJson;
-					} catch (const nlohmann::json::parse_error& e) {
-						logger::error("Error parsing json config file ({}) : {}\n", configPath, e.what());
-						continue;
-					}
-
-
-				} 
-
+					
 				settingsMap.Settings = settingsMap.Feature->CreateNewSettings();
+				settingsMap.Settings->SetType(_type);
+
+				settingsMap.Settings->ReleaseAll();
+
 				settingsMap.Settings->FromJson(fJson);
 				settingsMap.Settings->SetType(_type);
 
-				auto allSettings = settingsMap.Settings->GetAllSettings();
-				for (int j = 0; j < allSettings.size(); j++) {
-					// If General and dont have a value reset to default
-					if (_type == FeatureSettingsType::General) {
+				if (_type == FeatureSettingsType::WeatherOverrideDefault) {
+					settingsMap.Settings->Link(*ConfigurationManager::GetSingleton()->GeneralSettings[i].Settings);
+				} else if (_type == FeatureSettingsType::WeatherOverride) {
+					settingsMap.Settings->Link(*ConfigurationManager::GetSingleton()->WeatherSettings.WeatherDefaultSettings->FeatureSettings[i].Settings);
+				}
+				
+				// If General and dont have a value reset to default
+				if (_type == FeatureSettingsType::General) {
+					auto allSettings = settingsMap.Settings->GetAllSettings();
+					for (int j = 0; j < allSettings.size(); j++) {
 						if (!allSettings[j]->HasValue()) {
 							allSettings[j]->Copy(settingsMap.Settings->GetAllSettings()[j]);
 						}
 					}
-				}
+				}				
 
-			} 
-			catch (const std::exception& ex)
-			{
+			} catch (const std::exception& ex) {
 				logger::error("Exception parsing configuration for feature [{}]. Exception [{}]", settingsMap.GetFeatureName(), ex.what());
 				throw ex;
 			}
-				
-			if (_type == FeatureSettingsType::General) {
-				if (fJson["Enabled"].is_boolean()) {
-					settingsMap.Feature->Enable(fJson["Enabled"]);
-				}
-			}
-
+		} else if (_type == FeatureSettingsType::General) {
+			settingsMap.Settings = settingsMap.Feature->CreateNewSettings();
+			settingsMap.Settings->SetType(_type);
 		}
 	}
 }
 
-void FeatureSettingsCollection::Save(json& o_json)
+void removeNullElements(json& jsonObj)
+{
+	if (jsonObj.is_object()) {
+		for (auto it = jsonObj.begin(); it != jsonObj.end();) {
+			if (it.value().is_null()) {
+				it = jsonObj.erase(it);
+			} else {
+				++it;
+			}
+		}
+	}
+}
+
+void FeatureSettingsCollection::Save(std::map<Feature*, json>& featureConfigMap)
 {
 	for (auto it = begin(); it != end(); ++it) {
 		
 		if (it->Settings != nullptr) {
 			json fJson;
 
-			logger::info("Save {}", it->GetFeatureName());
-			if (_type == FeatureSettingsType::General) {
-				it->Settings->ToJson(fJson);
-				//settingsMap.Settings->ToJsonOptionals(fJson);
-			} else {
-				it->Settings->ToJson(fJson);
-				//settingsMap.Settings->ToJson(fJson);
+			it->Settings->ToJson(fJson);
+			if (_type != FeatureSettingsType::General) {
+				removeNullElements(fJson);
 			}
 
-			o_json[it->GetFeatureName()] = fJson;
-			if (_type == FeatureSettingsType::General)
-				o_json[it->GetFeatureName()]["Enabled"] = it->Feature->IsEnabled();
+			featureConfigMap[it->Feature] = fJson;
 		}
 	}
 }
@@ -124,8 +113,8 @@ void FeatureSettingsCollection::Draw()
 		if (ImGui::BeginListBox("##FeatureList", { -FLT_MIN, ImGui::GetTextLineHeight() * 50 })) {
 			for (int i = 0; i < size(); i++)
 				if (at(i).Settings != nullptr)
-					if (ImGui::Selectable(at(i).GetFeatureName().c_str(), _selectedFeature == i))
-						_selectedFeature = i;
+					if (ImGui::Selectable(at(i).GetFeatureName().c_str(), SelectedFeature == i))
+						SelectedFeature = i;
 			ImGui::EndListBox();
 		}
 
@@ -134,9 +123,16 @@ void FeatureSettingsCollection::Draw()
 			bool shownFeature = false;
 			for (int i = 0; i < size(); i++)
 				if (at(i).Settings != nullptr) {
-					if (i == _selectedFeature) {
+					if (i == SelectedFeature) {
 						shownFeature = true;
 						auto& settingsMap = at(i);
+
+						if (_type == FeatureSettingsType::General && settingsMap.Feature->AllowEnableDisable()) {
+							std::string label = "Enable " + settingsMap.GetFeatureName();
+							bool enabled = settingsMap.Feature->IsEnabled();
+							if (ImGui::Checkbox(label.c_str(), &enabled))
+								settingsMap.Feature->Enable(enabled);
+						}
 
 						settingsMap.Settings->TODUpdateAll();
 						settingsMap.Settings->Draw();
@@ -151,6 +147,11 @@ void FeatureSettingsCollection::Draw()
 
 		ImGui::EndTable();
 	}
+}
+
+void Configuration::FeatureSettingsCollection::ControlNewFeature(FeatureSettingMap& featureSettingsMap)
+{
+	ControlNewFeature(featureSettingsMap.Feature, featureSettingsMap.Settings);
 }
 
 void FeatureSettingsCollection::ControlNewFeature(Feature* feature, std::shared_ptr<FeatureSettings> newSettings)

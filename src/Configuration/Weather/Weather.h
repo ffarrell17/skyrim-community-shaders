@@ -11,10 +11,12 @@ namespace Configuration
 		FeatureSettingsCollection FeatureSettings;
 
 		Weather(bool defaultWeather = false);
-		Weather(json& o_json, bool defaultWeather = false);
+		Weather(json& o_json, std::map<Feature*, json> featureConfigMap, bool defaultWeather = false);
 
-		void Load(json& o_json);
-		void Save(json& o_json);
+		void Load(std::map<Feature*, json>& featureConfigMap);
+		void Load(json& o_json, std::map<Feature*, json>& featureConfigMap);
+		void Save(std::map<Feature*, json>& featureConfigMap);
+		void Save(json& o_json, std::map<Feature*, json>& featureConfigMap);
 
 		void Draw();
 

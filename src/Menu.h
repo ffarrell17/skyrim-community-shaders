@@ -26,6 +26,8 @@ public:
 	void DrawOverlay();
 	void DrawWeatherPanel();
 
+	ImGuiID WeatherPanelDockId;
+
 private:
 	bool isEnabled = true;
 	uint32_t toggleKey = VK_END;

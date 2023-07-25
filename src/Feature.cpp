@@ -23,6 +23,11 @@ void Feature::Enable(bool enable)
 	_enabled = enable;
 }
 
+bool Feature::AllowEnableDisable()
+{
+	return false;
+}
+
 bool Feature::IsLoaded()
 {
 	return _loaded;
@@ -101,7 +106,7 @@ const std::vector<Feature*>& Feature::GetFeatureList()
 		//GrassLighting::GetSingleton(),
 		//DistantTreeLighting::GetSingleton(),
 		//GrassCollision::GetSingleton(),
-		//ScreenSpaceShadows::GetSingleton(),
+		ScreenSpaceShadows::GetSingleton(),
 		//ExtendedMaterials::GetSingleton(),
 		WaterBlending::GetSingleton()
 	};

@@ -7,23 +7,24 @@ Weather::Weather(bool defaultWeather) :
 {
 	_isDefaultWeather = defaultWeather;
 	if (_isDefaultWeather) {
-		Name = "Default";
+		Name = "Default Weather";
 	} else {
 		Name = "New Weather";
 		Ids.push_back(0);
 	}
 }
 
-Weather::Weather(json& o_json, bool defaultWeather) :
+Weather::Weather(json& o_json, std::map<Feature*, json> featureConfigMap, bool defaultWeather) :
 	Weather(defaultWeather)
 {
-	Load(o_json);
+	Load(o_json, featureConfigMap);
 }
 
-void Configuration::Weather::Load(json& o_json)
+void Configuration::Weather::Load(json& o_json, std::map<Feature*, json>& featureConfigMap)
 {
 	Name = o_json["Name"];
 
+	Ids.clear();
 	auto ids = o_json["Ids"];
 	for (const auto& el : ids) {
 		uint32_t id;
@@ -48,14 +49,43 @@ void Configuration::Weather::Load(json& o_json)
 		Ids.push_back(id);
 	}
 
-	FeatureSettings.Load(o_json["Settings"]);
+	Load(featureConfigMap);
 }
 
-void Weather::Save(json& o_json)
+void Configuration::Weather::Load(std::map<Feature*, json>& featureConfigMap)
+{
+	std::map<Feature*, json> weatherFeatureConfigMap;
+	for (Feature* feature : Feature::GetFeatureList()) {
+		json weatherSettings;
+		if (!featureConfigMap[feature].is_null() && !featureConfigMap[feature][Name].is_null()) {
+			weatherSettings = featureConfigMap[feature][Name];
+		}
+		weatherFeatureConfigMap.insert(std::make_pair(feature, weatherSettings));
+	}
+
+	FeatureSettings.Load(weatherFeatureConfigMap);
+}
+
+void Weather::Save(json& o_json, std::map<Feature*, json>& featureConfigMap)
 {
 	o_json["Name"] = Name;
 	o_json["Ids"] = Ids;
-	FeatureSettings.Save(o_json["Settings"]);
+
+	Save(featureConfigMap);
+}
+
+void Weather::Save(std::map<Feature*, json>& featureConfigMap)
+{
+	std::map<Feature*, json> weatherFeatureConfigMap;
+	for (Feature* feature : Feature::GetFeatureList()) {
+		weatherFeatureConfigMap.insert(std::make_pair(feature, json()));
+	}
+
+	FeatureSettings.Save(weatherFeatureConfigMap);
+
+	for (Feature* feature : Feature::GetFeatureList()) {
+		featureConfigMap[feature][Name] = weatherFeatureConfigMap[feature];
+	}
 }
 
 bool TryGetHex(const std::string& input, int& val)
@@ -82,16 +112,17 @@ uint32_t HexStringToUint32(const std::string& hexString)
 
 void Weather::Draw()
 {
-	 _updated = _updatedIds = false;
+	_updated = _updatedIds = false;
 
-	_updated = ImGui::InputText("Name", &Name, _isDefaultWeather ? ImGuiInputTextFlags_ReadOnly : 0);	
+	if (!_isDefaultWeather) {
+		_updated = ImGui::InputText("Name", &Name);
+	}
 
 	if (!_isDefaultWeather) {
 		DrawIdList();
+		ImGui::Spacing();
+		ImGui::Spacing();
 	}
-
-	ImGui::Spacing();
-	ImGui::Spacing();
 
 	FeatureSettings.Draw();
 }

@@ -8,13 +8,13 @@ namespace Helpers
 	{
 	public:
 
-		template <typename T>
+		 template <typename T>
 		static T Lerp(T& start, T& end, float progress)
 		{
 			if (start == end)
 				return end;
 			else
-				return static_cast<T>(start + (end - start) * progress);
+				return static_cast<T>(static_cast<float>(start) + (static_cast<float>(end) - static_cast<float>(start)) * progress);
 		}
 
 		template <typename T>
@@ -23,16 +23,7 @@ namespace Helpers
 			if (start == end)
 				return end;
 			else
-				return static_cast<T>(start + (end - start) * progress);
-		}
-
-		template <typename T>
-		static T Lerp(std::optional<T>& start, std::optional<T>& end, float progress)
-		{
-			if (start.value() == end.value())
-				return end.value();
-			else
-				return Lerp<T>(start.value(), end.value(), progress);
+				return static_cast<T>(static_cast<float>(start) + (static_cast<float>(end) - static_cast<float>(start)) * progress);
 		}
 	};
 }

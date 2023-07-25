@@ -33,10 +33,10 @@ namespace Configuration
 		ConfigurationManager();
 
 		void Load(json& o_json);
-		void Save(json& o_json);
+		void Save();
 		void Update(bool force = false);
 
-		bool UseWeatherOverrides = false;
+		bool UseWeatherOverrides = true;
 	private:
 		RE::FormID _currentWeather = 0;
 		RE::FormID _outgoingWeather = 0;

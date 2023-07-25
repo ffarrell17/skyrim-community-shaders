@@ -3,7 +3,6 @@
 #include "Macros.h"
 #include "Configuration\FeatureValue.h"
 
-
 struct FeatureSettings
 {	
 
@@ -37,6 +36,30 @@ struct FeatureSettings
 		}
 	}
 
+	void Link(FeatureSettings& copy)
+	{
+		auto thisSettings = GetAllSettings();
+		auto copySettings = copy.GetAllSettings();
+
+		if (thisSettings.size() == copySettings.size()) {
+			for (int i = 0; i < thisSettings.size(); i++) {
+				thisSettings[i]->Link(copySettings[i]);
+			}
+		}
+	}
+
+	void CopyAndLink(FeatureSettings& copy)
+	{
+		auto thisSettings = GetAllSettings();
+		auto copySettings = copy.GetAllSettings();
+
+		if (thisSettings.size() == copySettings.size()) {
+			for (int i = 0; i < thisSettings.size(); i++) {
+				thisSettings[i]->CopyAndLink(copySettings[i]);
+			}
+		}
+	}
+
 	void SetType(Configuration::FeatureSettingsType type)
 	{
 		for (Configuration::fv_any* val : GetAllSettings()) {
@@ -62,6 +85,65 @@ struct FeatureSettings
 #pragma warning(suppress: 4100)
 	virtual void FromJson(const nlohmann::json& nlohmann_json_j) {}
 
+	void SetArray(Configuration::testU (&arr)[1])
+	{
+		for (int i = 0; i < 1; i++)
+			arr[i] = GetAllSettings()[i]->toU();
+	}
+
+	void SetArray(Configuration::testU (&arr)[2])
+	{
+		for (int i = 0; i < 2; i++)
+			arr[i] = GetAllSettings()[i]->toU();
+	}
+
+	void SetArray(Configuration::testU (&arr)[3])
+	{
+		for (int i = 0; i < 3; i++)
+			arr[i] = GetAllSettings()[i]->toU();
+	}
+
+	void SetArray(Configuration::testU (&arr)[4])
+	{
+		for (int i = 0; i < 4; i++)
+			arr[i] = GetAllSettings()[i]->toU();
+	}
+
+	void SetArray(Configuration::testU (&arr)[5])
+	{
+		for (int i = 0; i < 5; i++)
+			arr[i] = GetAllSettings()[i]->toU();
+	}
+
+	void SetArray(Configuration::testU (&arr)[6])
+	{
+		for (int i = 0; i < 6; i++)
+			arr[i] = GetAllSettings()[i]->toU();
+	}
+
+	void SetArray(Configuration::testU (&arr)[7])
+	{
+		for (int i = 0; i < 7; i++)
+			arr[i] = GetAllSettings()[i]->toU();
+	}
+
+	void SetArray(Configuration::testU (&arr)[8])
+	{
+		for (int i = 0; i < 8; i++)
+			arr[i] = GetAllSettings()[i]->toU();
+	}
+
+	void SetArray(Configuration::testU (&arr)[9])
+	{
+		for (int i = 0; i < 9; i++)
+			arr[i] = GetAllSettings()[i]->toU();
+	}
+
+	void SetArray(Configuration::testU (&arr)[10])
+	{
+		for (int i = 0; i < 10; i++)
+			arr[i] = GetAllSettings()[i]->toU();
+	}
 	
 	// Can be auto generated with FEATURE_SETTINGS_OVERRIDES macro
 	/*virtual void Lerp(const std::shared_ptr<FeatureSettings> start, const std::shared_ptr<FeatureSettings> end, double t) = 0;
@@ -149,8 +231,9 @@ struct FeatureSettings
 	void FromJson(const nlohmann::json& nlohmann_json_j)                                        \
 	{                                                                                           \
 		StructType& nlohmann_json_t = *this;                                                    \
-		std::shared_ptr<StructType> tempPtr = std::make_shared<StructType>();                   \
-		StructType& nlohmann_json_default_obj = *tempPtr;                                       \
+		/*std::shared_ptr<StructType> tempPtr = std::make_shared<StructType>();*/                   \
+		/* StructType& nlohmann_json_default_obj = *tempPtr;*/                                   \
+		StructType& nlohmann_json_default_obj = *this;\
 		NLOHMANN_JSON_EXPAND(NLOHMANN_JSON_PASTE(NLOHMANN_JSON_FROM_WITH_DEFAULT, __VA_ARGS__)) \
 	}                                                                                           \
                                                                                                 \

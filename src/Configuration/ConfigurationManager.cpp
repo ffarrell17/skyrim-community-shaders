@@ -10,14 +10,49 @@ Configuration::ConfigurationManager::ConfigurationManager() :
 	
 }
 
-void ConfigurationManager::Load(json& o_json)
+void ConfigurationManager::Load(json& general_json)
 {
-	GeneralSettings.Load(o_json);
+	logger::trace("Loading individual feature json configs");
+	std::map<Feature*, json> featureConfigMap;
+	for (Feature* feature : Feature::GetFeatureList()) {
 
-	if (o_json["WeatherSettings"].is_object()) {
-		WeatherSettings.Load(o_json["WeatherSettings"]);
+		json settings;
+		std::string configPath = "Data\\SKSE\\Plugins\\" + feature->GetShortName() + ".json";
+
+		std::ifstream i(configPath);
+		if (!i.is_open()) {
+			// config doesn't exist
+
+			if (!general_json[feature->GetName()].is_null())
+				settings["General"] = general_json[feature->GetName()];
+			
+		} else {
+			try {
+				i >> settings;
+			} catch (const nlohmann::json::parse_error& e) {
+				logger::error("Error parsing json config file ({}) : {}\n", configPath, e.what());
+				//continue;
+			}
+		}
+
+		featureConfigMap.insert(std::make_pair(feature, settings));
 	}
 
+	logger::trace("Loading General Settings");
+	std::map<Feature*, json> generalFeatureConfigMap;
+	for (Feature* feature : Feature::GetFeatureList()) {
+		json generalSettings;
+		if (!featureConfigMap[feature].is_null() && !featureConfigMap[feature]["General"].is_null()) {
+			generalSettings = featureConfigMap[feature]["General"];
+		}
+		generalFeatureConfigMap.insert(std::make_pair(feature, generalSettings));
+	}
+	GeneralSettings.Load(generalFeatureConfigMap);
+
+	logger::trace("Loading Weather Settings");
+	WeatherSettings.Load(featureConfigMap);
+
+	logger::trace("Loaded. Updating applied config");
 	Update(true);
 
 	for (int i = 0; i < CurrentSettings.size(); i++) {
@@ -27,13 +62,32 @@ void ConfigurationManager::Load(json& o_json)
 	}
 }
 
-void ConfigurationManager::Save(json& o_json)
+void ConfigurationManager::Save()
 {
-	GeneralSettings.Save(o_json);
+	std::map<Feature*, json> featureConfigMap;
+	for (Feature* feature : Feature::GetFeatureList()) {
+		featureConfigMap[feature] = json();
+	}
 
-	json weather;
-	WeatherSettings.Save(weather);
-	o_json["WeatherSettings"] = weather;
+	std::map<Feature*, json> generalConfigMap;
+	for (Feature* feature : Feature::GetFeatureList()) {
+		generalConfigMap[feature] = json();
+	}
+
+	GeneralSettings.Save(generalConfigMap);
+
+	for (Feature* feature : Feature::GetFeatureList()) {
+		featureConfigMap[feature]["General"] = generalConfigMap[feature];
+	}
+
+	WeatherSettings.Save(featureConfigMap);
+
+	for (Feature* feature : Feature::GetFeatureList()) {
+
+		std::string configPath = "Data\\SKSE\\Plugins\\" + feature->GetShortName() + ".json";
+		std::ofstream o(configPath);
+		o << featureConfigMap[feature].dump(1);
+	}
 }
 
 void ConfigurationManager::Update(bool force)
@@ -105,7 +159,7 @@ void ConfigurationManager::Update(bool force)
 	}
 
 	// Reset all updated statess as the menu updates at a slower rate
-	
+
 	GeneralSettings.ResetUpdatedState();
 	WeatherSettings.ResetUpdatedStates();
 

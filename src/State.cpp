@@ -146,7 +146,7 @@ void State::Save()
 
 	settings["Version"] = Plugin::VERSION.string();
 
-	Configuration::ConfigurationManager::GetSingleton()->Save(settings);
+	Configuration::ConfigurationManager::GetSingleton()->Save();
 	
 	o << settings.dump(1);
 }

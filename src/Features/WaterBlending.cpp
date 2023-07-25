@@ -1,7 +1,7 @@
 #include "WaterBlending.h"
 
 #pragma warning(suppress: 4100)
-void Settings::Draw()
+void WaterBlendingSettings::Draw()
  {
 	 if (ImGui::TreeNodeEx("General", ImGuiTreeNodeFlags_DefaultOpen)) {
 		

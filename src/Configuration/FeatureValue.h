@@ -4,9 +4,19 @@
 #include "Helpers/Math.h"
 #include "Helpers/Time.h"
 #include <implot.h>
+#include "Menu.h"
+
+#include <IconsMaterialDesign.h>
 
 namespace Configuration
 {
+	union testU
+	{
+		float floatValue;
+		int32_t intValue;
+		uint32_t uintValue;
+	};
+
 	// Types to differentiate logic when handling settings collections
 	// and individual settings display logic
 	enum class FeatureSettingsType
@@ -18,19 +28,7 @@ namespace Configuration
 
 	struct FeatureValueGeneric
 	{
-	public:
-		struct TODData
-		{
-			double time;
-			double value;
-		};
-
-		TODData todData[4] = {
-			{ 0.0f, 0.2f },   // Day
-			{ 0.25f, 0.3f },  // Sunrise
-			{ 0.75f, 0.7f },  // Sunset
-			{ 1.0f, 0.8f }    // Night
-		};
+	protected:
 
 		std::string _id = GenerateGuidAsString();
 		FeatureSettingsType _type = FeatureSettingsType::General;
@@ -39,81 +37,47 @@ namespace Configuration
 		std::shared_ptr<bool> _hasValue = std::make_shared<bool>(true);
 		bool _updated = false;
 
+	public:
+
 		virtual void TODUpdate() = 0;
-		virtual void SetAsLerp(FeatureValueGeneric* start, FeatureValueGeneric* end, float progress) = 0;
-		virtual void Copy(FeatureValueGeneric* fv) = 0;
+		
 		virtual std::string ToString() = 0;
 		
-		bool HasValue() const
-		{
-			return *_hasValue;
-		}
+		bool HasValue() const;
+		void Release();
 
-		void Release()
-		{
-			*_hasValue = false;
-			_isTOD = false;
-		}
+		bool IsTODValue() const;
+		void SetIsTODValue(bool todVal);
 
-		bool IsTODValue() const
-		{
-			return _isTOD;
-		}
+		void SetType(FeatureSettingsType type);
+		FeatureSettingsType GetType();
 
-		void SetIsTODValue(bool todVal)
-		{
-			_isTOD = todVal;
-		}
+		std::shared_ptr<bool> GetIsOverwrittenPtr();
+		void SetIsOverwrittenPtr(std::shared_ptr<bool> isOverwritten);
 
-		bool IsWeatherOverrideEnabled();
+		std::shared_ptr<bool> GetHasValuePtr();
+		void SetHasValuePtr(std::shared_ptr<bool> hasValue);
+
+		virtual void SetAsLerp(FeatureValueGeneric* start, FeatureValueGeneric* end, float progress) = 0;
+
+		virtual void Copy(FeatureValueGeneric* fv) = 0;
+		virtual void Link(FeatureValueGeneric* fv) = 0;
+		void CopyAndLink(FeatureValueGeneric* fv);
 
 		virtual void SetAsOverrideVal(FeatureValueGeneric* fv) = 0;
 
-		/* bool IsOverwritten()
-		{
-			return *_isOverwritten;
-		}
+		bool HasUpdated() const;
+		void ResetUpdated();
 
-		void SetOverwritten(bool overwritten)
-		{
-			*_isOverwritten = overwritten;
-		}*/
+		virtual testU toU() = 0;
 
-		bool HasUpdated() const
-		{
-			return _updated;
-		}
-
-		void ResetUpdated()
-		{
-			_updated = false;
-		}
-
-		void SetType(FeatureSettingsType type)
-		{
-			_type = type;
-		}
+	protected:
+		bool IsWeatherOverrideEnabled();
 
 	private:
-		std::string GenerateGuidAsString()
-		{
-			GUID guid;
-			CoCreateGuid(&guid);
 
-			return GuidToString(guid);
-		}
-
-		std::string GuidToString(GUID guid)
-		{
-			char guid_cstr[39];
-			snprintf(guid_cstr, sizeof(guid_cstr),
-				"{%08x-%04x-%04x-%02x%02x-%02x%02x%02x%02x%02x%02x}",
-				guid.Data1, guid.Data2, guid.Data3,
-				guid.Data4[0], guid.Data4[1], guid.Data4[2], guid.Data4[3],
-				guid.Data4[4], guid.Data4[5], guid.Data4[6], guid.Data4[7]);
-
-			return std::string(guid_cstr);
-		}
+		std::string GenerateGuidAsString();
+		std::string GuidToString(GUID guid);
 	};
 
 	typedef FeatureValueGeneric fv_any;
@@ -146,6 +110,18 @@ namespace Configuration
 
 	public:
 
+		testU toU()
+		{
+			testU t;
+			if constexpr (std::is_same_v<T, int> || std::is_same_v<T, int32_t>) {
+				t.intValue = Value;
+			} else if constexpr (std::is_same_v<T, uint32_t>) {
+				t.uintValue = Value;
+			} else if constexpr (std::is_same_v<T, float>) {
+				t.floatValue = Value;
+			}
+			return t;
+		}
 
 		FeatureValue(FeatureSettingsType type = FeatureSettingsType::General)
 		{ 
@@ -186,9 +162,14 @@ namespace Configuration
 			return std::to_string(Value);
 		}
 
-		TODVals<T> GetTODVals()
+		TODVals<T> GetTODVals() const
 		{
 			return _todVals;
+		}
+
+		void SetTODVals(TODVals<T> todVals)
+		{
+			_todVals = todVals;
 		}
 
 		virtual void SetAsLerp(FeatureValueGeneric* start, FeatureValueGeneric* end, float progress) override
@@ -227,27 +208,18 @@ namespace Configuration
 
 			*_hasValue = newFV->HasValue();
 			_updated = newFV->HasUpdated();
+		}
 
-			if (fv->_type == FeatureSettingsType::General) {
+		virtual void Link(FeatureValueGeneric* fv) override
+		{
+			if (fv->GetType() == FeatureSettingsType::General) {
 				if (_type == FeatureSettingsType::WeatherOverrideDefault || _type == FeatureSettingsType::WeatherOverride) {
-					logger::info("here 1");
-					_hasValue = fv->_isOverwritten;
+					fv->SetIsOverwrittenPtr(_hasValue);
 				}
-			} else if (fv->_type == FeatureSettingsType::WeatherOverrideDefault && _type == FeatureSettingsType::WeatherOverride) {
-				logger::info("here 2");
-				_hasValue = fv->_hasValue;
-				_isOverwritten = fv->_isOverwritten;
+			} else if (fv->GetType() == FeatureSettingsType::WeatherOverrideDefault && _type == FeatureSettingsType::WeatherOverride) {
+				_hasValue = fv->GetHasValuePtr();
+				_isOverwritten = fv->GetIsOverwrittenPtr();
 			}
-
-			//T _sunriseStart;
-			//T _sunriseEnd;
-			//T _day;
-			//T _sunsetStart;
-			//T _sunsetEnd;
-			//T _night;
-
-			//T _interiorDay;
-			//T _interiorNight;
 		}
 
 		void SetAllTODVals(T val)
@@ -306,126 +278,6 @@ namespace Configuration
 				Value = _todVals.Day;
 			}
 		}
-
-		/* FeatureValue& operator=(const T& value)
-		{
-			SetAll(value);
-			return *this;
-		}
-
-		bool operator==(const FeatureValue<T>& other) const
-		{
-			return Get() == other.Get();
-		}
-
-		bool operator<(const FeatureValue<T>& other) const
-		{
-			return Get() < other.Get();
-		}
-
-		bool operator>(const FeatureValue<T>& other) const
-		{
-			return Get() < other.Get();
-		}
-
-		double operator*(double f) const
-		{
-			return Get() * f;
-		}
-
-		template <typename U = T>  // Only if T != double
-		double operator*(typename std::enable_if<!std::is_same<U, double>::value, double>::type f) const
-		{
-			return Get() * f;
-		}
-
-		double operator*(const FeatureValue<T>& other) const
-		{
-			return Get() * other.Get();
-		}
-
-		double operator/(const FeatureValue<T>& other) const
-		{
-			if (other.Get() == 0) {
-				throw std::runtime_error("Division by zero!");
-			}
-			return Get() / other.Get();
-		}
-
-		T operator-(const FeatureValue<T>& other) const
-		{
-			return Get() - other.Get();
-		}
-
-		T operator+(const FeatureValue<T>& other) const
-		{
-			return Get() + other.Get();
-		}
-
-		void SetAll(T val)
-		{
-			SunriseStart = SunriseEnd = Day = SunsetStart = SunsetEnd = Night = InteriorDay = InteriorNight = val;
-			_drawAllVals = false;
-		}*/
-
-		/*bool AllTODEqual() const
-		{
-			return (_sunriseStart == _sunriseEnd && _sunriseEnd == _day && _day == _sunsetStart && _sunsetStart == _sunsetEnd && _sunsetEnd == _night && _night == _interiorDay && _interiorDay == _interiorNight);
-		}*/
-
-		/*UpdateValue()
-		{
-			Value = Get();
-		}*/
-
-		/* T CalculateTOD() const
-		{
-			if (AllTODEqual())
-				return _day;
-
-			const auto& todInfo = TODInfo::GetSingleton();
-
-			if (!todInfo.Valid)
-				return _day;
-
-			try {
-				if (todInfo.Exterior) {
-					switch (todInfo.TimePeriodType) {
-					case Configuration::TODInfo::TimePeriod::NightToDawn:
-						return Helpers::Math::Lerp(_night, _sunriseStart, todInfo.TimePeriodPercentage);
-
-					case Configuration::TODInfo::TimePeriod::DawnToSunrise:
-						return Helpers::Math::Lerp(_sunriseStart, _sunriseEnd, todInfo.TimePeriodPercentage);
-
-					case Configuration::TODInfo::TimePeriod::SunriseToDay:
-						return Helpers::Math::Lerp(_sunriseEnd, _day, todInfo.TimePeriodPercentage);
-
-					case Configuration::TODInfo::TimePeriod::DayToSunset:
-						return Helpers::Math::Lerp(_day, _sunsetStart, todInfo.TimePeriodPercentage);
-
-					case Configuration::TODInfo::TimePeriod::SunsetToDusk:
-						return Helpers::Math::Lerp(_sunsetStart, _sunsetEnd, todInfo.TimePeriodPercentage);
-
-					case Configuration::TODInfo::TimePeriod::DuskToNight:
-						return Helpers::Math::Lerp(_sunsetEnd, _night, todInfo.TimePeriodPercentage);
-
-					default:
-						return _day;
-					}
-				} else {
-					switch (todInfo.TimePeriodType) {
-					case Configuration::TODInfo::TimePeriod::DuskToNight:
-					case Configuration::TODInfo::TimePeriod::NightToDawn:
-						return _interiorNight;
-					default:
-						return _interiorDay;
-					}
-				}
-			} catch (std::exception& e) {
-				logger::error("Error getting TOD value for of type [{}]. Error: {}", typeid(T).name(), e.what());
-				return _day;
-			}
-		}*/
 
 		void DrawCheckbox(std::string label)
 		{
@@ -503,8 +355,9 @@ namespace Configuration
 				
 				if (_type == FeatureSettingsType::WeatherOverrideDefault) {
 					PushUniqueId("Override");
-					if (ImGui::Checkbox("O", &*_hasValue))
-						_updated = true;
+					if (ImGui::Button(!*_hasValue ? ICON_MD_LOCK : ICON_MD_LOCK_OPEN)) {
+						*_hasValue = !*_hasValue;
+					}
 					ImGui::PopID();
 					ImGui::SameLine();
 				}
@@ -528,8 +381,9 @@ namespace Configuration
 			if (_type == FeatureSettingsType::WeatherOverrideDefault || _type == FeatureSettingsType::WeatherOverride) {
 				if (_type == FeatureSettingsType::WeatherOverrideDefault) {
 					PushUniqueId("Override");
-					if (ImGui::Checkbox("O", &*_hasValue))
-						_updated = true;
+					if (ImGui::Button(!*_hasValue ? ICON_MD_LOCK : ICON_MD_LOCK_OPEN)) {
+						*_hasValue = !*_hasValue;
+					}
 					ImGui::PopID();
 					ImGui::SameLine();
 				}
@@ -541,15 +395,19 @@ namespace Configuration
 
 				if (_isTOD) {
 					PushUniqueId("TOD4");
-					ImGui::PushStyleColor(ImGuiCol_Button, ImVec4(0.2f, 0.4f, 0.6f, 1.0f));  // Set your desired background color
+					ImGui::PushStyleColor(ImGuiCol_Button, ImVec4(0.2f, 0.4f, 0.6f, 1.0f));
 					ImGui::PopID();
 				}
 
 				PushUniqueId("TOD");
-				if (ImGui::Button("TOD")) {
+				if (ImGui::Button(ICON_MD_SCHEDULE)) {
 					showTOD = true;
 				}
 				ImGui::PopID();
+
+				if (_isTOD) {
+					ImGui::PopStyleColor();
+				}
 				
 				if (showTOD)
 					DrawTODWindow(label, min, max);
@@ -576,14 +434,18 @@ namespace Configuration
 			}
 		}
 
-		T TODMin()
+		T TODMin(bool exterior = true)
 		{
-			return std::min<T>(std::min<T>(std::min<T>(std::min<T>(std::min<T>(_todVals.Night, _todVals.SunriseStart), _todVals.SunriseEnd), _todVals.Day), _todVals.SunsetStart), _todVals.SunsetEnd);
+			if (exterior)
+				return std::min<T>(std::min<T>(std::min<T>(std::min<T>(std::min<T>(_todVals.Night, _todVals.SunriseStart), _todVals.SunriseEnd), _todVals.Day), _todVals.SunsetStart), _todVals.SunsetEnd);
+			return std::min<T>(_todVals.InteriorDay, _todVals.InteriorNight);
 		}
 
-		T TODMax()
+		T TODMax(bool exterior = true)
 		{
-			return std::max<T>(std::max<T>(std::max<T>(std::max<T>(std::max<T>(_todVals.Night, _todVals.SunriseStart), _todVals.SunriseEnd), _todVals.Day), _todVals.SunsetStart), _todVals.SunsetEnd);
+			if (exterior)
+				return std::max<T>(std::max<T>(std::max<T>(std::max<T>(std::max<T>(_todVals.Night, _todVals.SunriseStart), _todVals.SunriseEnd), _todVals.Day), _todVals.SunsetStart), _todVals.SunsetEnd);
+			return std::max<T>(_todVals.InteriorDay, _todVals.InteriorNight);
 		}
 
 		struct TODValMap
@@ -602,9 +464,9 @@ namespace Configuration
 			ImGui::DockSpaceOverViewport(NULL, ImGuiDockNodeFlags_PassthruCentralNode);
 
 			PushUniqueId("TOD3");
-			ImGui::SetNextWindowSize({ 200, 200 }, ImGuiCond_FirstUseEver);
+			ImGui::SetNextWindowSize({ 1000, 400 }, ImGuiCond_FirstUseEver);
 			ImGui::SetNextWindowPos({ 1000, 400 }, ImGuiCond_FirstUseEver);
-			ImGui::Begin(("Time Of Day Editor: " + label).c_str(), &showTOD);
+			ImGui::Begin(("TOD: " + label).c_str(), &showTOD);
 			ImGui::PopID();
 
 			PushUniqueId("TOD2");
@@ -635,7 +497,7 @@ namespace Configuration
 			ImGui::SameLine();
 			ImGui::Text("Interior");
 
-			std::string str = std::to_string(Value);
+			std::string str = TemplateToString(Value);
 			//ImGui::InputText("Current Value", &str, ImGuiInputTextFlags_ReadOnly);
 
 			if (!_isTOD)
@@ -682,9 +544,10 @@ namespace Configuration
 				// Examples: https://traineq.org/implot_demo/src/implot_demo.html
 				if (ImPlot::BeginPlot("  ", ImVec2(-FLT_MIN, -FLT_MIN) /*, ImPlotFlags_Crosshairs*/)) {
 					
+					ImPlot::SetupLegend(ImPlotLocation_North, ImPlotLegendFlags_None);
 
-					T minT = min.TODMin();
-					T maxT = max.TODMax();
+					T minT = min.TODMin(!showInterior);
+					T maxT = max.TODMax(!showInterior);
 					T dif = maxT - minT;
 
 					double minYaxis = minT - (dif * 0.1);
@@ -732,7 +595,7 @@ namespace Configuration
 					xs1[size - 1] = todVals[1].time + secsInDay;
 					ys1[size - 1] = *todVals[1].val;
 					ImPlot::SetNextLineStyle(ImVec4(1.0f, 1.0f, 1.0f, 1.0f), 2);
-					ImPlot::PlotLine("Value", xs1, ys1, size);
+					ImPlot::PlotLine(label.c_str(), xs1, ys1, size);
 
 					// Add drag points for each tod val
 					ImVec4 dragPointColour = ImVec4(1, 1, 0, 1);
@@ -831,7 +694,7 @@ namespace Configuration
 				}
 			}
 
-			ImPlot::TagY(disp, ImVec4(0.2f, 0.4f, 0.6f, 1.0f), std::to_string(disp).c_str());
+			ImPlot::TagY(disp, ImVec4(0.2f, 0.4f, 0.6f, 1.0f), TemplateToString(static_cast<T>(disp)).c_str());
 		}
 
 		void PlotVerticalLine(double xVal, double minY, double maxY, ImVec4 colour)
@@ -884,109 +747,16 @@ namespace Configuration
 			OverrideVal = &newFV->Value;
 		}
 
-		/*bool DrawSliderScalar(std::string label, ImGuiDataType_ drawType, T min, T max, const char* format = NULL)
+		std::string TemplateToString(T val)
 		{
-			FeatureValue<T> todMin(min);
-			FeatureValue<T> todMax(max);
-			return DrawSliderScalar(label, drawType, todMin, todMax, format);
-		}
-
-		bool DrawSliderScalar(std::string label, ImGuiDataType_ drawType, FeatureValue<T> min, T max, const char* format = NULL)
-		{
-			FeatureValue<T> todMax(max);
-			return DrawSliderScalar(label, drawType, min, todMax, format);
-		}
-
-		bool DrawSliderScalar(std::string label, ImGuiDataType_ drawType, T min, FeatureValue<T> max, const char* format = NULL)
-		{
-			FeatureValue<T> todMin(min);
-			return DrawSliderScalar(label, drawType, todMin, max, format);
-		}
-		// Allowing other TODValues to mark the range per TOD
-		 bool DrawSliderScalar(std::string label, ImGuiDataType_ drawType, FeatureValue<T>& min, FeatureValue<T>& max, const char* format = NULL)
-		{
-			Helpers::UI::CustomCheckbox("TOD Value", &_drawAllVals);
-
-			bool updated = false;
-
-			if (_drawAllVals) {
-				ImGui::SameLine();
-				ImGui::Dummy(ImVec2(20.0f, 0.0f));
-				ImGui::SameLine();
-
-				ImGui::SetNextItemWidth(200.0f);
-				std::string str = std::to_string(Get());
-				ImGui::InputText("Current Value", const_cast<char*>(str.c_str()), str.size() + 1, ImGuiInputTextFlags_ReadOnly);
-
-				updated = updated || ImGui::SliderScalar((label + " Sunrise Start").c_str(), drawType, static_cast<void*>(&SunriseStart), &min.SunriseStart, &max.SunriseStart, format);
-				updated = updated || ImGui::SliderScalar((label + " Sunrise End").c_str(), drawType, static_cast<void*>(&SunriseEnd), &min.SunriseEnd, &max.SunriseEnd, format);
-				updated = updated || ImGui::SliderScalar((label + " Day").c_str(), drawType, static_cast<void*>(&Day), &min.Day, &max.Day, format);
-				updated = updated || ImGui::SliderScalar((label + " Sunset Start").c_str(), drawType, static_cast<void*>(&SunsetStart), &min.SunsetStart, &max.SunsetStart, format);
-				updated = updated || ImGui::SliderScalar((label + " Sunset End").c_str(), drawType, static_cast<void*>(&SunsetEnd), &min.SunsetEnd, &max.SunsetEnd, format);
-				updated = updated || ImGui::SliderScalar((label + " Night").c_str(), drawType, static_cast<void*>(&Night), &min.Night, &max.Night, format);
-				updated = updated || ImGui::SliderScalar((label + " InteriorDay").c_str(), drawType, static_cast<void*>(&InteriorDay), &min.InteriorDay, &max.InteriorDay, format);
-				updated = updated || ImGui::SliderScalar((label + " InteriorNight").c_str(), drawType, static_cast<void*>(&InteriorNight), &min.InteriorNight, &max.InteriorNight, format);
+			if (std::is_same<T, float>::value) {
+				std::stringstream stream;
+				stream << std::fixed << std::setprecision(3) << val;
+				return stream.str();
 			} else {
-				if (ImGui::SliderScalar(label.c_str(), drawType, static_cast<void*>(&Day), &min, &max, format)) {
-					SetAll(Day);
-					updated = true;
-				}
+				return std::to_string(val);
 			}
-
-			return updated;
-		}*/
-
-		/* void DrawCheckBox(std::string label)
-		{
-			Helpers::UI::CustomCheckbox("TOD Value", &_drawAllVals);
-
-			bool updated = false;
-
-			if (_drawAllVals) {
-				// Current val goes here
-
-				updated = updated || ImGui::Checkbox(label + " Sunrise Start", &SunriseStart);
-				updated = updated || ImGui::Checkbox(label + " Sunrise End", &SunriseEnd);
-				updated = updated || ImGui::Checkbox(label + " Day", &Day);
-				updated = updated || ImGui::Checkbox(label + " Sunset Start", &SunsetStart);
-				updated = updated || ImGui::Checkbox(label + " Sunset End", &SunsetEnd);
-				updated = updated || ImGui::Checkbox(label + " Night", &Night);
-				updated = updated || ImGui::Checkbox(label + " InteriorDay", &InteriorDay);
-				updated = updated || ImGui::Checkbox(label + " InteriorNight", &InteriorNight);
-
-			} else {
-				if (ImGui::Checkbox(label, &Day)) {
-					SetAll(Day);
-					updated = true;
-				}
-			}
-		}*/
-
-		/* static bool IsTODValue(const nlohmann::json& jsonValue)
-		{
-			// Check if the JSON value is an object
-			if (!jsonValue.is_object()) {
-				return false;
-			}
-
-			// Check if all the required keys exist in the JSON object
-			bool allExist =  jsonValue.contains("Dawn") && jsonValue.contains("Sunrise") && jsonValue.contains("Day") && jsonValue.contains("Sunset") && jsonValue.contains("Dusk") && jsonValue.contains("Night") && jsonValue.contains("InteriorDay") && jsonValue.contains("InteriorNight");
-		
-			if (!allExist)
-				return false;
-
-			if (std::is_floating_point<T>::value) {
-				return jsonValue["Day"].is_number_float();
-			}
-			if (std::is_integral<T>::value) {
-				return jsonValue["Day"].is_number();
-			}
-			if (std::is_same<T, bool>::value) {
-				return jsonValue["Day"].is_boolean();
-			}
-
-			return false; // Unknown
-		}*/
+		}
 	};
 
 	typedef FeatureValue<int32_t> fv_int32;
@@ -1012,7 +782,17 @@ namespace nlohmann
 				if (!value.IsTODValue()) {
 					j = value.Value;
 				} else {
-					//TOD logic
+					auto tod = value.GetTODVals();
+					j = nlohmann::json{
+						{ "SunriseStart", tod.SunriseStart },
+						{ "SunriseEnd", tod.SunriseEnd },
+						{ "Day", tod.Day },
+						{ "SunsetStart", tod.SunsetStart },
+						{ "SunsetEnd", tod.SunsetEnd },
+						{ "Night", tod.Night },
+						{ "InteriorDay", tod.InteriorDay },
+						{ "InteriorNight", tod.InteriorNight }
+					};
 				}
 			}
 		}
@@ -1020,7 +800,17 @@ namespace nlohmann
 		static void from_json(const json& j, Configuration::FeatureValue<T>& value)
 		{
 			if (j.is_object()) {
-				// TOD logic
+				auto tod = value.GetTODVals();
+				tod.SunriseStart = j.at("SunriseStart").get<T>();
+				tod.SunriseEnd = j.at("SunriseEnd").get<T>();
+				tod.Day = j.at("Day").get<T>();
+				tod.SunsetStart = j.at("SunsetStart").get<T>();
+				tod.SunsetEnd = j.at("SunsetEnd").get<T>();
+				tod.Night = j.at("Night").get<T>();
+				tod.InteriorDay = j.at("InteriorDay").get<T>();
+				tod.InteriorNight = j.at("InteriorNight").get<T>();
+				value.SetTODVals(tod);
+				value.SetIsTODValue(true);
 			} else if (!j.is_null()) {
 				value.SetValue(j.get<T>());
 			} else {
@@ -1087,67 +877,3 @@ namespace nlohmann
 		}
 	};
 }
-
-			/* if (j.is_object()) {
-				value.SunriseStart = j.at("SunriseStart").get<T>();
-				value.SunriseEnd = j.at("SunriseEnd").get<T>();
-				value.Day = j.at("Day").get<T>();
-				value.SunsetStart = j.at("SunsetStart").get<T>();
-				value.SunsetEnd = j.at("SunsetEnd").get<T>();
-				value.Night = j.at("Night").get<T>();
-				value.InteriorDay = j.at("InteriorDay").get<T>();
-				value.InteriorNight = j.at("InteriorNight").get<T>();
-			} else {
-				T val = j.get<T>();
-				value.SetAll(val);
-			}*/
-
-		//if (value.AllEqual()) {
-		/* if (value.SunriseStart == value.SunriseEnd && value.SunriseEnd == value.Day && value.Day == value.SunsetStart && value.SunsetStart == value.SunsetEnd && value.SunsetEnd == value.Night && value.Night == value.InteriorDay && value.InteriorDay == value.InteriorNight) {
-				j = value.Day;  // Store as a single value
-			} else {
-				j = nlohmann::json{
-					{ "SunriseStart", value.SunriseStart },
-					{ "SunriseEnd", value.SunriseEnd },
-					{ "Day", value.Day },
-					{ "SunsetStart", value.SunsetStart },
-					{ "SunsetEnd", value.SunsetEnd },
-					{ "Night", value.Night },
-					{ "InteriorDay", value.InteriorDay },
-					{ "InteriorNight", value.InteriorNight }
-				};
-			}*/
-		//}
-		//}
-
-		//static void to_json(json& j, const Configuration::FeatureValue<T>& value)
-		//{
-			//if (value.HasValue()) {
-			//	if (!value.IsTODValue()) {
-			//		j = value.Value;
-			//	} else {
-					//TOD logic
-			//		j = value.Value;
-			//	}
-
-				//if (value.AllEqual()) {
-				/* if (value.SunriseStart == value.SunriseEnd && value.SunriseEnd == value.Day && value.Day == value.SunsetStart && value.SunsetStart == value.SunsetEnd && value.SunsetEnd == value.Night && value.Night == value.InteriorDay && value.InteriorDay == value.InteriorNight) {
-				j = value.Day;  // Store as a single value
-			} else {
-				j = nlohmann::json{
-					{ "SunriseStart", value.SunriseStart },
-					{ "SunriseEnd", value.SunriseEnd },
-					{ "Day", value.Day },
-					{ "SunsetStart", value.SunsetStart },
-					{ "SunsetEnd", value.SunsetEnd },
-					{ "Night", value.Night },
-					{ "InteriorDay", value.InteriorDay },
-					{ "InteriorNight", value.InteriorNight }
-				};
-			}*/
-			//}
-		//}
-
-	// Typedef versions:
-//#include "FeatureValue.cpp"  // Include the implementation file
-//#endif

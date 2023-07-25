@@ -6,7 +6,7 @@
 
 using namespace Configuration;
 
-struct Settings : FeatureSettings
+struct WaterBlendingSettings : FeatureSettings
 {
 	fv_uint32 EnableWaterBlending = 1;
 	fv_uint32 EnableWaterBlendingSSR = 1;
@@ -15,10 +15,11 @@ struct Settings : FeatureSettings
 
 	void Draw();
 
-	FEATURE_SETTINGS(Settings, EnableWaterBlending, EnableWaterBlendingSSR, WaterBlendRange, SSRBlendRange)
+	FEATURE_SETTINGS(WaterBlendingSettings, EnableWaterBlending, EnableWaterBlendingSSR, WaterBlendRange, SSRBlendRange)
 };
 
-struct WaterBlending : FeatureWithSettings<Settings>
+
+struct WaterBlending : FeatureWithSettings<WaterBlendingSettings>
 {
 public:
 
@@ -34,7 +35,7 @@ public:
 	struct alignas(16) PerPass
 	{
 		float waterHeight;
-		Settings settings;
+		WaterBlendingSettings settings;
 		float pad[3];
 	};
 

@@ -1,91 +1,45 @@
-/*#include "ScreenSpaceShadows.h"
+#include "ScreenSpaceShadows.h"
 
 #include "State.h"
 #include "Util.h"
 
 using RE::RENDER_TARGETS;
 
-bool ScreenSpaceShadows::ConfigSettings::DrawSettings(bool& featureEnabled, bool isConfigOverride, std::shared_ptr<FeatureSettings> defaultSettings)
+void ScreenSpaceShadowsSettings::Draw()
 {
-	bool updated = false;
-
 	if (ImGui::TreeNodeEx("General", ImGuiTreeNodeFlags_DefaultOpen)) {
-			
-		if (!isConfigOverride) {
-			ImGui::Checkbox("Enable Screen-Space Shadows", &featureEnabled);
-		}
 
 		ImGui::TextWrapped("Controls the accuracy of traced shadows.");
-		if (isConfigOverride) Helpers::UI::BeginOptionalSection(MaxSamples, (uint32_t)24);
-		updated = updated || ImGui::SliderInt("Max Samples", (int*)&MaxSamples, 1, 512);
-		if (isConfigOverride) Helpers::UI::EndOptionalSection(MaxSamples);
+		MaxSamples.DrawSlider("Max Samples", 1, 512);
 
 		ImGui::TreePop();
 	}
 
 	if (ImGui::TreeNodeEx("Blur Filter", ImGuiTreeNodeFlags_DefaultOpen)) {
 
-		if (isConfigOverride) Helpers::UI::BeginOptionalSection<FeatureValue<float>>(BlurRadius, 0.5f);
-		updated = updated || BlurRadius->DrawSliderScalar("Blur Radius", ImGuiDataType_Float, 0, 1);
-		if (isConfigOverride) Helpers::UI::EndOptionalSection(BlurRadius);
-
-		if (isConfigOverride) Helpers::UI::BeginOptionalSection<FeatureValue<float>>(BlurDropoff, 0.005f);
-		updated = updated || BlurDropoff->DrawSliderScalar("Blur Depth Dropoff", ImGuiDataType_Float, 0.001f, 0.1f);
-		if (isConfigOverride) Helpers::UI::EndOptionalSection(BlurDropoff);
+		BlurRadius.DrawSlider("Blur Radius", 0, 1);
+		BlurDropoff.DrawSlider("Blur Depth Dropoff", 0.001f, 0.1f);
 
 		ImGui::TreePop();
 	}
 
 	if (ImGui::TreeNodeEx("Near Shadows", ImGuiTreeNodeFlags_DefaultOpen)) {
-			
-		if (isConfigOverride) Helpers::UI::BeginOptionalSection<FeatureValue<float>>(NearDistance, 16.0f);
-		updated = updated || NearDistance->DrawSliderScalar("Near Distance", ImGuiDataType_Float, 0, 128);
-		if (isConfigOverride) Helpers::UI::EndOptionalSection(NearDistance);
-
-		if (isConfigOverride) Helpers::UI::BeginOptionalSection<FeatureValue<float>>(NearThickness, 2.0f);
-		updated = updated || NearThickness->DrawSliderScalar("Near Thickness", ImGuiDataType_Float, 0, 128);
-		if (isConfigOverride) Helpers::UI::EndOptionalSection(NearThickness);
-
-		if (isConfigOverride) Helpers::UI::BeginOptionalSection<FeatureValue<float>>(NearHardness, 32.0f);
-		updated = updated || NearHardness->DrawSliderScalar("Near Hardness", ImGuiDataType_Float, 0, 64);
-		if (isConfigOverride) Helpers::UI::EndOptionalSection(NearHardness);
+		
+		NearDistance.DrawSlider("Near Distance", 0, 128);
+		NearThickness.DrawSlider("Near Thickness", 0, 128);
+		NearHardness.DrawSlider("Near Hardness", 0, 128);
 
 		ImGui::TreePop();
 	}
 
 	if (ImGui::TreeNodeEx("Far Shadows", ImGuiTreeNodeFlags_DefaultOpen)) {
 
-		if (isConfigOverride) Helpers::UI::BeginOptionalSection<FeatureValue<float>>(FarDistanceScale, 16.0f);
-		 updated = updated || FarDistanceScale->DrawSliderScalar("Far Distance Scale", ImGuiDataType_Float, 0, 1);
-		if (isConfigOverride) Helpers::UI::EndOptionalSection(FarDistanceScale);
-
-		if (isConfigOverride) Helpers::UI::BeginOptionalSection<FeatureValue<float>>(FarThicknessScale, 2.0f);
-		 updated = updated || FarThicknessScale->DrawSliderScalar("Far Thickness Scale", ImGuiDataType_Float, 0, 1);
-		if (isConfigOverride) Helpers::UI::EndOptionalSection(FarThicknessScale);
-
-		if (isConfigOverride) Helpers::UI::BeginOptionalSection<FeatureValue<float>>(FarHardness, 32.0f);
-		 updated = updated || FarHardness->DrawSliderScalar("Far Hardness", ImGuiDataType_Float, 0, 64);
-		if (isConfigOverride) Helpers::UI::EndOptionalSection(FarHardness);
+		FarDistanceScale.DrawSlider("Far Distance Scale", 0, 1);
+		FarThicknessScale.DrawSlider("Far Thickness Scale", 0, 1);
+		FarHardness.DrawSlider("Far Hardness", 0, 64);
 
 		ImGui::TreePop();
 	}
-
-	return updated;
-}
-
-ScreenSpaceShadows::ShaderSettings ScreenSpaceShadows::ConfigSettings::ToShaderSettings()
-{
-	ShaderSettings settings;
-	settings.MaxSamples = MaxSamples.value();
-	settings.FarDistanceScale = FarDistanceScale->Get();
-	settings.FarThicknessScale = FarThicknessScale->Get();
-	settings.FarHardness = FarHardness->Get();
-	settings.NearDistance = NearDistance->Get();
-	settings.NearThickness = NearThickness->Get();
-	settings.NearHardness = NearHardness->Get();
-	settings.BlurRadius = BlurRadius->Get();
-	settings.BlurDropoff = BlurDropoff->Get();
-	return settings;
 }
 
 enum class GrassShaderTechniques
@@ -190,7 +144,7 @@ ID3D11ComputeShader* ScreenSpaceShadows::GetComputeShaderVerticalBlur()
 
 void ScreenSpaceShadows::ModifyLighting(const RE::BSShader*, const uint32_t)
 {
-	if (!_enabled)
+	if (!_loaded)
 		return;
 
 	auto context = RE::BSGraphics::Renderer::GetSingleton()->GetRuntimeData().context;
@@ -320,7 +274,7 @@ void ScreenSpaceShadows::ModifyLighting(const RE::BSShader*, const uint32_t)
 
 					data.ShadowDistance = 10000.0f;
 
-					data.Settings = configSettings->ToShaderSettings();
+					settings.SetArray(data.Settings);
 
 					raymarchCB->Update(data);
 				}
@@ -470,14 +424,3 @@ void ScreenSpaceShadows::Reset()
 {
 	renderedScreenCamera = false;
 }
-
-std::shared_ptr<FeatureSettings> ScreenSpaceShadows::CreateConfig()
-{
-	return std::make_shared<ScreenSpaceShadows::ConfigSettings>();
-}
-
-void ScreenSpaceShadows::ApplyConfig(std::shared_ptr<FeatureSettings> config)
-{
-	configSettings = std::dynamic_pointer_cast<ScreenSpaceShadows::ConfigSettings>(config);
-}
-*/

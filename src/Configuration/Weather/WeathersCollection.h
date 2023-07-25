@@ -11,8 +11,8 @@ namespace Configuration
 
 		WeathersCollection();
 
-		void Load(json& o_json);
-		void Save(json& o_json);
+		void Load(std::map<Feature*, json>& featureConfigMap);
+		void Save(std::map<Feature*, json>& featureConfigMap);  //(json& o_json);
 		void Draw();
 
 		void AddNewWeather();

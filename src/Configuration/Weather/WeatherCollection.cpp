@@ -8,34 +8,50 @@ WeathersCollection::WeathersCollection()
 	WeatherDefaultSettings = std::make_shared<Weather>(true);
 }
 
-void WeathersCollection::Load(json& o_json)
+void WeathersCollection::Load(std::map<Feature*, json>& featureConfigMap)//(json& o_json)
 {
 	CustomWeatherSettings.clear();
 
-	if (o_json["Default"].is_object()) {
-		WeatherDefaultSettings->Load(o_json["Default"]);
-	}
+	WeatherDefaultSettings->Load(featureConfigMap);
 
-	if (o_json["Overrides"].is_array()) {
-		for (auto& weatherO : o_json["Overrides"]) {
-			CustomWeatherSettings.push_back(std::make_shared<Weather>(weatherO));
+	json weathersJson;
+	std::string configPath = "Data\\SKSE\\Plugins\\Weathers.json";
+
+	std::ifstream i(configPath);
+	if (i.is_open()) {
+		try {
+			i >> weathersJson;
+		} catch (const nlohmann::json::parse_error& e) {
+			logger::error("Error parsing json config file ({}) : {}\n", configPath, e.what());
+			return;
+		}
+
+		if (weathersJson.is_array()) {
+			for (auto& weatherO : weathersJson) {
+				CustomWeatherSettings.push_back(std::make_shared<Weather>(weatherO, featureConfigMap));
+			}
 		}
 	}
+
+	
 }
 
-void WeathersCollection::Save(json& o_json)
+void WeathersCollection::Save(std::map<Feature*, json>& featureConfigMap)
 {
-	json wdefault;
-	WeatherDefaultSettings->Save(wdefault);
-	o_json["Default"] = wdefault;
+	std::ofstream o(L"Data\\SKSE\\Plugins\\Weathers.json");
 
+	WeatherDefaultSettings->Save(featureConfigMap);
+
+	json weathersJson;
 	if (!CustomWeatherSettings.empty()) {
 		for (const auto& weather : CustomWeatherSettings) {
 			json weatherJson;
-			weather->Save(weatherJson);
-			o_json["Overrides"].push_back(weatherJson);
+			weather->Save(weatherJson, featureConfigMap);
+			weathersJson.push_back(weatherJson);
 		}
 	}
+
+	o << weathersJson.dump(1);
 }
 
 void Configuration::WeathersCollection::Draw()
@@ -91,7 +107,7 @@ void Configuration::WeathersCollection::AddNewWeather()
 
 			auto newFS = defaultSettingsMap.Feature->CreateNewSettings();
 			newWeather->FeatureSettings.ControlNewFeature(defaultSettingsMap.Feature, newFS);
-			newFS->Copy(*defaultSettingsMap.Settings);
+			newFS->CopyAndLink(*defaultSettingsMap.Settings);
 		}
 	}
 
@@ -156,13 +172,21 @@ void Configuration::WeathersCollection::DrawWeather(std::shared_ptr<Weather> wea
 
 		if (!featureNames.empty()) {
 			int selectedItem = -1;
-			if (ImGui::Combo("Add Feature Override", &selectedItem, featureNamesCStr.data(), static_cast<int>(featureNamesCStr.size()))) {
+			if (ImGui::Combo("Add", &selectedItem, featureNamesCStr.data(), static_cast<int>(featureNamesCStr.size()))) {
 				for (int i = 0; i < WeatherDefaultSettings->FeatureSettings.size(); i++) {
 					if (WeatherDefaultSettings->FeatureSettings[i].GetFeatureName() == featureNames[selectedItem]) {
 						ControlNewFeatureSettings(i);
-						//_selectedFeature = i;
+						weather->FeatureSettings.SelectedFeature = -1;
 					}
 				}
+			}
+		}
+
+		if (weather->FeatureSettings.SelectedFeature >= 0) {
+			std::string buttonLabel = "Remove:" + weather->FeatureSettings[weather->FeatureSettings.SelectedFeature].GetFeatureName();
+			if (ImGui::Button(buttonLabel.c_str())) {
+				weather->FeatureSettings[weather->FeatureSettings.SelectedFeature].Settings = nullptr;
+				weather->FeatureSettings.SelectedFeature = -1;
 			}
 		}
 	}
@@ -177,12 +201,13 @@ void Configuration::WeathersCollection::ControlNewFeatureSettings(int featureInd
 
 	auto newDefaultFS = featureSettingsToControl.Feature->CreateNewSettings();
 	WeatherDefaultSettings->FeatureSettings.ControlNewFeature(featureSettingsToControl.Feature, newDefaultFS);
-	newDefaultFS->Copy(*configManager->GeneralSettings[featureIndex].Settings);
+	newDefaultFS->CopyAndLink(*configManager->GeneralSettings[featureIndex].Settings);
+	newDefaultFS->ReleaseAll();
 
 	// Add to all custom weathers also
 	for (auto weather : CustomWeatherSettings) {
 		auto newFS = featureSettingsToControl.Feature->CreateNewSettings();
 		weather->FeatureSettings.ControlNewFeature(featureSettingsToControl.Feature, newFS);
-		newFS->Copy(*newDefaultFS);
+		newFS->CopyAndLink(*newDefaultFS);
 	}
 }

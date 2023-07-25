@@ -25,9 +25,10 @@ namespace Configuration
 	{
 		FeatureSettingsCollection(FeatureSettingsType type);
 
-		void Load(json& o_json);
-		void Save(json& o_json);
+		void Load(std::map<Feature*, json>& featureConfigMap);  //(json& o_json);
+		void Save(std::map<Feature*, json>& featureConfigMap);
 
+		void ControlNewFeature(FeatureSettingMap& featureSettingsMap);
 		void ControlNewFeature(Feature* Feature, std::shared_ptr<FeatureSettings> newSettings);
 
 		bool HasUpdated();
@@ -35,10 +36,11 @@ namespace Configuration
 
 		void Draw();
 
+		int SelectedFeature = -1;
+
 	private:
 		FeatureSettingsType _type;
 		bool _updated = false;
-		int _selectedFeature = -1;
 
 		void ResetSettings();
 	};

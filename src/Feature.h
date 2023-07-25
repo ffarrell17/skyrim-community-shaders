@@ -11,6 +11,7 @@ public:
 
 	bool IsEnabled();
 	void Enable(bool enable);
+	virtual bool AllowEnableDisable();
 	bool IsLoaded();
 
 	std::string GetIniPath();
@@ -38,10 +39,6 @@ protected:
 	std::string _version;
 	bool _enabled = true;
 	bool _loaded = false;
-
-private:
-
-	std::string RemoveSpaces(const std::string& str);
 };
 
 template <typename Derived>
