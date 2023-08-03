@@ -2,9 +2,32 @@
 
 #include "Buffer.h"
 #include "Feature.h"
+#include "Configuration/FeatureValue.h"
 
-struct GrassLighting : Feature
+using namespace Configuration;
+
+struct GrassLightingSettings : FeatureSettings
 {
+	fv_float Glossiness = 20.0f;
+	fv_float SpecularStrength = 0.5f;
+	fv_float SubsurfaceScatteringAmount = 1.0f;
+	fv_uint32 EnableDirLightFix = 1;
+	fv_uint32 EnablePointLights = 1;
+
+	void Draw();
+
+	FEATURE_SETTINGS(GrassLightingSettings,
+		Glossiness,
+		SpecularStrength,
+		SubsurfaceScatteringAmount,
+		EnableDirLightFix,
+		EnablePointLights)
+};
+
+class GrassLighting : public FeatureWithSettings<GrassLightingSettings>
+{
+public:
+
 	static GrassLighting* GetSingleton()
 	{
 		static GrassLighting singleton;
@@ -14,36 +37,43 @@ struct GrassLighting : Feature
 	virtual inline std::string GetName() { return "Grass Lighting"; }
 	virtual inline std::string GetShortName() { return "GrassLighting"; }
 
-	struct Settings
-	{
-		float Glossiness = 20;
-		float SpecularStrength = 0.5;
-		float SubsurfaceScatteringAmount = 0.5;
-		std::uint32_t EnableDirLightFix = 1;
-		std::uint32_t EnablePointLights = 1;
-	};
-
 	struct alignas(16) PerFrame
 	{
 		DirectX::XMFLOAT4 EyePosition;
 		DirectX::XMFLOAT3X4 DirectionalAmbient;
 		float SunlightScale;
-		Settings Settings;
-		float pad0;
-		float pad1;
+		
+		float Glossiness;
+		float SpecularStrength;
+		float SubsurfaceScatteringAmount;
+		uint32_t EnableDirLightFix;
+		uint32_t EnablePointLights;
+
+		float pad[2];
 	};
 
-	Settings settings;
+	struct alignas(16) PerFrameVR
+	{
+		DirectX::XMFLOAT4 EyePosition;
+		DirectX::XMFLOAT4 EyePosition2;
+		DirectX::XMFLOAT3X4 DirectionalAmbient;
+		float SunlightScale;
+
+		float Glossiness;
+		float SpecularStrength;
+		float SubsurfaceScatteringAmount;
+		uint32_t EnableDirLightFix;
+		uint32_t EnablePointLights;
+
+		float pad[2];
+	};
 
 	bool updatePerFrame = false;
 	ConstantBuffer* perFrame = nullptr;
-	virtual void SetupResources();
-	virtual void Reset();
 
-	virtual void DrawSettings();
+	virtual void SetupResources() override;
+	virtual void Reset() override;
+
 	void ModifyGrass(const RE::BSShader* shader, const uint32_t descriptor);
-	virtual void Draw(const RE::BSShader* shader, const uint32_t descriptor);
-
-	virtual void Load(json& o_json);
-	virtual void Save(json& o_json);
+	virtual void Draw(const RE::BSShader* shader, const uint32_t descriptor) override;
 };

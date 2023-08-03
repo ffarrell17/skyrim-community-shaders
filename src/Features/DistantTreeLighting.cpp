@@ -1,47 +1,47 @@
 #include "DistantTreeLighting.h"
+#include "..\Configuration\ConfigurationManager.h"
 
 #include "State.h"
 #include "Util.h"
+#include "Helpers/UI.h"
 
-NLOHMANN_DEFINE_TYPE_NON_INTRUSIVE_WITH_DEFAULT(
-	DistantTreeLighting::Settings,
-	EnableComplexTreeLOD,
-	EnableDirLightFix,
-	SubsurfaceScatteringAmount,
-	FogDimmerAmount)
-
-void DistantTreeLighting::DrawSettings()
+void DistantTreeLightingSettings::Draw()
 {
 	if (ImGui::TreeNodeEx("Complex Tree LOD", ImGuiTreeNodeFlags_DefaultOpen)) {
+			
 		ImGui::TextWrapped(
 			"Enables advanced lighting simulation on tree LOD.\n"
 			"Requires DynDOLOD.\n"
 			"See https://dyndolod.info/ for more information.");
-		ImGui::Checkbox("Enable Complex Tree LOD", (bool*)&settings.EnableComplexTreeLOD);
+		EnableComplexTreeLOD.DrawCheckbox("Enable Complex Tree LOD");
 
 		ImGui::TreePop();
 	}
 
 	if (ImGui::TreeNodeEx("Lights", ImGuiTreeNodeFlags_DefaultOpen)) {
+			
 		ImGui::TextWrapped("Fix for trees not being affected by sunlight scale.");
-		ImGui::Checkbox("Enable Directional Light Fix", (bool*)&settings.EnableDirLightFix);
+		EnableDirLightFix.DrawCheckbox("Enable Directional Light Fix");
 
 		ImGui::TreePop();
 	}
 
 	if (ImGui::TreeNodeEx("Effects", ImGuiTreeNodeFlags_DefaultOpen)) {
+		
 		ImGui::TextWrapped(
 			"Soft lighting controls how evenly lit an object is.\n"
 			"Back lighting illuminates the back face of an object.\n"
 			"Combined to model the transport of light through the surface.");
-		ImGui::SliderFloat("Subsurface Scattering Amount", &settings.SubsurfaceScatteringAmount, 0.0f, 1.0f);
+		SubsurfaceScatteringAmount.DrawSlider("Subsurface Scattering Amount", 0.0f, 1.0f);
 
 		ImGui::TreePop();
 	}
 
 	if (ImGui::TreeNodeEx("Vanilla", ImGuiTreeNodeFlags_DefaultOpen)) {
+
 		ImGui::TextWrapped("Darkens lighting relative fog strength.");
-		ImGui::SliderFloat("Fog Dimmer Amount", &settings.FogDimmerAmount, 0.0f, 1.0f);
+
+		FogDimmerAmount.DrawSlider("Fog Dimmer Amount", 0.0f, 1.0f);
 
 		ImGui::TreePop();
 	}
@@ -116,7 +116,10 @@ void DistantTreeLighting::ModifyDistantTree(const RE::BSShader*, const uint32_t 
 
 		perPassData.ComplexAtlasTexture = complexAtlasTexture;
 
-		perPassData.Settings = settings;
+		perPassData.EnableComplexTreeLOD	   = settings.EnableComplexTreeLOD.Value;
+		perPassData.EnableDirLightFix		   = settings.EnableDirLightFix.Value;
+		perPassData.FogDimmerAmount			   = settings.FogDimmerAmount.Value;
+		perPassData.SubsurfaceScatteringAmount = settings.SubsurfaceScatteringAmount.Value;
 
 		perPass->Update(perPassData);
 
@@ -142,19 +145,6 @@ void DistantTreeLighting::Draw(const RE::BSShader* shader, const uint32_t descri
 		ModifyDistantTree(shader, descriptor);
 		break;
 	}
-}
-
-void DistantTreeLighting::Load(json& o_json)
-{
-	if (o_json[GetName()].is_object())
-		settings = o_json[GetName()];
-
-	Feature::Load(o_json);
-}
-
-void DistantTreeLighting::Save(json& o_json)
-{
-	o_json[GetName()] = settings;
 }
 
 void DistantTreeLighting::SetupResources()

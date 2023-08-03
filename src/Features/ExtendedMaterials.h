@@ -2,57 +2,82 @@
 
 #include "Buffer.h"
 #include "Feature.h"
+#include "Configuration/FeatureValue.h"
 
-struct ExtendedMaterials : Feature
+using namespace Configuration;
+
+struct ExtendedMaterialsSettings : FeatureSettings
 {
+	fv_uint32 EnableComplexMaterial = 1;
+
+	fv_uint32 EnableParallax = 1;
+	fv_uint32 EnableTerrain = 0;
+	fv_uint32 EnableHighQuality = 0;
+
+	fv_uint32 MaxDistance = 2048;
+	fv_float CRPMRange = 0.5f;
+	fv_float BlendRange = 0.05f;
+	fv_float Height = 0.1f;
+
+	fv_uint32 EnableShadows = 1;
+	fv_uint32 ShadowsStartFade = 512;
+	fv_uint32 ShadowsEndFade = 1024;
+
+	void Draw();
+
+	FEATURE_SETTINGS(ExtendedMaterialsSettings,
+			EnableComplexMaterial,
+			EnableParallax,
+			EnableTerrain,
+			EnableHighQuality,
+			MaxDistance,
+			CRPMRange,
+			BlendRange,
+			Height,
+			EnableShadows,
+			ShadowsStartFade,
+			ShadowsEndFade)
+};
+
+struct ExtendedMaterials : public FeatureWithSettings<ExtendedMaterialsSettings>
+{
+public:
+
 	static ExtendedMaterials* GetSingleton()
 	{
 		static ExtendedMaterials singleton;
 		return &singleton;
 	}
-	
+
 	virtual inline std::string GetName() { return "Complex Parallax Materials"; }
 	virtual inline std::string GetShortName() { return "ComplexParallaxMaterials"; }
-
-	struct Settings
-	{
-		uint32_t EnableComplexMaterial = 1;
-
-		uint32_t EnableParallax = 1;
-		uint32_t EnableTerrain =0;
-		uint32_t EnableHighQuality = 0;
-
-		uint32_t MaxDistance = 2048;
-		float CRPMRange = 0.5f;
-		float BlendRange = 0.05f;
-		float Height = 0.1f;
-
-		uint32_t EnableShadows = 1;
-		uint32_t ShadowsStartFade = 512;
-		uint32_t ShadowsEndFade = 1024;
-	};
 
 	struct alignas(16) PerPass
 	{
 		uint32_t CullingMode = 0;
-		Settings settings;
-	};
 
-	Settings settings;
+		uint32_t EnableComplexMaterial;
+		uint32_t EnableParallax;
+		uint32_t EnableTerrain;
+		uint32_t EnableHighQuality;
+		uint32_t MaxDistance;
+		float CRPMRange;
+		float BlendRange;
+		float Height;
+		uint32_t EnableShadows;
+		uint32_t ShadowsStartFade;
+		uint32_t ShadowsEndFade;
+	};
 
 	std::unique_ptr<Buffer> perPass = nullptr;
 
 	ID3D11SamplerState* terrainSampler = nullptr;
 	
-	virtual void SetupResources();
-	virtual inline void Reset() {}
-
-	virtual void DrawSettings();
+	virtual void SetupResources() override;
 
 	void ModifyLighting(const RE::BSShader* shader, const uint32_t descriptor);
-	virtual void Draw(const RE::BSShader* shader, const uint32_t descriptor);
+	virtual void Draw(const RE::BSShader* shader, const uint32_t descriptor) override;
 
-	virtual void Load(json& o_json);
-	virtual void Save(json& o_json);
+	std::vector<std::string> GetAdditionalRequiredShaderDefines(RE::BSShader::Type shaderType);
+
 };
-

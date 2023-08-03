@@ -1,6 +1,8 @@
 #pragma once
 
 #include <nlohmann/json.hpp>
+#include "Feature.h"
+
 using json = nlohmann::json;
 
 class State
@@ -17,7 +19,7 @@ public:
 	RE::BSShader* currentShader = nullptr;
 	uint32_t currentVertexDescriptor = 0;
 	uint32_t currentPixelDescriptor = 0;
-	spdlog::level::level_enum logLevel = spdlog::level::info;
+	spdlog::level::level_enum logLevel = spdlog::level::trace;
 
 	void Draw();
 	void Reset();
@@ -26,11 +28,10 @@ public:
 	void Load();
 	void Save();
 
+	void ClearComputeShaders();
 	bool ValidateCache(CSimpleIniA& a_ini);
 	void WriteDiskCacheInfo(CSimpleIniA& a_ini);
 
 	void SetLogLevel(spdlog::level::level_enum a_level = spdlog::level::info);
 	spdlog::level::level_enum GetLogLevel();
-
 };
-

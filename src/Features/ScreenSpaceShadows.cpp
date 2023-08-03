@@ -5,48 +5,40 @@
 
 using RE::RENDER_TARGETS;
 
-NLOHMANN_DEFINE_TYPE_NON_INTRUSIVE_WITH_DEFAULT(
-	ScreenSpaceShadows::Settings,
-	MaxSamples,
-	FarDistanceScale,
-	FarThicknessScale,
-	FarHardness,
-	NearDistance,
-	NearThickness,
-	NearHardness,
-	BlurRadius,
-	BlurDropoff)
-
-void ScreenSpaceShadows::DrawSettings()
+void ScreenSpaceShadowsSettings::Draw()
 {
 	if (ImGui::TreeNodeEx("General", ImGuiTreeNodeFlags_DefaultOpen)) {
-		ImGui::Checkbox("Enable Screen-Space Shadows", &enabled);
+
+		ImGui::Checkbox("Enable Screen-Space Shadows", &ScreenSpaceShadows::GetSingleton()->enabled);
 
 		ImGui::TextWrapped("Controls the accuracy of traced shadows.");
-		ImGui::SliderInt("Max Samples", (int*)&settings.MaxSamples, 1, 512);
+		MaxSamples.DrawSlider("Max Samples", 1, 512);
 
 		ImGui::TreePop();
 	}
 
 	if (ImGui::TreeNodeEx("Blur Filter", ImGuiTreeNodeFlags_DefaultOpen)) {
-		ImGui::SliderFloat("Blur Radius", &settings.BlurRadius, 0, 1);
-		ImGui::SliderFloat("Blur Depth Dropoff", &settings.BlurDropoff, 0.001f, 0.1f);
+
+		BlurRadius.DrawSlider("Blur Radius", 0, 1);
+		BlurDropoff.DrawSlider("Blur Depth Dropoff", 0.001f, 0.1f);
 
 		ImGui::TreePop();
 	}
 
 	if (ImGui::TreeNodeEx("Near Shadows", ImGuiTreeNodeFlags_DefaultOpen)) {
-		ImGui::SliderFloat("Near Distance", &settings.NearDistance, 0, 128);
-		ImGui::SliderFloat("Near Thickness", &settings.NearThickness, 0, 128);
-		ImGui::SliderFloat("Near Hardness", &settings.NearHardness, 0, 64);
+		
+		NearDistance.DrawSlider("Near Distance", 0, 128);
+		NearThickness.DrawSlider("Near Thickness", 0, 128);
+		NearHardness.DrawSlider("Near Hardness", 0, 128);
 
 		ImGui::TreePop();
 	}
 
 	if (ImGui::TreeNodeEx("Far Shadows", ImGuiTreeNodeFlags_DefaultOpen)) {
-		ImGui::SliderFloat("Far Distance Scale", &settings.FarDistanceScale, 0, 1);
-		ImGui::SliderFloat("Far Thickness Scale", &settings.FarThicknessScale, 0, 1);
-		ImGui::SliderFloat("Far Hardness", &settings.FarHardness, 0, 64);
+
+		FarDistanceScale.DrawSlider("Far Distance Scale", 0, 1);
+		FarThicknessScale.DrawSlider("Far Thickness Scale", 0, 1);
+		FarHardness.DrawSlider("Far Hardness", 0, 64);
 
 		ImGui::TreePop();
 	}
@@ -284,7 +276,15 @@ void ScreenSpaceShadows::ModifyLighting(const RE::BSShader*, const uint32_t)
 
 					data.ShadowDistance = 10000.0f;
 
-					data.Settings = settings;
+					data.MaxSamples =			settings.MaxSamples.Value;
+					data.FarDistanceScale =		settings.FarDistanceScale.Value;
+					data.FarThicknessScale =	settings.FarThicknessScale.Value;
+					data.FarHardness =			settings.FarHardness.Value;
+					data.NearDistance =			settings.NearDistance.Value;
+					data.NearThickness =		settings.NearThickness.Value;
+					data.NearHardness =			settings.NearHardness.Value;
+					data.BlurRadius =			settings.BlurRadius.Value;
+					data.BlurDropoff =			settings.BlurDropoff.Value;
 
 					raymarchCB->Update(data);
 				}
@@ -389,7 +389,7 @@ void ScreenSpaceShadows::ModifyLighting(const RE::BSShader*, const uint32_t)
 
 	ID3D11Buffer* buffers[1]{};
 	buffers[0] = perPass->CB();
-	context->PSSetConstantBuffers(4, ARRAYSIZE(buffers), buffers);
+	context->PSSetConstantBuffers(5, ARRAYSIZE(buffers), buffers);
 
 	context->PSSetSamplers(14, 1, &computeSampler);
 }
@@ -409,17 +409,19 @@ void ScreenSpaceShadows::Draw(const RE::BSShader* shader, const uint32_t descrip
 	}
 }
 
-void ScreenSpaceShadows::Load(json& o_json)
+std::vector<std::string> ScreenSpaceShadows::GetAdditionalRequiredShaderDefines(RE::BSShader::Type shaderType)
 {
-	if (o_json[GetName()].is_object())
-		settings = o_json[GetName()];
+	std::vector<std::string> defines;
 
-	Feature::Load(o_json);
-}
+	switch (shaderType) {
+	case RE::BSShader::Type::Grass:
+	case RE::BSShader::Type::Lighting:
+	case RE::BSShader::Type::DistantTree:
+		defines.push_back("SCREEN_SPACE_SHADOWS");
+		break;
+	}
 
-void ScreenSpaceShadows::Save(json& o_json)
-{
-	o_json[GetName()] = settings;
+	return defines;
 }
 
 void ScreenSpaceShadows::SetupResources()

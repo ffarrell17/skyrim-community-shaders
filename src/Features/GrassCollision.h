@@ -2,9 +2,28 @@
 
 #include "Buffer.h"
 #include "Feature.h"
+#include "Configuration/FeatureValue.h"
 
-struct GrassCollision : Feature
+using namespace Configuration;
+
+struct GrassCollisionSettings : FeatureSettings
 {
+	fv_uint32 EnableGrassCollision = 1;
+	fv_float RadiusMultiplier = 2;
+	fv_float DisplacementMultiplier = 16;
+
+	void Draw();
+
+	FEATURE_SETTINGS(GrassCollisionSettings,
+		EnableGrassCollision,
+		RadiusMultiplier,
+		DisplacementMultiplier)
+};
+
+class GrassCollision : public FeatureWithSettings<GrassCollisionSettings>
+{
+public:
+
 	static GrassCollision* GetSingleton()
 	{
 		static GrassCollision singleton;
@@ -14,18 +33,15 @@ struct GrassCollision : Feature
 	virtual inline std::string GetName() { return "Grass Collision"; }
 	virtual inline std::string GetShortName() { return "GrassCollision"; }
 
-	struct Settings
-	{
-		std::uint32_t EnableGrassCollision = 1;
-		float RadiusMultiplier = 2;
-		float DisplacementMultiplier = 16;
-	};
-
 	struct alignas(16) PerFrame
 	{
 		DirectX::XMFLOAT3 boundCentre;
 		float boundRadius;
-		Settings Settings;
+
+		uint32_t EnableGrassCollision;
+		float RadiusMultiplier;
+		float DisplacementMultiplier;
+
 		float pad0;
 	};
 
@@ -37,19 +53,15 @@ struct GrassCollision : Feature
 
 	std::unique_ptr<Buffer> collisions = nullptr;
 
-	Settings settings;
-
 	bool updatePerFrame = false;
 	ConstantBuffer* perFrame = nullptr;
 
-	virtual void SetupResources();
-	virtual void Reset();
+	virtual void SetupResources() override;
+	virtual void Reset() override;
 
-	virtual void DrawSettings();
 	void UpdateCollisions();
 	void ModifyGrass(const RE::BSShader* shader, const uint32_t descriptor);
-	virtual void Draw(const RE::BSShader* shader, const uint32_t descriptor);
+	virtual void Draw(const RE::BSShader* shader, const uint32_t descriptor) override;
 
-	virtual void Load(json& o_json);
-	virtual void Save(json& o_json);
+	std::vector<std::string> GetAdditionalRequiredShaderDefines(RE::BSShader::Type shaderType);
 };

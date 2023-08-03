@@ -1,22 +1,17 @@
 #include "WaterBlending.h"
 
-NLOHMANN_DEFINE_TYPE_NON_INTRUSIVE_WITH_DEFAULT(
-	WaterBlending::Settings,
-	EnableWaterBlending,
-	WaterBlendRange,
-	EnableWaterBlendingSSR,
-	SSRBlendRange)
+#pragma warning(suppress: 4100)
+void WaterBlendingSettings::Draw()
+ {
+	 if (ImGui::TreeNodeEx("General", ImGuiTreeNodeFlags_DefaultOpen)) {
+		
+		EnableWaterBlending.DrawCheckbox("Enable Water Blending");
 
-void WaterBlending::DrawSettings()
-{
-	if (ImGui::TreeNodeEx("General", ImGuiTreeNodeFlags_DefaultOpen)) {
-		ImGui::Checkbox("Enable Water Blending", (bool*)&settings.EnableWaterBlending);
+		WaterBlendRange.DrawSlider("Water Blend Range", 0.0f, 3.0f);
 
-		ImGui::SliderFloat("Water Blend Range", &settings.WaterBlendRange, 0, 3);
+		EnableWaterBlendingSSR.DrawCheckbox("Enable Water Blending SSR");
 
-		ImGui::Checkbox("Enable Water Blending SSR", (bool*)&settings.EnableWaterBlendingSSR);
-
-		ImGui::SliderFloat("SSR Blend Range", &settings.SSRBlendRange, 0, 3);
+		SSRBlendRange.DrawSlider("SSR Blend Range", 0.0f, 3.0f);
 
 		ImGui::TreePop();
 	}
@@ -28,7 +23,10 @@ void WaterBlending::Draw(const RE::BSShader* shader, const uint32_t)
 		auto context = RE::BSGraphics::Renderer::GetSingleton()->GetRuntimeData().context;
 
 		PerPass data{};
-		data.settings = settings;
+		data.EnableWaterBlending = settings.EnableWaterBlending.Value;
+		data.EnableWaterBlendingSSR = settings.EnableWaterBlendingSSR.Value;
+		data.WaterBlendRange = settings.WaterBlendRange.Value;
+		data.SSRBlendRange = settings.SSRBlendRange.Value;
 
 		auto shadowState = RE::BSGraphics::RendererShadowState::GetSingleton();
 
@@ -82,15 +80,15 @@ void WaterBlending::SetupResources()
 	perPass->CreateSRV(srvDesc);
 }
 
-void WaterBlending::Load(json& o_json)
+std::vector<std::string> WaterBlending::GetAdditionalRequiredShaderDefines(RE::BSShader::Type shaderType)
 {
-	if (o_json[GetName()].is_object())
-		settings = o_json[GetName()];
+	std::vector<std::string> defines;
 
-	Feature::Load(o_json);
-}
+	switch (shaderType) {
+	case RE::BSShader::Type::Water:
+		defines.push_back("WATER_BLENDING");
+		break;
+	}
 
-void WaterBlending::Save(json& o_json)
-{
-	o_json[GetName()] = settings;
+	return defines;
 }

@@ -2,10 +2,27 @@
 
 #include "Buffer.h"
 #include "Feature.h"
+#include "Configuration/FeatureValue.h"
 
-struct WaterBlending : Feature
+using namespace Configuration;
+
+struct WaterBlendingSettings : FeatureSettings
+{
+	fv_uint32 EnableWaterBlending = 1;
+	fv_uint32 EnableWaterBlendingSSR = 1;
+	fv_float WaterBlendRange = 1;
+	fv_float SSRBlendRange = 1;
+
+	void Draw();
+
+	FEATURE_SETTINGS(WaterBlendingSettings, EnableWaterBlending, EnableWaterBlendingSSR, WaterBlendRange, SSRBlendRange)
+};
+
+
+struct WaterBlending : FeatureWithSettings<WaterBlendingSettings>
 {
 public:
+
 	static WaterBlending* GetSingleton()
 	{
 		static WaterBlending singleton;
@@ -15,33 +32,22 @@ public:
 	virtual inline std::string GetName() { return "Water Blending"; }
 	virtual inline std::string GetShortName() { return "WaterBlending"; }
 
-	struct Settings
-	{
-		uint32_t EnableWaterBlending = 1;
-		uint32_t EnableWaterBlendingSSR = 1;
-		float WaterBlendRange = 1;
-		float SSRBlendRange = 1;
-	};
-
 	struct alignas(16) PerPass
 	{
 		float waterHeight;
-		Settings settings;
+		uint32_t EnableWaterBlending;
+		uint32_t EnableWaterBlendingSSR;
+		float WaterBlendRange;
+		float SSRBlendRange;
 		float pad[3];
 	};
 
-	Settings settings;
-
 	std::unique_ptr<Buffer> perPass = nullptr;
 
-	
 	virtual void SetupResources();
-	virtual inline void Reset() {}
 
-	virtual void DrawSettings();
+	virtual void Draw(const RE::BSShader* shader, const uint32_t descriptor) override;
 
-	virtual void Draw(const RE::BSShader* shader, const uint32_t descriptor);
-	
-	virtual void Load(json& o_json);
-	virtual void Save(json& o_json);
+	std::vector<std::string> GetAdditionalRequiredShaderDefines(RE::BSShader::Type shaderType);
 };
+

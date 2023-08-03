@@ -116,8 +116,10 @@ namespace DX
 #include <CLIBUtil/simpleINI.hpp>
 
 #include "imgui.h"
+#include "imgui_stdlib.h" // Allows text inputs with std::string
 
 #include <nlohmann/json.hpp>
 using json = nlohmann::json;
 
 #include <magic_enum.hpp>
+#include "visit_struct/visit_struct.hpp"

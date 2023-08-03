@@ -2,9 +2,40 @@
 
 #include "Buffer.h"
 #include "Feature.h"
+#include "Configuration/FeatureValue.h"
 
-struct ScreenSpaceShadows : Feature
+using namespace Configuration;
+
+struct ScreenSpaceShadowsSettings : FeatureSettings
 {
+	fv_uint32 MaxSamples = 24;
+	fv_float FarDistanceScale = 0.025f;
+	fv_float FarThicknessScale = 0.025f;
+	fv_float FarHardness = 8.0f;
+	fv_float NearDistance = 16.0f;
+	fv_float NearThickness = 2.0f;
+	fv_float NearHardness = 32.0f;
+	fv_float BlurRadius = 0.5f;
+	fv_float BlurDropoff = 0.005f;
+
+	void Draw();
+
+	FEATURE_SETTINGS(ScreenSpaceShadowsSettings,
+		MaxSamples,
+		FarDistanceScale,
+		FarThicknessScale,
+		FarHardness,
+		NearDistance,
+		NearThickness,
+		NearHardness,
+		BlurRadius,
+		BlurDropoff)
+};
+
+class ScreenSpaceShadows : public FeatureWithSettings<ScreenSpaceShadowsSettings>
+{
+public:
+
 	static ScreenSpaceShadows* GetSingleton()
 	{
 		static ScreenSpaceShadows singleton;
@@ -13,19 +44,6 @@ struct ScreenSpaceShadows : Feature
 
 	virtual inline std::string GetName() { return "Screen-Space Shadows"; }
 	virtual inline std::string GetShortName() { return "ScreenSpaceShadows"; }
-
-	struct Settings
-	{
-		uint32_t MaxSamples = 24;
-		float FarDistanceScale = 0.025f;
-		float FarThicknessScale = 0.025f;
-		float FarHardness = 8.0f;
-		float NearDistance = 16.0f;
-		float NearThickness = 2.0f;
-		float NearHardness = 32.0f;
-		float BlurRadius = 0.5f;
-		float BlurDropoff = 0.005f;
-	};
 
 	struct alignas(16) PerPass
 	{
@@ -43,14 +61,21 @@ struct ScreenSpaceShadows : Feature
 		DirectX::XMFLOAT4 DynamicRes;
 		DirectX::XMVECTOR InvDirLightDirectionVS;
 		float ShadowDistance = 10000;
-		Settings Settings;
+
+		uint32_t MaxSamples;
+		float FarDistanceScale;
+		float FarThicknessScale;
+		float FarHardness;
+		float NearDistance;
+		float NearThickness;
+		float NearHardness;
+		float BlurRadius;
+		float BlurDropoff;
 	};
 
-	Settings settings;
+	bool enabled = true;
 
 	ConstantBuffer* perPass = nullptr;
-
-	bool enabled = true;
 
 	ID3D11SamplerState* computeSampler = nullptr;
 
@@ -65,21 +90,19 @@ struct ScreenSpaceShadows : Feature
 
 	bool renderedScreenCamera = false;
 
-	virtual void SetupResources();
-	virtual void Reset();
+	virtual void SetupResources() override;
+	virtual void Reset() override;
+	virtual void ClearComputeShader() override;
 
-	virtual void DrawSettings();
 	void ModifyGrass(const RE::BSShader* shader, const uint32_t descriptor);
 	void ModifyDistantTree(const RE::BSShader*, const uint32_t descriptor);
 
-	void ClearComputeShader();
 	ID3D11ComputeShader* GetComputeShader();
 	ID3D11ComputeShader* GetComputeShaderHorizontalBlur();
 	ID3D11ComputeShader* GetComputeShaderVerticalBlur();
 
 	void ModifyLighting(const RE::BSShader* shader, const uint32_t descriptor);
-	virtual void Draw(const RE::BSShader* shader, const uint32_t descriptor);
+	virtual void Draw(const RE::BSShader* shader, const uint32_t descriptor) override;
 
-	virtual void Load(json& o_json);
-	virtual void Save(json& o_json);
+	std::vector<std::string> GetAdditionalRequiredShaderDefines(RE::BSShader::Type shaderType);
 };

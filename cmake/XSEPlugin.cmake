@@ -122,6 +122,7 @@ target_include_directories(
 	${PROJECT_NAME}
 	PUBLIC
 		${CMAKE_CURRENT_SOURCE_DIR}/include
+		"extern/IconFontCppHeaders"
 	PRIVATE
 		${CMAKE_CURRENT_BINARY_DIR}/cmake
 		${CMAKE_CURRENT_SOURCE_DIR}/src

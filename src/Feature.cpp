@@ -1,31 +1,48 @@
 #include "Feature.h"
 
 #include "Features/DistantTreeLighting.h"
+#include "Features/ExtendedMaterials.h"
 #include "Features/GrassCollision.h"
 #include "Features/GrassLighting.h"
 #include "Features/ScreenSpaceShadows.h"
-#include "Features/ExtendedMaterials.h"
 #include "Features/WaterBlending.h"
 
-void Feature::Load(json&)
+std::string Feature::GetVersion()
 {
-	// convert string to wstring
-	auto ini_filename = std::format("{}.ini", GetShortName());
-	std::wstring ini_filename_w;
-	std::ranges::copy(ini_filename, std::back_inserter(ini_filename_w));
-	auto ini_path = L"Data\\Shaders\\Features\\" + ini_filename_w;
+	return version;
+}
+
+bool Feature::IsLoaded()
+{
+	return loaded;
+}
+
+std::string Feature::GetIniPath()
+{
+	return "Data\\Shaders\\Features\\" + GetShortName() + ".ini";
+}
+
+void Feature::Init()
+{
+	std::string iniPath = GetIniPath();
 
 	CSimpleIniA ini;
 	ini.SetUnicode();
-	ini.LoadFile(ini_path.c_str());
+	ini.LoadFile(iniPath.c_str());
 	if (auto value = ini.GetValue("Info", "Version")) {
 		loaded = true;
 		version = value;
-		logger::info("{} successfully loaded", ini_filename);
+		logger::info("{} successfully loaded", iniPath.c_str());
 	} else {
 		loaded = false;
-		logger::warn("{} not successfully loaded", ini_filename);
+		logger::warn("{} not successfully loaded", iniPath.c_str());
 	}
+}
+
+#pragma warning(suppress: 4100)
+std::vector<std::string> Feature::GetAdditionalRequiredShaderDefines(RE::BSShader::Type shaderType)
+{
+	return std::vector<std::string>();
 }
 
 bool Feature::ValidateCache(CSimpleIniA& a_ini)
@@ -77,5 +94,11 @@ const std::vector<Feature*>& Feature::GetFeatureList()
 		ExtendedMaterials::GetSingleton(),
 		WaterBlending::GetSingleton()
 	};
-	return features;
+
+	static std::vector<Feature*> featuresVR = {
+		GrassLighting::GetSingleton(),
+		ExtendedMaterials::GetSingleton(),
+	};
+
+	return REL::Module::IsVR() ? featuresVR : features;
 }

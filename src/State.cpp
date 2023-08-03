@@ -2,14 +2,18 @@
 
 #include <magic_enum.hpp>
 
-#include "Menu.h"
+#include "Configuration/ConfigurationManager.h"
+
 #include "ShaderCache.h"
+#include "Menu.h"
 
 #include "Feature.h"
 #include "Features/Clustered.h"
 
- void State::Draw()
+void State::Draw()
 {
+	Configuration::ConfigurationManager::GetSingleton()->Update();
+
 	auto& shaderCache = SIE::ShaderCache::Instance();
 	if (shaderCache.IsEnabled() && currentShader) {
 		auto type = currentShader->shaderType.get();
@@ -25,8 +29,9 @@
 					context->PSSetShader(pixelShader->shader, NULL, NULL);
 				}
 
-				for (auto* feature : Feature::GetFeatureList())
+				for (auto& feature : Feature::GetFeatureList()) {
 					feature->Draw(currentShader, currentPixelDescriptor);
+				}
 			}
 		}
 	}
@@ -37,14 +42,17 @@
 void State::Reset()
 {
 	Clustered::GetSingleton()->Reset();
-	for (auto* feature : Feature::GetFeatureList())
+
+	for (auto& feature : Feature::GetFeatureList()) {
 		feature->Reset();
+	}
 }
 
 void State::Setup()
 {
-	for (auto* feature : Feature::GetFeatureList())
+	for (auto& feature : Feature::GetFeatureList()) {
 		feature->SetupResources();
+	}
 }
 
 void State::Load()
@@ -103,8 +111,11 @@ void State::Load()
 		}
 	}
 
-	for (auto* feature : Feature::GetFeatureList())
-		feature->Load(settings);
+	for (auto& feature : Feature::GetFeatureList()) {
+		feature->Init();
+	}
+
+	Configuration::ConfigurationManager::GetSingleton()->Load(settings);
 }
 
 void State::Save()
@@ -135,24 +146,33 @@ void State::Save()
 
 	settings["Version"] = Plugin::VERSION.string();
 
-	for (auto* feature : Feature::GetFeatureList())
-		feature->Save(settings);
-
+	Configuration::ConfigurationManager::GetSingleton()->Save();
+	
 	o << settings.dump(1);
+}
+
+void State::ClearComputeShaders()
+{
+	for (auto& feature : Feature::GetFeatureList()) {
+		feature->ClearComputeShader();
+	}
 }
 
 bool State::ValidateCache(CSimpleIniA& a_ini)
 {
 	bool valid = true;
-	for (auto* feature : Feature::GetFeatureList())
+	for (auto& feature : Feature::GetFeatureList()) {
 		valid = valid && feature->ValidateCache(a_ini);
+	}
+
 	return valid;
 }
 
 void State::WriteDiskCacheInfo(CSimpleIniA& a_ini)
 {
-	for (auto* feature : Feature::GetFeatureList())
+	for (auto& feature : Feature::GetFeatureList()) {
 		feature->WriteDiskCacheInfo(a_ini);
+	}
 }
 
 void State::SetLogLevel(spdlog::level::level_enum a_level)
