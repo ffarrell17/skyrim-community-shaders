@@ -232,6 +232,19 @@ void GrassCollision::ModifyGrass(const RE::BSShader*, const uint32_t)
 	}
 }
 
+std::vector<std::string> GrassCollision::GetAdditionalRequiredShaderDefines(RE::BSShader::Type shaderType)
+{
+	std::vector<std::string> defines;
+
+	switch (shaderType) {
+	case RE::BSShader::Type::Grass:
+		defines.push_back("GRASS_COLLISION");
+		break;
+	}
+
+	return defines;
+}
+
 void GrassCollision::Draw(const RE::BSShader* shader, const uint32_t descriptor)
 {
 	switch (shader->shaderType.get()) {

@@ -33,7 +33,6 @@ private:
 	uint32_t toggleKey = VK_END;
 	bool settingToggleKey = false;
 	bool showWeatherMenu = false;
-	bool showCurrentConfig = false;
 
 	int selectedWeatherIndex = -1;
 	int selectedLocationIndex = -1;

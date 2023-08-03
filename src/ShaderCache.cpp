@@ -6,10 +6,6 @@
 #include <d3dcompiler.h>
 #include <wrl/client.h>
 
-#include "Features/ExtendedMaterials.h"
-#include "Features/GrassCollision.h"
-#include "Features/ScreenSpaceShadows.h"
-#include "Features/WaterBlending.h"
 #include "State.h"
 
 namespace SIE
@@ -91,6 +87,19 @@ namespace SIE
 			AdditionalAlphaMask = 1 << 23,
 		};
 
+		std::set<std::string> GetAdditionalRequiredFeatureDefines(RE::BSShader::Type shaderType)
+		{
+			std::set<std::string> additionalDefines;
+			for (const auto& feature : Feature::GetFeatureList()) {
+				if (feature->IsLoaded()) {
+					for (const auto featureDefine : feature->GetAdditionalRequiredShaderDefines(shaderType)) {
+						additionalDefines.insert(featureDefine);
+					}
+				}
+			}
+			return additionalDefines;
+		}
+
 		static void GetLightingShaderDefines(uint32_t descriptor,
 			D3D_SHADER_MACRO* defines)
 		{
@@ -105,15 +114,10 @@ namespace SIE
 				++defines;
 			}
 
-			if (ScreenSpaceShadows::GetSingleton()->IsLoaded()) {
-				defines[0] = { "SCREEN_SPACE_SHADOWS", nullptr };
+			for (const auto& define : GetAdditionalRequiredFeatureDefines(RE::BSShader::Type::Lighting)) {
+				defines[0] = { define.c_str(), nullptr };
 				++defines;
 			}
-
-			//if (ExtendedMaterials::GetSingleton()->loaded) {
-			//	defines[0] = { "COMPLEX_PARALLAX_MATERIALS", nullptr };
-			//	++defines;
-			//}
 
 			if (REL::Module::IsVR()) {
 				defines[0] = { "VR", nullptr };
@@ -137,6 +141,12 @@ namespace SIE
 				defines[0] = { "FLARE", nullptr };
 				++defines;
 			}
+
+			for (const auto& define : GetAdditionalRequiredFeatureDefines(RE::BSShader::Type::BloodSplatter)) {
+				defines[0] = { define.c_str(), nullptr };
+				++defines;
+			}
+
 			defines[0] = { nullptr, nullptr };
 		}
 
@@ -163,8 +173,8 @@ namespace SIE
 				++defines;
 			}
 
-			if (ScreenSpaceShadows::GetSingleton()->IsLoaded()) {
-				defines[0] = { "SCREEN_SPACE_SHADOWS", nullptr };
+			for (const auto& define : GetAdditionalRequiredFeatureDefines(RE::BSShader::Type::DistantTree)) {
+				defines[0] = { define.c_str(), nullptr };
 				++defines;
 			}
 
@@ -251,6 +261,11 @@ namespace SIE
 				}
 			}
 
+			for (const auto& define : GetAdditionalRequiredFeatureDefines(RE::BSShader::Type::Sky)) {
+				defines[0] = { define.c_str(), nullptr };
+				++defines;
+			}
+
 			defines[0] = { nullptr, nullptr };
 		}
 
@@ -276,13 +291,8 @@ namespace SIE
 				++defines;
 			}
 
-			//if (GrassCollision::GetSingleton()->loaded) {
-			//	defines[0] = { "GRASS_COLLISION", nullptr };
-			///	++defines;
-			//}
-
-			if (ScreenSpaceShadows::GetSingleton()->IsLoaded()) {
-				defines[0] = { "SCREEN_SPACE_SHADOWS", nullptr };
+			for (const auto& define : GetAdditionalRequiredFeatureDefines(RE::BSShader::Type::Grass)) {
+				defines[0] = { define.c_str(), nullptr };
 				++defines;
 			}
 
@@ -340,6 +350,11 @@ namespace SIE
 					defines += 2;
 					break;
 				}
+			}
+
+			for (const auto& define : GetAdditionalRequiredFeatureDefines(RE::BSShader::Type::Particle)) {
+				defines[0] = { define.c_str(), nullptr };
+				++defines;
 			}
 
 			defines[0] = { nullptr, nullptr };
@@ -482,6 +497,11 @@ namespace SIE
 				++defines;
 			}
 
+			for (const auto& define : GetAdditionalRequiredFeatureDefines(RE::BSShader::Type::Effect)) {
+				defines[0] = { define.c_str(), nullptr };
+				++defines;
+			}
+
 			defines[0] = { nullptr, nullptr };
 		}
 
@@ -580,10 +600,10 @@ namespace SIE
 				defines += 2;
 			}
 
-			/* if (WaterBlending::GetSingleton()->IsLoaded()) {
-				defines[0] = { "WATER_BLENDING", nullptr };
+			for (const auto& define : GetAdditionalRequiredFeatureDefines(RE::BSShader::Type::Water)) {
+				defines[0] = { define.c_str(), nullptr };
 				++defines;
-			}*/
+			}
 
 			defines[0] = { nullptr, nullptr };
 		}

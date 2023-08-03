@@ -62,4 +62,6 @@ public:
 	void UpdateCollisions();
 	void ModifyGrass(const RE::BSShader* shader, const uint32_t descriptor);
 	virtual void Draw(const RE::BSShader* shader, const uint32_t descriptor) override;
+
+	std::vector<std::string> GetAdditionalRequiredShaderDefines(RE::BSShader::Type shaderType);
 };

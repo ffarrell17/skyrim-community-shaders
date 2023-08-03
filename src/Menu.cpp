@@ -372,7 +372,6 @@ void Menu::DrawSettings()
 			}
 			
 			ImGui::Checkbox("Show Weather & Locations Menu", &showWeatherMenu);
-			ImGui::Checkbox("Show Generated Config", &showCurrentConfig);
 		
 	}
 
@@ -483,12 +482,6 @@ void Menu::DrawSettings()
 
 		if (ImGui::CollapsingHeader("Features", ImGuiTreeNodeFlags_DefaultOpen)) {
 			Configuration::ConfigurationManager::GetSingleton()->GeneralSettings.Draw();
-		}
-
-		if (showCurrentConfig) {
-			if (ImGui::CollapsingHeader("Generated", ImGuiTreeNodeFlags_DefaultOpen)) {
-				Configuration::ConfigurationManager::GetSingleton()->CurrentSettings.Draw();
-			}
 		}
 	}
 
