@@ -10,7 +10,7 @@ struct GrassLightingSettings : FeatureSettings
 {
 	fv_float Glossiness = 20.0f;
 	fv_float SpecularStrength = 0.5f;
-	fv_float SubsurfaceScatteringAmount = 0.5f;
+	fv_float SubsurfaceScatteringAmount = 1.0f;
 	fv_uint32 EnableDirLightFix = 1;
 	fv_uint32 EnablePointLights = 1;
 
@@ -42,6 +42,22 @@ public:
 		DirectX::XMFLOAT4 EyePosition;
 		DirectX::XMFLOAT3X4 DirectionalAmbient;
 		float SunlightScale;
+		
+		float Glossiness;
+		float SpecularStrength;
+		float SubsurfaceScatteringAmount;
+		uint32_t EnableDirLightFix;
+		uint32_t EnablePointLights;
+
+		float pad[2];
+	};
+
+	struct alignas(16) PerFrameVR
+	{
+		DirectX::XMFLOAT4 EyePosition;
+		DirectX::XMFLOAT4 EyePosition2;
+		DirectX::XMFLOAT3X4 DirectionalAmbient;
+		float SunlightScale;
 
 		float Glossiness;
 		float SpecularStrength;
@@ -49,8 +65,7 @@ public:
 		uint32_t EnableDirLightFix;
 		uint32_t EnablePointLights;
 
-		float pad0;
-		float pad1;
+		float pad[2];
 	};
 
 	bool updatePerFrame = false;

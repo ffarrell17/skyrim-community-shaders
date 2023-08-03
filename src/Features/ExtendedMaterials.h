@@ -8,20 +8,20 @@ using namespace Configuration;
 
 struct ExtendedMaterialsSettings : FeatureSettings
 {
-	fv_uint32 EnableComplexMaterial;
+	fv_uint32 EnableComplexMaterial = 1;
 
-	fv_uint32 EnableParallax;
-	fv_uint32 EnableTerrain;
-	fv_uint32 EnableHighQuality;
+	fv_uint32 EnableParallax = 1;
+	fv_uint32 EnableTerrain = 0;
+	fv_uint32 EnableHighQuality = 0;
 
-	fv_uint32 MaxDistance;
-	fv_float CRPMRange;
-	fv_float BlendRange;
-	fv_float Height;
+	fv_uint32 MaxDistance = 2048;
+	fv_float CRPMRange = 0.5f;
+	fv_float BlendRange = 0.05f;
+	fv_float Height = 0.1f;
 
-	fv_uint32 EnableShadows;
-	fv_uint32 ShadowsStartFade;
-	fv_uint32 ShadowsEndFade;
+	fv_uint32 EnableShadows = 1;
+	fv_uint32 ShadowsStartFade = 512;
+	fv_uint32 ShadowsEndFade = 1024;
 
 	void Draw();
 

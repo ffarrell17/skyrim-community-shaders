@@ -204,19 +204,16 @@ RE::BSEventNotifyControl Menu::ProcessEvent(RE::InputEvent* const* a_event, RE::
 					break;
 				}
 
-				switch (button->device.get()) {
-				case RE::INPUT_DEVICE::kKeyboard:
-					if (!button->IsPressed()) {
-						if (settingToggleKey) {
-							toggleKey = key;
-							settingToggleKey = false;
-						} else if (key == toggleKey) {
-							isEnabled = !isEnabled;
-							if (const auto controlMap = RE::ControlMap::GetSingleton()) {
-								controlMap->GetRuntimeData().ignoreKeyboardMouse = isEnabled;
-							}
-						}
+			switch (button->device.get()) {
+			case RE::INPUT_DEVICE::kKeyboard:
+				if (!button->IsPressed()) {
+					if (settingToggleKey) {
+						toggleKey = key;
+						settingToggleKey = false;
+					} else if (key == toggleKey) {
+						IsEnabled = !IsEnabled;
 					}
+				}
 
 					 io.AddKeyEvent(VirtualKeyToImGuiKey(key), button->IsPressed());
 
@@ -226,22 +223,25 @@ RE::BSEventNotifyControl Menu::ProcessEvent(RE::InputEvent* const* a_event, RE::
 					io.AddKeyEvent(ImGuiMod_Shift, button->IsPressed());
 				else if (key == VK_LMENU || key == VK_RMENU)
 					io.AddKeyEvent(ImGuiMod_Alt, button->IsPressed());
-					break;
-				case RE::INPUT_DEVICE::kMouse:
-					logger::trace("Detect mouse scan code {} value {} pressed: {}", scan_code, button->Value(), button->IsPressed());
-					if (scan_code > 7)  // middle scroll
-						io.AddMouseWheelEvent(0, button->Value() * (scan_code == 8 ? 1 : -1));
-					else {
-						if (scan_code > 5)
-							scan_code = 5;
-						io.AddMouseButtonEvent(scan_code, button->IsPressed());
-					}
-					break;
-				default:
-					continue;
+				break;
+			case RE::INPUT_DEVICE::kMouse:
+				logger::trace("Detect mouse scan code {} value {} pressed: {}", scan_code, button->Value(), button->IsPressed());
+				if (scan_code > 7)  // middle scroll
+					io.AddMouseWheelEvent(0, button->Value() * (scan_code == 8 ? 1 : -1));
+				else {
+					if (scan_code > 5)
+						scan_code = 5;
+					io.AddMouseButtonEvent(scan_code, button->IsPressed());
 				}
+				break;
+			default:
+				continue;
+			}
+			if (const auto controlMap = RE::ControlMap::GetSingleton()) {
+				controlMap->GetRuntimeData().ignoreKeyboardMouse = IsEnabled;
 			}
 		}
+	}
 
 	} catch (const std::exception& ex) {
 		logger::error("{}", ex.what());

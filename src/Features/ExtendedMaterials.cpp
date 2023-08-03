@@ -69,8 +69,12 @@ void ExtendedMaterials::ModifyLighting(const RE::BSShader*, const uint32_t)
 
 	{
 		PerPass data{};
-		data.CullingMode = RE::BSGraphics::RendererShadowState::GetSingleton()->GetRuntimeData().rasterStateCullMode;
 		
+		if (!REL::Module::IsVR())
+			data.CullingMode = RE::BSGraphics::RendererShadowState::GetSingleton()->GetRuntimeData().rasterStateCullMode;
+		else
+			data.CullingMode = RE::BSGraphics::RendererShadowState::GetSingleton()->GetVRRuntimeData().rasterStateCullMode;
+
 		data.EnableParallax = settings.EnableParallax.Value;
 		data.EnableTerrain = settings.EnableTerrain.Value;
 		data.EnableHighQuality = settings.EnableHighQuality.Value;
