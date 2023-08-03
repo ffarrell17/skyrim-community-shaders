@@ -1,4 +1,4 @@
-/*#include "GrassCollision.h"
+#include "GrassCollision.h"
 
 #include "State.h"
 #include "Util.h"
@@ -12,46 +12,22 @@ enum class GrassShaderTechniques
 	RenderDepth = 8,
 };
 
-bool GrassCollision::ConfigSettings::DrawSettings(bool& featureEnabled, bool isConfigOverride, std::shared_ptr<FeatureSettings> defaultSettings)
+void GrassCollisionSettings::Draw()
 {
-	bool updated = false;
-
 	if (ImGui::TreeNodeEx("Grass Collision", ImGuiTreeNodeFlags_DefaultOpen)) {
 		ImGui::TextWrapped("Allows player collision to modify grass position.");
-			
-		if (!isConfigOverride) {
-			ImGui::Checkbox("Enable Grass Collision", &featureEnabled);
-		}
-		
-		if (isConfigOverride) Helpers::UI::BeginOptionalSection<FeatureValue<float>>(RadiusMultiplier, 2.0f);
+		EnableGrassCollision.DrawCheckbox("Enable Grass Collision");
 
 		ImGui::TextWrapped("Distance from collision centres to apply collision");
-		updated = updated || RadiusMultiplier->DrawSliderScalar("Radius Multiplier", ImGuiDataType_Float, 0.0f, 8.0f);
+		RadiusMultiplier.DrawSlider("Radius Multiplier", 0.0f, 8.0f);
 
-		if (isConfigOverride) Helpers::UI::EndOptionalSection(RadiusMultiplier);
-
-			
-		if (isConfigOverride) Helpers::UI::BeginOptionalSection<FeatureValue<float>>(RadiusMultiplier, 2.0f);
 			
 		ImGui::TextWrapped("Strength of each collision on grass position.");
-		updated = updated || RadiusMultiplier->DrawSliderScalar("Displacement Multiplier", ImGuiDataType_Float, 0.0f, 32.0f);
+	    DisplacementMultiplier.DrawSlider("Displacement Multiplier", 0.0f, 32.0f);
 
-		if (isConfigOverride) Helpers::UI::EndOptionalSection(RadiusMultiplier);
-		
 		ImGui::TreePop();
 	}
-
-	return updated;
 }
-
-GrassCollision::ShaderSettings GrassCollision::ConfigSettings::ToShaderSettings()
-{
-	ShaderSettings settings;
-	settings.RadiusMultiplier = RadiusMultiplier->Get();
-	settings.DisplacementMultiplier = DisplacementMultiplier->Get();
-	return settings;
-}
-
 
 static bool GetShapeBound(RE::NiAVObject* a_node, RE::NiPoint3& centerPos, float& radius)
 {
@@ -146,7 +122,7 @@ void GrassCollision::UpdateCollisions()
 				RE::NiPoint3 centerPos;
 				float radius;
 				if (GetShapeBound(a_object, centerPos, radius)) {
-					radius *= configSettings->RadiusMultiplier->Get();
+					radius *= settings.RadiusMultiplier.Value;
 					CollisionSData data{};
 					RE::NiPoint3 eyePosition{};
 					if (REL::Module::IsVR()) {
@@ -207,11 +183,11 @@ void GrassCollision::UpdateCollisions()
 
 void GrassCollision::ModifyGrass(const RE::BSShader*, const uint32_t)
 {
-	if (!_loaded)
+	if (!loaded)
 		return;
 
 	if (updatePerFrame) {
-		if (_enabled) {
+		if (settings.EnableGrassCollision.Value) {
 			UpdateCollisions();
 		}
 
@@ -232,16 +208,18 @@ void GrassCollision::ModifyGrass(const RE::BSShader*, const uint32_t)
 		perFrameData.boundCentre.x = bound.center.x - eyePosition.x;
 		perFrameData.boundCentre.y = bound.center.y - eyePosition.y;
 		perFrameData.boundCentre.z = bound.center.z - eyePosition.z;
-		perFrameData.boundRadius = bound.radius * configSettings->RadiusMultiplier->Get();;
+		perFrameData.boundRadius = bound.radius * settings.RadiusMultiplier.Value;
 
-		perFrameData.Settings = configSettings->ToShaderSettings();
+		perFrameData.EnableGrassCollision = settings.EnableGrassCollision.Value;
+		perFrameData.RadiusMultiplier = settings.RadiusMultiplier.Value;
+		perFrameData.DisplacementMultiplier = settings.DisplacementMultiplier.Value;
 
 		perFrame->Update(perFrameData);
 
 		updatePerFrame = false;
 	}
 
-	if (_enabled) {
+	if (settings.EnableGrassCollision.Value) {
 		auto context = RE::BSGraphics::Renderer::GetSingleton()->GetRuntimeData().context;
 
 		ID3D11ShaderResourceView* views[1]{};
@@ -272,13 +250,3 @@ void GrassCollision::Reset()
 {
 	updatePerFrame = true;
 }
-
-std::shared_ptr<FeatureSettings> GrassCollision::CreateConfig()
-{
-	return std::make_shared<GrassCollision::ConfigSettings>();
-}
-
-void GrassCollision::ApplyConfig(std::shared_ptr<FeatureSettings> config)
-{
-	configSettings = std::dynamic_pointer_cast<GrassCollision::ConfigSettings>(config);
-}*/

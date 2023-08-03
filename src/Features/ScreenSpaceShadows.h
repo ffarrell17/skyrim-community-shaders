@@ -44,8 +44,6 @@ public:
 
 	virtual inline std::string GetName() { return "Screen-Space Shadows"; }
 	virtual inline std::string GetShortName() { return "ScreenSpaceShadows"; }
-	virtual inline bool AllowEnableDisable() { return true; }
-
 
 	struct alignas(16) PerPass
 	{
@@ -63,9 +61,19 @@ public:
 		DirectX::XMFLOAT4 DynamicRes;
 		DirectX::XMVECTOR InvDirLightDirectionVS;
 		float ShadowDistance = 10000;
-		//ScreenSpaceShadowsSettings Settings;
-		testU Settings[9];
+
+		uint32_t MaxSamples;
+		float FarDistanceScale;
+		float FarThicknessScale;
+		float FarHardness;
+		float NearDistance;
+		float NearThickness;
+		float NearHardness;
+		float BlurRadius;
+		float BlurDropoff;
 	};
+
+	bool enabled = true;
 
 	ConstantBuffer* perPass = nullptr;
 

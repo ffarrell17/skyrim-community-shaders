@@ -6,6 +6,10 @@
 #include <d3dcompiler.h>
 #include <wrl/client.h>
 
+#include "Features/ExtendedMaterials.h"
+#include "Features/GrassCollision.h"
+#include "Features/ScreenSpaceShadows.h"
+#include "Features/WaterBlending.h"
 #include "State.h"
 
 namespace SIE
@@ -37,19 +41,6 @@ namespace SIE
 		uint32_t GetTechnique(uint32_t descriptor)
 		{
 			return 0x3F & (descriptor >> 24);
-		}
-
-		std::set<std::string> GetAdditionalRequiredFeatureDefines(RE::BSShader::Type shaderType)
-		{
-			std::set<std::string> additionalDefines;
-			for (const auto& feature : Feature::GetFeatureList()) {
-				if (feature->IsLoaded()) {
-					for (const auto featureDefine : feature->GetAdditionalRequiredShaderDefines(shaderType)) {
-						additionalDefines.insert(featureDefine);
-					}
-				}
-			}
-			return additionalDefines;
 		}
 
 		enum class LightingShaderTechniques
@@ -114,11 +105,20 @@ namespace SIE
 				++defines;
 			}
 
-			for (const auto& define : GetAdditionalRequiredFeatureDefines(RE::BSShader::Type::Lighting)) {
-				defines[0] = { define.c_str(), nullptr };
+			if (ScreenSpaceShadows::GetSingleton()->IsLoaded()) {
+				defines[0] = { "SCREEN_SPACE_SHADOWS", nullptr };
 				++defines;
 			}
 
+			//if (ExtendedMaterials::GetSingleton()->loaded) {
+			//	defines[0] = { "COMPLEX_PARALLAX_MATERIALS", nullptr };
+			//	++defines;
+			//}
+
+			if (REL::Module::IsVR()) {
+				defines[0] = { "VR", nullptr };
+				++defines;
+			}
 			VanillaGetLightingShaderDefines(descriptor, defines);
 		}
 
@@ -137,12 +137,6 @@ namespace SIE
 				defines[0] = { "FLARE", nullptr };
 				++defines;
 			}
-
-			for (const auto& define : GetAdditionalRequiredFeatureDefines(RE::BSShader::Type::BloodSplatter)) {
-				defines[0] = { define.c_str(), nullptr };
-				++defines;
-			}
-
 			defines[0] = { nullptr, nullptr };
 		}
 
@@ -169,8 +163,8 @@ namespace SIE
 				++defines;
 			}
 
-			for (const auto& define : GetAdditionalRequiredFeatureDefines(RE::BSShader::Type::DistantTree)) {
-				defines[0] = { define.c_str(), nullptr };
+			if (ScreenSpaceShadows::GetSingleton()->IsLoaded()) {
+				defines[0] = { "SCREEN_SPACE_SHADOWS", nullptr };
 				++defines;
 			}
 
@@ -257,11 +251,6 @@ namespace SIE
 				}
 			}
 
-			for (const auto& define : GetAdditionalRequiredFeatureDefines(RE::BSShader::Type::Sky)) {
-				defines[0] = { define.c_str(), nullptr };
-				++defines;
-			}
-
 			defines[0] = { nullptr, nullptr };
 		}
 
@@ -287,11 +276,20 @@ namespace SIE
 				++defines;
 			}
 
-			for (const auto& define : GetAdditionalRequiredFeatureDefines(RE::BSShader::Type::Grass)) {
-				defines[0] = { define.c_str(), nullptr };
+			//if (GrassCollision::GetSingleton()->loaded) {
+			//	defines[0] = { "GRASS_COLLISION", nullptr };
+			///	++defines;
+			//}
+
+			if (ScreenSpaceShadows::GetSingleton()->IsLoaded()) {
+				defines[0] = { "SCREEN_SPACE_SHADOWS", nullptr };
 				++defines;
 			}
 
+			if (REL::Module::IsVR()) {
+				defines[0] = { "VR", nullptr };
+				++defines;
+			}
 			defines[0] = { nullptr, nullptr };
 		}
 
@@ -342,11 +340,6 @@ namespace SIE
 					defines += 2;
 					break;
 				}
-			}
-
-			for (const auto& define : GetAdditionalRequiredFeatureDefines(RE::BSShader::Type::Particle)) {
-				defines[0] = { define.c_str(), nullptr };
-				++defines;
 			}
 
 			defines[0] = { nullptr, nullptr };
@@ -489,11 +482,6 @@ namespace SIE
 				++defines;
 			}
 
-			for (const auto& define : GetAdditionalRequiredFeatureDefines(RE::BSShader::Type::Effect)) {
-				defines[0] = { define.c_str(), nullptr };
-				++defines;
-			}
-
 			defines[0] = { nullptr, nullptr };
 		}
 
@@ -592,10 +580,10 @@ namespace SIE
 				defines += 2;
 			}
 
-			for (const auto& define : GetAdditionalRequiredFeatureDefines(RE::BSShader::Type::Water)) {
-				defines[0] = { define.c_str(), nullptr };
+			/* if (WaterBlending::GetSingleton()->IsLoaded()) {
+				defines[0] = { "WATER_BLENDING", nullptr };
 				++defines;
-			}
+			}*/
 
 			defines[0] = { nullptr, nullptr };
 		}
@@ -1120,13 +1108,12 @@ namespace SIE
 			logger::debug("Compiled {} shader {}::{}", magic_enum::enum_name(shaderClass),
 				magic_enum::enum_name(type), descriptor);
 
-
 			ID3DBlob* strippedShaderBlob = nullptr;
 
 			const uint32_t stripFlags = D3DCOMPILER_STRIP_DEBUG_INFO |
-			                        D3DCOMPILER_STRIP_REFLECTION_DATA |
-			                        D3DCOMPILER_STRIP_TEST_BLOBS |
-			                        D3DCOMPILER_STRIP_PRIVATE_DATA;
+			                            D3DCOMPILER_STRIP_REFLECTION_DATA |
+			                            D3DCOMPILER_STRIP_TEST_BLOBS |
+			                            D3DCOMPILER_STRIP_PRIVATE_DATA;
 
 			D3DStripShader(shaderBlob->GetBufferPointer(), shaderBlob->GetBufferSize(), stripFlags, &strippedShaderBlob);
 			std::swap(shaderBlob, strippedShaderBlob);
@@ -1135,8 +1122,6 @@ namespace SIE
 			if (useDiskCache) {
 				auto directoryPath = std::format("Data/ShaderCache/{}", shader.fxpFilename);
 				if (!std::filesystem::is_directory(directoryPath)) {
-
-
 					try {
 						std::filesystem::create_directories(directoryPath);
 					} catch (std::filesystem::filesystem_error const& ex) {
@@ -1317,10 +1302,9 @@ namespace SIE
 			return nullptr;
 		}
 
-		if (shader.shaderType.get() == RE::BSShader::Type::Water)
-		{
+		if (shader.shaderType.get() == RE::BSShader::Type::Water) {
 			const auto technique = (descriptor >> 11) & 0xF;
-			if (technique == 9) { // LOD
+			if (technique == 9) {  // LOD
 				return nullptr;
 			}
 		}
@@ -1419,43 +1403,24 @@ namespace SIE
 
 	void ShaderCache::ValidateDiskCache()
 	{
-		logger::info("Validating Disk Cache");
-
 		CSimpleIniA ini;
 		ini.SetUnicode();
 		ini.LoadFile(L"Data\\ShaderCache\\Info.ini");
 		bool valid = true;
 
-		std::string cacheVersion = SHADER_CACHE_VERSION.string();
-		logger::trace("Checking cache version equals {}", cacheVersion);
-		
 		if (auto version = ini.GetValue("Cache", "Version")) {
-		
-			if (strcmp(cacheVersion.c_str(), version) != 0) {
-				logger::info("Disk cache version out of date. Expected: {} Got: {}", cacheVersion, version);
-				valid = false;
-			} 
-			else {
-				logger::trace("Disk cache version is correct");
-			}		
-		} else {
-			logger::info("No cache version found");
-			valid = false;
-		}
-
-		if (valid) {
-
-			logger::trace("Validating Feauture Caches");
-			if (!(State::GetSingleton()->ValidateCache(ini))) {
-				logger::info("A features disk cache version was out of date");
+			if (strcmp(SHADER_CACHE_VERSION.string().c_str(), version) != 0 || !(State::GetSingleton()->ValidateCache(ini))) {
+				logger::info("Disk cache outdated or invalid");
 				valid = false;
 			}
+		} else {
+			logger::info("Disk cache outdated or invalid");
+			valid = false;
 		}
 
 		if (valid) {
 			logger::info("Using disk cache");
 		} else {
-			logger::info("Disk cache outdated or invalid");
 			DeleteDiskCache();
 		}
 	}
@@ -1472,7 +1437,7 @@ namespace SIE
 
 	ShaderCache::ShaderCache()
 	{
-		static const auto compilationThreadCount = max(1, (static_cast<int32_t>(std::thread::hardware_concurrency() - 4)));
+		static const auto compilationThreadCount = static_cast<int32_t>(std::thread::hardware_concurrency());
 		for (size_t threadIndex = 0; threadIndex < compilationThreadCount; ++threadIndex) {
 			compilationThreads.push_back(std::jthread(&ShaderCache::ProcessCompilationSet, this));
 		}
@@ -1548,11 +1513,13 @@ namespace SIE
 
 	void ShaderCache::ProcessCompilationSet()
 	{
+		SetThreadPriority(GetCurrentThread(), THREAD_MODE_BACKGROUND_BEGIN);
 		while (true) {
 			const auto& task = compilationSet.WaitTake();
 			task.Perform();
 			compilationSet.Complete(task);
 		}
+		SetThreadPriority(GetCurrentThread(), THREAD_MODE_BACKGROUND_END);
 	}
 
 	ShaderCompilationTask::ShaderCompilationTask(ShaderClass aShaderClass,

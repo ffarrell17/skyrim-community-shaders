@@ -97,6 +97,8 @@
 
 #define GENERATE_MEMBER_REF(Member) &Member,
 
+#define GENERATE_SET_SETTINGS(Member) settings.Member = Member.Value;
+
 
 template <typename T>
 T Interpolate(const T& start, const T& end, double progress)

@@ -3,6 +3,7 @@
 
 using namespace Configuration;
 
+
 bool FeatureValueGeneric::IsWeatherOverrideEnabled()
 {
 	return Configuration::ConfigurationManager::GetSingleton()->UseWeatherOverrides;

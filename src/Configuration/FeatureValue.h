@@ -10,13 +10,6 @@
 
 namespace Configuration
 {
-	union testU
-	{
-		float floatValue;
-		int32_t intValue;
-		uint32_t uintValue;
-	};
-
 	// Types to differentiate logic when handling settings collections
 	// and individual settings display logic
 	enum class FeatureSettingsType
@@ -69,8 +62,6 @@ namespace Configuration
 		bool HasUpdated() const;
 		void ResetUpdated();
 
-		virtual testU toU() = 0;
-
 	protected:
 		bool IsWeatherOverrideEnabled();
 
@@ -83,52 +74,37 @@ namespace Configuration
 	typedef FeatureValueGeneric fv_any;
 
 	template <typename T>
-	struct TODVals
-	{
-		T SunriseStart;
-		T SunriseEnd;
-		T Day;
-		T SunsetStart;
-		T SunsetEnd;
-		T Night;
-
-		T InteriorDay;
-		T InteriorNight;
-	};
-
-	template <typename T>
 	struct FeatureValue : FeatureValueGeneric
 	{
-	public:
+		template <typename T>
+		struct TODVals
+		{
+			T SunriseStart;
+			T SunriseEnd;
+			T Day;
+			T SunsetStart;
+			T SunsetEnd;
+			T Night;
+
+			T InteriorDay;
+			T InteriorNight;
+		};
+
 		T Value;
+		TODVals<T> TODValues;
 
 	private:
 		T* OverrideVal;
-		TODVals<T> _todVals;
 
 		ImGuiDataType_ _imGuiDataType;
 
+		bool _drawIsDisabled;
+		bool _showTOD = false;
+
 	public:
 
-		testU toU()
+		FeatureValue()
 		{
-			testU t;
-			if constexpr (std::is_same_v<T, int> || std::is_same_v<T, int32_t>) {
-				t.intValue = Value;
-			} else if constexpr (std::is_same_v<T, uint32_t>) {
-				t.uintValue = Value;
-			} else if constexpr (std::is_same_v<T, float>) {
-				t.floatValue = Value;
-			}
-			return t;
-		}
-
-		FeatureValue(FeatureSettingsType type = FeatureSettingsType::General)
-		{ 
-			_type = type;
-			if (_type == FeatureSettingsType::General)
-				*_hasValue = true;
-
 			if constexpr(std::is_same_v<T, int> || std::is_same_v<T, int32_t>) {
 				_imGuiDataType = ImGuiDataType_S32;
 			} else if constexpr (std::is_same_v<T, uint32_t>) {
@@ -143,12 +119,10 @@ namespace Configuration
 		~FeatureValue() 
 		{ }
 
-		FeatureValue(T defaultVal, FeatureSettingsType type = FeatureSettingsType::General) :
-			FeatureValue(type)
+		FeatureValue(T defaultVal) : FeatureValue()
 		{
 			Value = defaultVal;
 			SetAllTODVals(Value);
-			*_hasValue = true;
 		}
 
 		void SetValue(T val)
@@ -160,16 +134,6 @@ namespace Configuration
 		std::string ToString()
 		{
 			return std::to_string(Value);
-		}
-
-		TODVals<T> GetTODVals() const
-		{
-			return _todVals;
-		}
-
-		void SetTODVals(TODVals<T> todVals)
-		{
-			_todVals = todVals;
 		}
 
 		virtual void SetAsLerp(FeatureValueGeneric* start, FeatureValueGeneric* end, float progress) override
@@ -193,16 +157,14 @@ namespace Configuration
 			if (!_isTOD) {
 				SetAllTODVals(Value);
 			} else {
-				auto fvTodVals = newFV->GetTODVals();
-
-				_todVals.SunriseStart = fvTodVals.SunriseStart;
-				_todVals.SunriseEnd = fvTodVals.SunriseEnd;
-				_todVals.Day = fvTodVals.Day;
-				_todVals.SunsetStart = fvTodVals.SunsetStart;
-				_todVals.SunsetEnd = fvTodVals.SunsetEnd;
-				_todVals.Night = fvTodVals.Night;
-				_todVals.InteriorDay = fvTodVals.InteriorDay;
-				_todVals.InteriorNight = fvTodVals.InteriorNight;
+				TODValues.SunriseStart = newFV->TODValues.SunriseStart;
+				TODValues.SunriseEnd = newFV->TODValues.SunriseEnd;
+				TODValues.Day = newFV->TODValues.Day;
+				TODValues.SunsetStart = newFV->TODValues.SunsetStart;
+				TODValues.SunsetEnd = newFV->TODValues.SunsetEnd;
+				TODValues.Night = newFV->TODValues.Night;
+				TODValues.InteriorDay = newFV->TODValues.InteriorDay;
+				TODValues.InteriorNight = newFV->TODValues.InteriorNight;
 			}
 
 
@@ -224,7 +186,7 @@ namespace Configuration
 
 		void SetAllTODVals(T val)
 		{
-			_todVals.SunriseStart = _todVals.SunriseEnd = _todVals.Day = _todVals.SunsetStart = _todVals.SunsetEnd = _todVals.Night = _todVals.InteriorDay = _todVals.InteriorNight = val;
+			TODValues.SunriseStart = TODValues.SunriseEnd = TODValues.Day = TODValues.SunsetStart = TODValues.SunsetEnd = TODValues.Night = TODValues.InteriorDay = TODValues.InteriorNight = val;
 		}
 
 		virtual void TODUpdate() override
@@ -235,47 +197,47 @@ namespace Configuration
 			TODInfo* todInfo = TODInfo::GetSingleton();
 
 			if (!todInfo->Valid)
-				Value = _todVals.Day;
+				Value = TODValues.Day;
 
 			try {
 				if (todInfo->Exterior) {
 					switch (todInfo->TimePeriodType) {
 					case Configuration::TODInfo::TimePeriod::NightToSunriseStart:
-						Value = Helpers::Math::Lerp(_todVals.Night, _todVals.SunriseStart, todInfo->TimePeriodPercentage);
+						Value = Helpers::Math::Lerp(TODValues.Night, TODValues.SunriseStart, todInfo->TimePeriodPercentage);
 						break;
 					case Configuration::TODInfo::TimePeriod::SunriseStartToSunriseEnd:
-						Value = Helpers::Math::Lerp(_todVals.SunriseStart, _todVals.SunriseEnd, todInfo->TimePeriodPercentage);
+						Value = Helpers::Math::Lerp(TODValues.SunriseStart, TODValues.SunriseEnd, todInfo->TimePeriodPercentage);
 						break;
 					case Configuration::TODInfo::TimePeriod::SunriseEndToDay:
-						Value = Helpers::Math::Lerp(_todVals.SunriseEnd, _todVals.Day, todInfo->TimePeriodPercentage);
+						Value = Helpers::Math::Lerp(TODValues.SunriseEnd, TODValues.Day, todInfo->TimePeriodPercentage);
 						break;
 					case Configuration::TODInfo::TimePeriod::DayToSunsetStart:
-						Value = Helpers::Math::Lerp(_todVals.Day, _todVals.SunsetStart, todInfo->TimePeriodPercentage);
+						Value = Helpers::Math::Lerp(TODValues.Day, TODValues.SunsetStart, todInfo->TimePeriodPercentage);
 						break;
 					case Configuration::TODInfo::TimePeriod::SunsetStartToSunsetEnd:
-						Value = Helpers::Math::Lerp(_todVals.SunsetStart, _todVals.SunsetEnd, todInfo->TimePeriodPercentage);
+						Value = Helpers::Math::Lerp(TODValues.SunsetStart, TODValues.SunsetEnd, todInfo->TimePeriodPercentage);
 						break;
 					case Configuration::TODInfo::TimePeriod::SunsetEndToNight:
-						Value = Helpers::Math::Lerp(_todVals.SunsetEnd, _todVals.Night, todInfo->TimePeriodPercentage);
+						Value = Helpers::Math::Lerp(TODValues.SunsetEnd, TODValues.Night, todInfo->TimePeriodPercentage);
 						break;
 					default:
-						Value = _todVals.Day;
+						Value = TODValues.Day;
 						break;
 					}
 				} else {
 					switch (todInfo->TimePeriodType) {
 					case Configuration::TODInfo::TimePeriod::SunsetEndToNight:
 					case Configuration::TODInfo::TimePeriod::NightToSunriseStart:
-						Value = _todVals.InteriorNight;
+						Value = TODValues.InteriorNight;
 						break;
 					default:
-						Value = _todVals.InteriorDay;
+						Value = TODValues.InteriorDay;
 						break;
 					}
 				}
 			} catch (std::exception& e) {
 				logger::error("Error getting TOD value for of type [{}]. Error: {}", typeid(T).name(), e.what());
-				Value = _todVals.Day;
+				Value = TODValues.Day;
 			}
 		}
 
@@ -340,15 +302,15 @@ namespace Configuration
 			PostDraw();
 		}
 
-		bool drawIsDisabled;
-		bool showTOD = false;
+	private:
+
 		void PreDraw()
 		{
 			_updated = false;
-			drawIsDisabled = false;
+			_drawIsDisabled = false;
 			if (*_isOverwritten && IsWeatherOverrideEnabled()) {
 				ImGui::BeginDisabled();
-				drawIsDisabled = true;
+				_drawIsDisabled = true;
 			}
 
 			if (_type == FeatureSettingsType::WeatherOverrideDefault || _type == FeatureSettingsType::WeatherOverride) {
@@ -364,7 +326,7 @@ namespace Configuration
 
 				if (!*_isOverwritten && !*_hasValue) {
 					ImGui::BeginDisabled();
-					drawIsDisabled = true;
+					_drawIsDisabled = true;
 				}
 			}
 		}
@@ -372,10 +334,10 @@ namespace Configuration
 		void PreDraw(std::string label, FeatureValue<T>& min, FeatureValue<T>& max)
 		{
 			_updated = false;
-			drawIsDisabled = false;
+			_drawIsDisabled = false;
 			if (*_isOverwritten && IsWeatherOverrideEnabled()) {
 				ImGui::BeginDisabled();
-				drawIsDisabled = true;
+				_drawIsDisabled = true;
 			}
 
 			if (_type == FeatureSettingsType::WeatherOverrideDefault || _type == FeatureSettingsType::WeatherOverride) {
@@ -390,7 +352,7 @@ namespace Configuration
 
 				if (!*_isOverwritten && !*_hasValue) {
 					ImGui::BeginDisabled();
-					drawIsDisabled = true;
+					_drawIsDisabled = true;
 				}
 
 				if (_isTOD) {
@@ -401,7 +363,7 @@ namespace Configuration
 
 				PushUniqueId("TOD");
 				if (ImGui::Button(ICON_MD_SCHEDULE)) {
-					showTOD = true;
+					_showTOD = true;
 				}
 				ImGui::PopID();
 
@@ -409,14 +371,14 @@ namespace Configuration
 					ImGui::PopStyleColor();
 				}
 				
-				if (showTOD)
+				if (_showTOD)
 					DrawTODWindow(label, min, max);
 
 				ImGui::SameLine();
 
-				if (_isTOD && !drawIsDisabled) {
+				if (_isTOD && !_drawIsDisabled) {
 					ImGui::BeginDisabled();
-					drawIsDisabled = true;
+					_drawIsDisabled = true;
 				}
 			}
 		}
@@ -429,7 +391,7 @@ namespace Configuration
 
 		void PostDraw()
 		{
-			if (drawIsDisabled) {
+			if (_drawIsDisabled) {
 				ImGui::EndDisabled();
 			}
 		}
@@ -437,15 +399,15 @@ namespace Configuration
 		T TODMin(bool exterior = true)
 		{
 			if (exterior)
-				return std::min<T>(std::min<T>(std::min<T>(std::min<T>(std::min<T>(_todVals.Night, _todVals.SunriseStart), _todVals.SunriseEnd), _todVals.Day), _todVals.SunsetStart), _todVals.SunsetEnd);
-			return std::min<T>(_todVals.InteriorDay, _todVals.InteriorNight);
+				return std::min<T>(std::min<T>(std::min<T>(std::min<T>(std::min<T>(TODValues.Night, TODValues.SunriseStart), TODValues.SunriseEnd), TODValues.Day), TODValues.SunsetStart), TODValues.SunsetEnd);
+			return std::min<T>(TODValues.InteriorDay, TODValues.InteriorNight);
 		}
 
 		T TODMax(bool exterior = true)
 		{
 			if (exterior)
-				return std::max<T>(std::max<T>(std::max<T>(std::max<T>(std::max<T>(_todVals.Night, _todVals.SunriseStart), _todVals.SunriseEnd), _todVals.Day), _todVals.SunsetStart), _todVals.SunsetEnd);
-			return std::max<T>(_todVals.InteriorDay, _todVals.InteriorNight);
+				return std::max<T>(std::max<T>(std::max<T>(std::max<T>(std::max<T>(TODValues.Night, TODValues.SunriseStart), TODValues.SunriseEnd), TODValues.Day), TODValues.SunsetStart), TODValues.SunsetEnd);
+			return std::max<T>(TODValues.InteriorDay, TODValues.InteriorNight);
 		}
 
 		struct TODValMap
@@ -466,7 +428,7 @@ namespace Configuration
 			PushUniqueId("TOD3");
 			ImGui::SetNextWindowSize({ 1000, 400 }, ImGuiCond_FirstUseEver);
 			ImGui::SetNextWindowPos({ 1000, 400 }, ImGuiCond_FirstUseEver);
-			ImGui::Begin(("TOD: " + label).c_str(), &showTOD);
+			ImGui::Begin(("TOD: " + label).c_str(), &_showTOD);
 			ImGui::PopID();
 
 			PushUniqueId("TOD2");
@@ -516,26 +478,23 @@ namespace Configuration
 			double sunsetEndTime = secsInDay + Helpers::Time::TimeToSeconds(todInfo->SunsetEndTime);
 			double nightTimeR = secsInDay * 2;
 
-			const auto minTodVals = min.GetTODVals();
-			const auto maxTodVals = max.GetTODVals();
-
 			std::vector<TODValMap> todVals;
 
 			if (!showInterior) {
 				todVals = {
-					{ &_todVals.Night, nightTimeL, "Night", minTodVals.Night, maxTodVals.Night },
-					{ &_todVals.SunriseStart, sunriseStartTime, "Sunrise Start", minTodVals.SunriseStart, maxTodVals.SunriseStart },
-					{ &_todVals.SunriseEnd, sunriseEndTime, "Sunrise End", minTodVals.SunriseEnd, maxTodVals.SunriseEnd },
-					{ &_todVals.Day, dayTime, "Day", minTodVals.Day, maxTodVals.Day },
-					{ &_todVals.SunsetStart, sunsetStartTime, "Sunset Start", minTodVals.SunsetStart, maxTodVals.SunsetStart },
-					{ &_todVals.SunsetEnd, sunsetEndTime, "Sunset End", minTodVals.SunsetEnd, maxTodVals.SunsetEnd },
-					{ &_todVals.Night, nightTimeR, "Night", minTodVals.Night, maxTodVals.Night }
+					{ &TODValues.Night, nightTimeL, "Night", min.TODValues.Night, max.TODValues.Night },
+					{ &TODValues.SunriseStart, sunriseStartTime, "Sunrise Start", min.TODValues.SunriseStart, max.TODValues.SunriseStart },
+					{ &TODValues.SunriseEnd, sunriseEndTime, "Sunrise End", min.TODValues.SunriseEnd, max.TODValues.SunriseEnd },
+					{ &TODValues.Day, dayTime, "Day", min.TODValues.Day, max.TODValues.Day },
+					{ &TODValues.SunsetStart, sunsetStartTime, "Sunset Start", min.TODValues.SunsetStart, max.TODValues.SunsetStart },
+					{ &TODValues.SunsetEnd, sunsetEndTime, "Sunset End", min.TODValues.SunsetEnd, max.TODValues.SunsetEnd },
+					{ &TODValues.Night, nightTimeR, "Night", min.TODValues.Night, max.TODValues.Night }
 				};
 			} else {
 				todVals = {
-					{ &_todVals.InteriorNight, nightTimeL, "Night", minTodVals.InteriorNight, maxTodVals.InteriorNight },
-					{ &_todVals.InteriorDay, dayTime, "Day", minTodVals.InteriorDay, maxTodVals.InteriorDay },
-					{ &_todVals.InteriorNight, nightTimeR, "Night", minTodVals.InteriorNight, maxTodVals.InteriorNight }
+					{ &TODValues.InteriorNight, nightTimeL, "Night", min.TODValues.InteriorNight, max.TODValues.InteriorNight },
+					{ &TODValues.InteriorDay, dayTime, "Day", min.TODValues.InteriorDay, max.TODValues.InteriorDay },
+					{ &TODValues.InteriorNight, nightTimeR, "Night", min.TODValues.InteriorNight, max.TODValues.InteriorNight }
 				};
 			}
 
@@ -622,22 +581,22 @@ namespace Configuration
 					if (!showInterior) {
 						switch (todInfo->TimePeriodType) {
 						case TODInfo::NightToSunriseStart:
-							above = _todVals.Night > _todVals.SunriseStart;
+							above = TODValues.Night > TODValues.SunriseStart;
 							break;
 						case TODInfo::SunriseStartToSunriseEnd:
-							above = _todVals.SunriseStart > _todVals.SunriseEnd;
+							above = TODValues.SunriseStart > TODValues.SunriseEnd;
 							break;
 						case TODInfo::SunriseEndToDay:
-							above = _todVals.SunriseEnd > _todVals.Day;
+							above = TODValues.SunriseEnd > TODValues.Day;
 							break;
 						case TODInfo::DayToSunsetStart:
-							above = _todVals.Day > _todVals.SunsetStart;
+							above = TODValues.Day > TODValues.SunsetStart;
 							break;
 						case TODInfo::SunsetStartToSunsetEnd:
-							above = _todVals.SunsetStart > _todVals.SunsetEnd;
+							above = TODValues.SunsetStart > TODValues.SunsetEnd;
 							break;
 						case TODInfo::SunsetEndToNight:
-							above = _todVals.SunsetEnd > _todVals.Night;
+							above = TODValues.SunsetEnd > TODValues.Night;
 							break;
 						}
 					} else {
@@ -645,12 +604,12 @@ namespace Configuration
 						case TODInfo::NightToSunriseStart:
 						case TODInfo::SunriseStartToSunriseEnd:
 						case TODInfo::SunriseEndToDay:
-							above = _todVals.InteriorNight > _todVals.InteriorDay;
+							above = TODValues.InteriorNight > TODValues.InteriorDay;
 							break;
 						case TODInfo::DayToSunsetStart:
 						case TODInfo::SunsetStartToSunsetEnd:
 						case TODInfo::SunsetEndToNight:
-							above = _todVals.InteriorNight < _todVals.InteriorDay;
+							above = TODValues.InteriorNight < TODValues.InteriorDay;
 							break;
 						}
 					}
@@ -709,7 +668,7 @@ namespace Configuration
 			ImPlot::PlotLine("", x, y, 2);
 		}
 
-		void PlotDragPoint(int id, double& x, T& y, T& min, T& max, ImVec4 colour, float size)
+		void PlotDragPoint(int id, double& x, T& y, T min, T max, ImVec4 colour, float size)
 		{
 			double xCopy = x;
 			double yCopy = static_cast<double>(y);
@@ -782,7 +741,7 @@ namespace nlohmann
 				if (!value.IsTODValue()) {
 					j = value.Value;
 				} else {
-					auto tod = value.GetTODVals();
+					auto tod = value.TODValues;
 					j = nlohmann::json{
 						{ "SunriseStart", tod.SunriseStart },
 						{ "SunriseEnd", tod.SunriseEnd },
@@ -800,16 +759,14 @@ namespace nlohmann
 		static void from_json(const json& j, Configuration::FeatureValue<T>& value)
 		{
 			if (j.is_object()) {
-				auto tod = value.GetTODVals();
-				tod.SunriseStart = j.at("SunriseStart").get<T>();
-				tod.SunriseEnd = j.at("SunriseEnd").get<T>();
-				tod.Day = j.at("Day").get<T>();
-				tod.SunsetStart = j.at("SunsetStart").get<T>();
-				tod.SunsetEnd = j.at("SunsetEnd").get<T>();
-				tod.Night = j.at("Night").get<T>();
-				tod.InteriorDay = j.at("InteriorDay").get<T>();
-				tod.InteriorNight = j.at("InteriorNight").get<T>();
-				value.SetTODVals(tod);
+				value.TODValues.SunriseStart = j.at("SunriseStart").get<T>();
+				value.TODValues.SunriseEnd = j.at("SunriseEnd").get<T>();
+				value.TODValues.Day = j.at("Day").get<T>();
+				value.TODValues.SunsetStart = j.at("SunsetStart").get<T>();
+				value.TODValues.SunsetEnd = j.at("SunsetEnd").get<T>();
+				value.TODValues.Night = j.at("Night").get<T>();
+				value.TODValues.InteriorDay = j.at("InteriorDay").get<T>();
+				value.TODValues.InteriorNight = j.at("InteriorNight").get<T>();
 				value.SetIsTODValue(true);
 			} else if (!j.is_null()) {
 				value.SetValue(j.get<T>());

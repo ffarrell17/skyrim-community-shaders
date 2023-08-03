@@ -127,13 +127,6 @@ void FeatureSettingsCollection::Draw()
 						shownFeature = true;
 						auto& settingsMap = at(i);
 
-						if (_type == FeatureSettingsType::General && settingsMap.Feature->AllowEnableDisable()) {
-							std::string label = "Enable " + settingsMap.GetFeatureName();
-							bool enabled = settingsMap.Feature->IsEnabled();
-							if (ImGui::Checkbox(label.c_str(), &enabled))
-								settingsMap.Feature->Enable(enabled);
-						}
-
 						settingsMap.Settings->TODUpdateAll();
 						settingsMap.Settings->Draw();
 

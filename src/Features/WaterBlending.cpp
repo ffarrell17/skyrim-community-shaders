@@ -23,7 +23,10 @@ void WaterBlending::Draw(const RE::BSShader* shader, const uint32_t)
 		auto context = RE::BSGraphics::Renderer::GetSingleton()->GetRuntimeData().context;
 
 		PerPass data{};
-		data.settings = settings;
+		data.EnableWaterBlending = settings.EnableWaterBlending.Value;
+		data.EnableWaterBlendingSSR = settings.EnableWaterBlendingSSR.Value;
+		data.WaterBlendRange = settings.WaterBlendRange.Value;
+		data.SSRBlendRange = settings.SSRBlendRange.Value;
 
 		auto shadowState = RE::BSGraphics::RendererShadowState::GetSingleton();
 

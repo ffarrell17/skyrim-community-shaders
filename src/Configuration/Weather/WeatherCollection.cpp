@@ -183,7 +183,7 @@ void Configuration::WeathersCollection::DrawWeather(std::shared_ptr<Weather> wea
 		}
 
 		if (weather->FeatureSettings.SelectedFeature >= 0) {
-			std::string buttonLabel = "Remove:" + weather->FeatureSettings[weather->FeatureSettings.SelectedFeature].GetFeatureName();
+			std::string buttonLabel = "Remove: " + weather->FeatureSettings[weather->FeatureSettings.SelectedFeature].GetFeatureName();
 			if (ImGui::Button(buttonLabel.c_str())) {
 				weather->FeatureSettings[weather->FeatureSettings.SelectedFeature].Settings = nullptr;
 				weather->FeatureSettings.SelectedFeature = -1;

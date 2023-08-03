@@ -35,7 +35,10 @@ public:
 	struct alignas(16) PerPass
 	{
 		float waterHeight;
-		WaterBlendingSettings settings;
+		uint32_t EnableWaterBlending;
+		uint32_t EnableWaterBlendingSSR;
+		float WaterBlendRange;
+		float SSRBlendRange;
 		float pad[3];
 	};
 

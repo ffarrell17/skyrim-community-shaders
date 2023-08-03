@@ -9,9 +9,6 @@ public:
 
 	std::string GetVersion();
 
-	bool IsEnabled();
-	void Enable(bool enable);
-	virtual bool AllowEnableDisable();
 	bool IsLoaded();
 
 	std::string GetIniPath();
@@ -36,28 +33,25 @@ public:
 
 protected:
 
-	std::string _version;
-	bool _enabled = true;
-	bool _loaded = false;
+	std::string version;
+	bool loaded = false;
 };
 
-template <typename Derived>
-concept DerivedFromBaseStruct = std::is_base_of<FeatureSettings, Derived>::value;
 
-template <DerivedFromBaseStruct Derived>
+template <typename SettingsT>
 class FeatureWithSettings : public Feature
 {
 protected:
-	Derived settings;
+	SettingsT settings;
 
 public:
 	virtual std::shared_ptr<FeatureSettings> CreateNewSettings() override
 	{
-		return std::make_shared<Derived>();
+		return std::make_shared<SettingsT>();
 	}
 	
 	void SetSettings(FeatureSettings& newSettings)
 	{
-		settings = dynamic_cast<Derived&>(newSettings);
+		settings = dynamic_cast<SettingsT&>(newSettings);
 	}
 };

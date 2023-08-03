@@ -1,4 +1,4 @@
-/*#include "GrassLighting.h"
+#include "GrassLighting.h"
 
 #include "State.h"
 #include "Util.h"
@@ -12,27 +12,17 @@ enum class GrassShaderTechniques
 	RenderDepth = 8,
 };
 
-bool GrassLighting::ConfigSettings::DrawSettings(bool& featureEnabled, bool isConfigOverride, std::shared_ptr<FeatureSettings> defaultSettings)
+void GrassLightingSettings::Draw()
 {
-	bool updated = false;
-
-	featureEnabled = featureEnabled;
-
-	 if (ImGui::TreeNodeEx("Complex Grass", ImGuiTreeNodeFlags_DefaultOpen)) {
-			
-			
+	if (ImGui::TreeNodeEx("Complex Grass", ImGuiTreeNodeFlags_DefaultOpen)) {
 		ImGui::TextWrapped(
 			"Specular highlights for complex grass.\n"
 			"Functions the same as on other objects.");
 
-		if (isConfigOverride) Helpers::UI::BeginOptionalSection<FeatureValue<float>>(Glossiness, 20.0f);
-		updated = updated || Glossiness->DrawSliderScalar("Glossiness", ImGuiDataType_Float, 1.0f, 100.0f);
-		if (isConfigOverride) Helpers::UI::EndOptionalSection(Glossiness);
+		Glossiness.DrawSlider("Glossiness", 1.0f, 100.0f);
 
-		if (isConfigOverride) Helpers::UI::BeginOptionalSection<FeatureValue<float>>(SpecularStrength, 0.5f);
-		updated = updated || SpecularStrength->DrawSliderScalar("Specular Strength", ImGuiDataType_Float, 0.0f, 1.0f);
-		if (isConfigOverride) Helpers::UI::EndOptionalSection(SpecularStrength);
-			
+		SpecularStrength.DrawSlider("Specular Strength", 0.0f, 1.0f);
+
 		ImGui::TreePop();
 	}
 
@@ -41,39 +31,23 @@ bool GrassLighting::ConfigSettings::DrawSettings(bool& featureEnabled, bool isCo
 			"Soft lighting controls how evenly lit an object is.\n"
 			"Back lighting illuminates the back face of an object.\n"
 			"Combined to model the transport of light through the surface.");
-			
-		if (isConfigOverride) Helpers::UI::BeginOptionalSection<FeatureValue<float>>(SubsurfaceScatteringAmount, 0.5f);
+
 		ImGui::PushItemWidth(ImGui::GetWindowWidth() * 0.5f);
-		updated = updated || SubsurfaceScatteringAmount->DrawSliderScalar("Subsurface Scattering Amount", ImGuiDataType_Float, 0.0f, 1.0f);
-		if (isConfigOverride) Helpers::UI::EndOptionalSection(SubsurfaceScatteringAmount);
+		SubsurfaceScatteringAmount.DrawSlider("Subsurface Scattering Amount", 0.0f, 1.0f);
 
 		ImGui::TreePop();
 	}
 
-	if (!isConfigOverride && ImGui::TreeNodeEx("Lights", ImGuiTreeNodeFlags_DefaultOpen)) {
-
+	if (ImGui::TreeNodeEx("Lights", ImGuiTreeNodeFlags_DefaultOpen)) {
 		ImGui::TextWrapped("Fix for grass not being affected by sunlight scale.");
-		updated = updated || ImGui::Checkbox("Enable Directional Light Fix", (bool*)&EnableDirLightFix);
+		EnableDirLightFix.DrawCheckbox("Enable Directional Light Fix");
 
 		ImGui::TextWrapped("Enables point lights on grass like other objects. Slightly impacts performance if there are a lot of lights.");
 
-		updated = updated || ImGui::Checkbox("Enable Point Lights", (bool*)&EnablePointLights);
+		EnablePointLights.DrawCheckbox("Enable Point Lights");
 
 		ImGui::TreePop();
 	}
-
-	return updated;
-}
-
-GrassLighting::ShaderSettings GrassLighting::ConfigSettings::ToShaderSettings()
-{
-	ShaderSettings settings;
-	settings.Glossiness = Glossiness->Get();
-	settings.SpecularStrength = SpecularStrength->Get();
-	settings.SubsurfaceScatteringAmount = SubsurfaceScatteringAmount->Get();
-	settings.EnableDirLightFix = (bool)EnableDirLightFix;
-	settings.EnablePointLights = (bool)EnablePointLights;
-	return settings;
 }
 
 void GrassLighting::ModifyGrass(const RE::BSShader*, const uint32_t descriptor)
@@ -107,7 +81,11 @@ void GrassLighting::ModifyGrass(const RE::BSShader*, const uint32_t descriptor)
 			auto manager = RE::ImageSpaceManager::GetSingleton();
 			perFrameData.SunlightScale = manager->data.baseData.hdr.sunlightScale;
 
-			perFrameData.Settings = configSettings->ToShaderSettings();
+			perFrameData.Glossiness = settings.Glossiness.Value;
+			perFrameData.SpecularStrength = settings.SpecularStrength.Value;
+			perFrameData.SubsurfaceScatteringAmount = settings.SubsurfaceScatteringAmount.Value;
+			perFrameData.EnableDirLightFix = settings.EnableDirLightFix.Value;
+			perFrameData.EnablePointLights = settings.EnablePointLights.Value;
 
 			perFrame->Update(perFrameData);
 
@@ -143,13 +121,3 @@ void GrassLighting::Reset()
 {
 	updatePerFrame = true;
 }
-
-std::shared_ptr<FeatureSettings> GrassLighting::CreateConfig()
-{
-	return std::make_shared<GrassLighting::ConfigSettings>();
-}
-
-void GrassLighting::ApplyConfig(std::shared_ptr<FeatureSettings> config)
-{
-	configSettings = std::dynamic_pointer_cast<GrassLighting::ConfigSettings>(config);
-}*/

@@ -9,6 +9,8 @@ void ScreenSpaceShadowsSettings::Draw()
 {
 	if (ImGui::TreeNodeEx("General", ImGuiTreeNodeFlags_DefaultOpen)) {
 
+		ImGui::Checkbox("Enable Screen-Space Shadows", &ScreenSpaceShadows::GetSingleton()->enabled);
+
 		ImGui::TextWrapped("Controls the accuracy of traced shadows.");
 		MaxSamples.DrawSlider("Max Samples", 1, 512);
 
@@ -144,7 +146,7 @@ ID3D11ComputeShader* ScreenSpaceShadows::GetComputeShaderVerticalBlur()
 
 void ScreenSpaceShadows::ModifyLighting(const RE::BSShader*, const uint32_t)
 {
-	if (!_loaded)
+	if (!loaded)
 		return;
 
 	auto context = RE::BSGraphics::Renderer::GetSingleton()->GetRuntimeData().context;
@@ -211,7 +213,7 @@ void ScreenSpaceShadows::ModifyLighting(const RE::BSShader*, const uint32_t)
 		if (shadowState->GetRuntimeData().cubeMapRenderTarget == RE::RENDER_TARGETS_CUBEMAP::kREFLECTIONS) {
 			enableSSS = false;
 
-		} else if (!renderedScreenCamera && _enabled) {
+		} else if (!renderedScreenCamera && enabled) {
 			renderedScreenCamera = true;
 
 			// Backup the game state
@@ -274,7 +276,15 @@ void ScreenSpaceShadows::ModifyLighting(const RE::BSShader*, const uint32_t)
 
 					data.ShadowDistance = 10000.0f;
 
-					settings.SetArray(data.Settings);
+					data.MaxSamples =			settings.MaxSamples.Value;
+					data.FarDistanceScale =		settings.FarDistanceScale.Value;
+					data.FarThicknessScale =	settings.FarThicknessScale.Value;
+					data.FarHardness =			settings.FarHardness.Value;
+					data.NearDistance =			settings.NearDistance.Value;
+					data.NearThickness =		settings.NearThickness.Value;
+					data.NearHardness =			settings.NearHardness.Value;
+					data.BlurRadius =			settings.BlurRadius.Value;
+					data.BlurDropoff =			settings.BlurDropoff.Value;
 
 					raymarchCB->Update(data);
 				}
@@ -361,7 +371,7 @@ void ScreenSpaceShadows::ModifyLighting(const RE::BSShader*, const uint32_t)
 		}
 
 		PerPass data{};
-		data.EnableSSS = enableSSS && shadowState->GetRuntimeData().rasterStateCullMode <= 1 && _enabled;
+		data.EnableSSS = enableSSS && shadowState->GetRuntimeData().rasterStateCullMode <= 1 && enabled;
 		perPass->Update(data);
 
 		if (renderedScreenCamera) {

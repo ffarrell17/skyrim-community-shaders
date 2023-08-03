@@ -7,30 +7,14 @@
 #include "Features/ExtendedMaterials.h"
 #include "Features/WaterBlending.h"
 
-
 std::string Feature::GetVersion()
 {
-	return _version;
-}
-
-bool Feature::IsEnabled()
-{
-	return _enabled;
-}
-
-void Feature::Enable(bool enable)
-{
-	_enabled = enable;
-}
-
-bool Feature::AllowEnableDisable()
-{
-	return false;
+	return version;
 }
 
 bool Feature::IsLoaded()
 {
-	return _loaded;
+	return loaded;
 }
 
 std::string Feature::GetIniPath()
@@ -46,11 +30,11 @@ void Feature::Init()
 	ini.SetUnicode();
 	ini.LoadFile(iniPath.c_str());
 	if (auto value = ini.GetValue("Info", "Version")) {
-		_loaded = true;
-		_version = value;
+		loaded = true;
+		version = value;
 		logger::info("{} successfully loaded", iniPath.c_str());
 	} else {
-		_loaded = false;
+		loaded = false;
 		logger::warn("{} not successfully loaded", iniPath.c_str());
 	}
 }
@@ -69,19 +53,19 @@ bool Feature::ValidateCache(CSimpleIniA& a_ini)
 	logger::info("Validating {}", name);
 
 	auto enabledInCache = a_ini.GetBoolValue(ini_name.c_str(), "Enabled", false);
-	if (enabledInCache && !_loaded) {
+	if (enabledInCache && !loaded) {
 		logger::info("Feature was uninstalled");
 		return false;
 	}
-	if (!enabledInCache && _loaded) {
+	if (!enabledInCache && loaded) {
 		logger::info("Feature was installed");
 		return false;
 	}
 
-	if (_loaded) {
+	if (loaded) {
 		auto versionInCache = a_ini.GetValue(ini_name.c_str(), "Version");
-		if (strcmp(versionInCache, _version.c_str()) != 0) {
-			logger::info("Change in version detected. Installed {} but {} in Disk Cache", _version, versionInCache);
+		if (strcmp(versionInCache, version.c_str()) != 0) {
+			logger::info("Change in version detected. Installed {} but {} in Disk Cache", version, versionInCache);
 			return false;
 		} else {
 			logger::info("Installed version and cached version match.");
@@ -95,19 +79,19 @@ bool Feature::ValidateCache(CSimpleIniA& a_ini)
 void Feature::WriteDiskCacheInfo(CSimpleIniA& a_ini)
 {
 	auto ini_name = GetShortName();
-	a_ini.SetBoolValue(ini_name.c_str(), "Enabled", _loaded);
-	a_ini.SetValue(ini_name.c_str(), "Version", _version.c_str());
+	a_ini.SetBoolValue(ini_name.c_str(), "Enabled", loaded);
+	a_ini.SetValue(ini_name.c_str(), "Version", version.c_str());
 }
 
 const std::vector<Feature*>& Feature::GetFeatureList()
 {
 	// Cat: essentially load order i guess
 	static std::vector<Feature*> features = {
-		//GrassLighting::GetSingleton(),
-		//DistantTreeLighting::GetSingleton(),
-		//GrassCollision::GetSingleton(),
+		GrassLighting::GetSingleton(),
+		DistantTreeLighting::GetSingleton(),
+		GrassCollision::GetSingleton(),
 		ScreenSpaceShadows::GetSingleton(),
-		//ExtendedMaterials::GetSingleton(),
+		ExtendedMaterials::GetSingleton(),
 		WaterBlending::GetSingleton()
 	};
 	return features;

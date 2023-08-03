@@ -1,76 +1,50 @@
-/*#include "DistantTreeLighting.h"
+#include "DistantTreeLighting.h"
 #include "..\Configuration\ConfigurationManager.h"
 
 #include "State.h"
 #include "Util.h"
 #include "Helpers/UI.h"
 
-bool DistantTreeLighting::ConfigSettings::DrawSettings(bool& featureEnabled, bool isConfigOverride, std::shared_ptr<FeatureSettings> defaultSettings)
+void DistantTreeLightingSettings::Draw()
 {
-	bool updated = false;
-
-	featureEnabled = featureEnabled;  //to hide warning
-
-	if (!isConfigOverride && ImGui::TreeNodeEx("Complex Tree LOD", ImGuiTreeNodeFlags_DefaultOpen)) {
+	if (ImGui::TreeNodeEx("Complex Tree LOD", ImGuiTreeNodeFlags_DefaultOpen)) {
 			
 		ImGui::TextWrapped(
 			"Enables advanced lighting simulation on tree LOD.\n"
 			"Requires DynDOLOD.\n"
 			"See https://dyndolod.info/ for more information.");
-		updated = updated || ImGui::Checkbox("Enable Complex Tree LOD", (bool*)&EnableComplexTreeLOD);
+		EnableComplexTreeLOD.DrawCheckbox("Enable Complex Tree LOD");
 
 		ImGui::TreePop();
 	}
 
-	if (!isConfigOverride && ImGui::TreeNodeEx("Lights", ImGuiTreeNodeFlags_DefaultOpen)) {
+	if (ImGui::TreeNodeEx("Lights", ImGuiTreeNodeFlags_DefaultOpen)) {
 			
 		ImGui::TextWrapped("Fix for trees not being affected by sunlight scale.");
-		updated = updated || ImGui::Checkbox("Enable Directional Light Fix", (bool*)&EnableDirLightFix);
+		EnableDirLightFix.DrawCheckbox("Enable Directional Light Fix");
 
 		ImGui::TreePop();
 	}
 
 	if (ImGui::TreeNodeEx("Effects", ImGuiTreeNodeFlags_DefaultOpen)) {
-			
-		if (isConfigOverride) Helpers::UI::BeginOptionalSection<FeatureValue<float>>(SubsurfaceScatteringAmount, 0.5f);
-
+		
 		ImGui::TextWrapped(
 			"Soft lighting controls how evenly lit an object is.\n"
 			"Back lighting illuminates the back face of an object.\n"
 			"Combined to model the transport of light through the surface.");
-		updated = updated || SubsurfaceScatteringAmount->DrawSliderScalar("Subsurface Scattering Amount", ImGuiDataType_Float, 0.0f, 1.0f);
-
-		if (isConfigOverride) Helpers::UI::EndOptionalSection(SubsurfaceScatteringAmount);
+		SubsurfaceScatteringAmount.DrawSlider("Subsurface Scattering Amount", 0.0f, 1.0f);
 
 		ImGui::TreePop();
 	}
 
 	if (ImGui::TreeNodeEx("Vanilla", ImGuiTreeNodeFlags_DefaultOpen)) {
 
-		if (isConfigOverride) Helpers::UI::BeginOptionalSection<FeatureValue<float>>(FogDimmerAmount, 1.0f);
-
 		ImGui::TextWrapped("Darkens lighting relative fog strength.");
 
-			
-
-		updated = updated || FogDimmerAmount->DrawSliderScalar("Fog Dimmer Amount", ImGuiDataType_Float, 0.0f, 1.0f);
-
-		if (isConfigOverride) Helpers::UI::EndOptionalSection(FogDimmerAmount);
+		FogDimmerAmount.DrawSlider("Fog Dimmer Amount", 0.0f, 1.0f);
 
 		ImGui::TreePop();
 	}
-
-	return updated;
-}
-
-DistantTreeLighting::ShaderSettings DistantTreeLighting::ConfigSettings::ToShaderSettings()
-{
-	ShaderSettings settings;
-	settings.EnableComplexTreeLOD = EnableComplexTreeLOD;
-	settings.EnableDirLightFix = EnableDirLightFix;
-	settings.FogDimmerAmount = FogDimmerAmount->Get();
-	settings.SubsurfaceScatteringAmount = SubsurfaceScatteringAmount->Get();
-	return settings;
 }
 
 enum class DistantTreeShaderTechniques
@@ -142,7 +116,10 @@ void DistantTreeLighting::ModifyDistantTree(const RE::BSShader*, const uint32_t 
 
 		perPassData.ComplexAtlasTexture = complexAtlasTexture;
 
-		perPassData.Settings = configSettings->ToShaderSettings();
+		perPassData.EnableComplexTreeLOD	   = settings.EnableComplexTreeLOD.Value;
+		perPassData.EnableDirLightFix		   = settings.EnableDirLightFix.Value;
+		perPassData.FogDimmerAmount			   = settings.FogDimmerAmount.Value;
+		perPassData.SubsurfaceScatteringAmount = settings.SubsurfaceScatteringAmount.Value;
 
 		perPass->Update(perPassData);
 
@@ -174,13 +151,3 @@ void DistantTreeLighting::SetupResources()
 {
 	perPass = new ConstantBuffer(ConstantBufferDesc<PerPass>());
 }
-
-std::shared_ptr<FeatureSettings> DistantTreeLighting::CreateConfig()
-{
-	return std::make_shared<DistantTreeLighting::ConfigSettings>();
-}
-
-void DistantTreeLighting::ApplyConfig(std::shared_ptr<FeatureSettings> config)
-{
-	configSettings = std::dynamic_pointer_cast<DistantTreeLighting::ConfigSettings>(config);
-}*/
